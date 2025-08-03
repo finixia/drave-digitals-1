@@ -40,6 +40,38 @@ export interface RegisterData {
   role?: string;
 }
 
+export interface DetailedRegistrationData {
+  // Basic Info
+  name: string;
+  email: string;
+  password: string;
+  phone: string;
+  
+  // Personal Details
+  dateOfBirth: string;
+  gender: string;
+  address: string;
+  city: string;
+  state: string;
+  pincode?: string;
+  
+  // Professional Details
+  currentPosition?: string;
+  experience: string;
+  skills: string;
+  education: string;
+  expectedSalary?: string;
+  preferredLocation?: string;
+  
+  // Preferences
+  jobType?: string;
+  workMode?: string;
+  interestedServices: string[];
+  
+  // Documents
+  resume?: File;
+}
+
 class ApiService {
   private async request(endpoint: string, options: RequestInit = {}) {
     const url = `${API_BASE_URL}${endpoint}`;
@@ -100,6 +132,31 @@ class ApiService {
     }
     
     return response;
+  }
+
+  async registerWithDetails(formData: FormData) {
+    const response = await fetch(`${API_BASE_URL}/auth/register-detailed`, {
+      method: 'POST',
+      headers: {
+        // Don't set Content-Type for FormData, let browser set it
+        ...(localStorage.getItem('token') && {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        })
+      },
+      body: formData,
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Registration failed');
+    }
+
+    if (data.token) {
+      localStorage.setItem('token', data.token);
+    }
+    
+    return data;
   }
 
   // Contact form
