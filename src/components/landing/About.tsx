@@ -73,11 +73,39 @@ const About = () => {
               initial={{ opacity: 0, scale: 0.8 }}
               whileInView={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
-              whileHover={{ scale: 1.05 }}
+              whileHover={{ 
+                scale: 1.1,
+                rotate: [0, -2, 2, 0],
+                boxShadow: "0 15px 30px rgba(0,0,0,0.1)"
+              }}
               className="text-center bg-gray-50 backdrop-blur-xl border border-gray-200 rounded-2xl p-6"
             >
-              <stat.icon className={`${stat.color} mx-auto mb-4`} size={32} />
-              <div className="text-3xl font-bold text-gray-900 mb-2">{stat.value}</div>
+              <motion.div
+                animate={{ 
+                  rotate: [0, 10, -10, 0],
+                  scale: [1, 1.1, 1]
+                }}
+                transition={{ 
+                  duration: 3, 
+                  repeat: Infinity,
+                  delay: index * 0.5
+                }}
+              >
+                <stat.icon className={`${stat.color} mx-auto mb-4`} size={32} />
+              </motion.div>
+              <motion.div 
+                className="text-3xl font-bold text-gray-900 mb-2"
+                animate={{ 
+                  scale: [1, 1.05, 1]
+                }}
+                transition={{ 
+                  duration: 2, 
+                  repeat: Infinity,
+                  delay: index * 0.3
+                }}
+              >
+                {stat.value}
+              </motion.div>
               <div className="text-gray-600 text-sm">{stat.label}</div>
             </motion.div>
           ))}
@@ -100,13 +128,24 @@ const About = () => {
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: index * 0.2 }}
+                  whileHover={{ x: 10, scale: 1.02 }}
                   className="flex items-start space-x-4"
                 >
                   <motion.div
-                    whileHover={{ scale: 1.1, rotate: 5 }}
+                    whileHover={{ 
+                      scale: 1.2, 
+                      rotate: [0, -10, 10, 0],
+                      boxShadow: "0 8px 25px rgba(239, 68, 68, 0.3)"
+                    }}
+                    transition={{ duration: 0.3 }}
                     className="flex-shrink-0 w-12 h-12 bg-gradient-to-r from-red-500 to-red-600 rounded-xl flex items-center justify-center"
                   >
-                    <value.icon className="text-white" size={20} />
+                    <motion.div
+                      animate={{ rotate: [0, 5, -5, 0] }}
+                      transition={{ duration: 4, repeat: Infinity }}
+                    >
+                      <value.icon className="text-white" size={20} />
+                    </motion.div>
                   </motion.div>
                   <div>
                     <h4 className="text-xl font-semibold text-gray-900 mb-2">
@@ -156,9 +195,21 @@ const About = () => {
                       initial={{ opacity: 0, x: -20 }}
                       whileInView={{ opacity: 1, x: 0 }}
                       transition={{ duration: 0.5, delay: index * 0.1 }}
+                      whileHover={{ x: 10, scale: 1.02 }}
                       className="flex items-center space-x-3"
                     >
-                      <div className="w-2 h-2 bg-red-400 rounded-full" />
+                      <motion.div 
+                        className="w-2 h-2 bg-red-400 rounded-full"
+                        animate={{ 
+                          scale: [1, 1.5, 1],
+                          opacity: [0.7, 1, 0.7]
+                        }}
+                        transition={{ 
+                          duration: 2, 
+                          repeat: Infinity,
+                          delay: index * 0.2
+                        }}
+                      />
                       <span className="text-gray-700">{commitment}</span>
                     </motion.div>
                   ))}
@@ -175,7 +226,10 @@ const About = () => {
           className="text-center mt-20"
         >
           <motion.button
-            whileHover={{ scale: 1.05 }}
+            whileHover={{ 
+              scale: 1.05,
+              boxShadow: "0 20px 40px rgba(239, 68, 68, 0.3)"
+            }}
             whileTap={{ scale: 0.95 }}
             onClick={() => {
               const contactSection = document.getElementById('contact');
@@ -183,8 +237,13 @@ const About = () => {
                 contactSection.scrollIntoView({ behavior: 'smooth' });
               }
             }}
-            className="bg-gradient-to-r from-red-500 to-red-600 text-white px-12 py-4 rounded-full text-lg font-semibold hover:shadow-2xl transition-all"
+            className="bg-gradient-to-r from-red-500 to-red-600 text-white px-12 py-4 rounded-full text-lg font-semibold hover:shadow-2xl transition-all relative overflow-hidden"
           >
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+              animate={{ x: ["-100%", "100%"] }}
+              transition={{ duration: 2.5, repeat: Infinity, repeatDelay: 3 }}
+            />
             Start Your Journey Today
           </motion.button>
         </motion.div>

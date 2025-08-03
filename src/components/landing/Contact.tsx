@@ -211,18 +211,40 @@ const Contact = () => {
               <motion.button
                 type="submit"
                 disabled={isSubmitting}
-                whileHover={{ scale: 1.02 }}
+                whileHover={{ 
+                  scale: 1.02,
+                  boxShadow: "0 15px 30px rgba(239, 68, 68, 0.3)"
+                }}
                 whileTap={{ scale: 0.98 }}
-                className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white py-4 rounded-xl font-semibold hover:shadow-2xl transition-all inline-flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white py-4 rounded-xl font-semibold hover:shadow-2xl transition-all inline-flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden"
               >
+                {!isSubmitting && (
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                    animate={{ x: ["-100%", "100%"] }}
+                    transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                  />
+                )}
                 {isSubmitting ? (
                   <>
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <motion.div 
+                      className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    />
                     <span>Sending...</span>
                   </>
                 ) : (
                   <>
-                    <Send size={20} />
+                    <motion.div
+                      animate={{ 
+                        x: [0, 3, 0],
+                        rotate: [0, 15, 0]
+                      }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    >
+                      <Send size={20} />
+                    </motion.div>
                     <span>Send Message</span>
                   </>
                 )}
@@ -267,13 +289,31 @@ const Contact = () => {
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: index * 0.1 }}
+                    whileHover={{ scale: 1.02, x: 5 }}
                     className="flex items-start space-x-4"
                   >
                     <motion.div
-                      whileHover={{ scale: 1.1, rotate: 5 }}
+                      whileHover={{ 
+                        scale: 1.2, 
+                        rotate: [0, -10, 10, 0],
+                        boxShadow: "0 8px 20px rgba(0,0,0,0.15)"
+                      }}
+                      transition={{ duration: 0.3 }}
                       className={`flex-shrink-0 w-12 h-12 bg-white rounded-xl flex items-center justify-center ${info.color} shadow-sm border border-gray-200`}
                     >
-                      <info.icon size={20} />
+                      <motion.div
+                        animate={{ 
+                          rotate: [0, 5, -5, 0],
+                          scale: [1, 1.1, 1]
+                        }}
+                        transition={{ 
+                          duration: 3, 
+                          repeat: Infinity,
+                          delay: index * 0.5
+                        }}
+                      >
+                        <info.icon size={20} />
+                      </motion.div>
                     </motion.div>
                     <div>
                       <h4 className="text-gray-900 font-semibold mb-2">{info.title}</h4>
@@ -291,14 +331,29 @@ const Contact = () => {
             {/* Quick Actions */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <motion.div
-                whileHover={{ scale: 1.02 }}
+                whileHover={{ 
+                  scale: 1.05,
+                  y: -5,
+                  boxShadow: "0 15px 30px rgba(239, 68, 68, 0.2)"
+                }}
                 className="bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-2xl p-6 text-center"
               >
-                <Shield className="text-red-400 mx-auto mb-3" size={32} />
+                <motion.div
+                  animate={{ 
+                    rotate: [0, -5, 5, 0],
+                    scale: [1, 1.1, 1]
+                  }}
+                  transition={{ duration: 3, repeat: Infinity }}
+                >
+                  <Shield className="text-red-400 mx-auto mb-3" size={32} />
+                </motion.div>
                 <h4 className="text-gray-900 font-semibold mb-2">Emergency Fraud Help</h4>
                 <p className="text-gray-600 text-sm mb-4">24/7 cyber fraud assistance</p>
                 <motion.button
-                  whileHover={{ scale: 1.05 }}
+                  whileHover={{ 
+                    scale: 1.05,
+                    boxShadow: "0 8px 20px rgba(239, 68, 68, 0.3)"
+                  }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => {
                     // Scroll to contact form and pre-select fraud assistance
@@ -308,21 +363,41 @@ const Contact = () => {
                       setFormData(prev => ({ ...prev, service: 'fraud-assistance' }));
                     }
                   }}
-                  className="bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-600 transition-colors"
+                  className="bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-600 transition-colors relative overflow-hidden"
                 >
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                    animate={{ x: ["-100%", "100%"] }}
+                    transition={{ duration: 2, repeat: Infinity, repeatDelay: 4 }}
+                  />
                   Get Help Now
                 </motion.button>
               </motion.div>
 
               <motion.div
-                whileHover={{ scale: 1.02 }}
+                whileHover={{ 
+                  scale: 1.05,
+                  y: -5,
+                  boxShadow: "0 15px 30px rgba(59, 130, 246, 0.2)"
+                }}
                 className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-2xl p-6 text-center"
               >
-                <Briefcase className="text-blue-400 mx-auto mb-3" size={32} />
+                <motion.div
+                  animate={{ 
+                    rotate: [0, 5, -5, 0],
+                    scale: [1, 1.1, 1]
+                  }}
+                  transition={{ duration: 3, repeat: Infinity, delay: 1 }}
+                >
+                  <Briefcase className="text-blue-400 mx-auto mb-3" size={32} />
+                </motion.div>
                 <h4 className="text-gray-900 font-semibold mb-2">Job Placement</h4>
                 <p className="text-gray-600 text-sm mb-4">Find your dream job today</p>
                 <motion.button
-                  whileHover={{ scale: 1.05 }}
+                  whileHover={{ 
+                    scale: 1.05,
+                    boxShadow: "0 8px 20px rgba(239, 68, 68, 0.3)"
+                  }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => {
                     // Scroll to contact form and pre-select job consultancy
@@ -332,8 +407,13 @@ const Contact = () => {
                       setFormData(prev => ({ ...prev, service: 'job-consultancy' }));
                     }
                   }}
-                  className="bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-600 transition-colors"
+                  className="bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-600 transition-colors relative overflow-hidden"
                 >
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                    animate={{ x: ["-100%", "100%"] }}
+                    transition={{ duration: 2, repeat: Infinity, repeatDelay: 4 }}
+                  />
                   Apply Now
                 </motion.button>
               </motion.div>

@@ -90,7 +90,13 @@ const Footer = () => {
         {/* Logo at the Top */}
         <div className="flex justify-start mb-10">
 
-          <motion.div whileHover={{ scale: 1.05 }}>
+          <motion.div 
+            whileHover={{ 
+              scale: 1.05,
+              rotate: [0, -2, 2, 0]
+            }}
+            transition={{ duration: 0.3 }}
+          >
             <img
               src="/company logo.png"
               alt="Drave Capitals Logo"
@@ -129,10 +135,27 @@ const Footer = () => {
                 <motion.a
                   key={index}
                   href={social.href}
-                  whileHover={{ scale: 1.2, y: -2 }}
+                  whileHover={{ 
+                    scale: 1.3, 
+                    y: -5,
+                    rotate: [0, -10, 10, 0],
+                    boxShadow: "0 8px 20px rgba(0,0,0,0.2)"
+                  }}
+                  transition={{ duration: 0.3 }}
                   className={`w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center text-gray-400 ${social.color} transition-all duration-300`}
                 >
-                  <social.icon size={18} />
+                  <motion.div
+                    animate={{ 
+                      rotate: [0, 5, -5, 0]
+                    }}
+                    transition={{ 
+                      duration: 4, 
+                      repeat: Infinity,
+                      delay: index * 0.5
+                    }}
+                  >
+                    <social.icon size={18} />
+                  </motion.div>
                 </motion.a>
               ))}
             </div>
@@ -147,7 +170,12 @@ const Footer = () => {
                   <li key={index}>
                     <motion.a
                       href="#"
-                      whileHover={{ x: 5 }}
+                      whileHover={{ 
+                        x: 8,
+                        color: "#dc2626",
+                        scale: 1.05
+                      }}
+                      transition={{ duration: 0.2 }}
                       className="text-gray-600 hover:text-red-600 transition-all text-sm"
                     >
                       {link}
@@ -190,15 +218,29 @@ const Footer = () => {
                 <motion.button
                   type="submit"
                   disabled={isSubmitting}
-                  whileHover={{ scale: isSubmitting ? 1 : 1.05 }}
+                  whileHover={{ 
+                    scale: isSubmitting ? 1 : 1.05,
+                    boxShadow: isSubmitting ? "none" : "0 10px 25px rgba(239, 68, 68, 0.3)"
+                  }}
                   whileTap={{ scale: isSubmitting ? 1 : 0.95 }}
-                  className={`bg-gradient-to-r from-red-500 to-red-600 text-white px-8 py-3 rounded-xl font-semibold hover:shadow-lg transition-all whitespace-nowrap ${
+                  className={`bg-gradient-to-r from-red-500 to-red-600 text-white px-8 py-3 rounded-xl font-semibold hover:shadow-lg transition-all whitespace-nowrap relative overflow-hidden ${
                     isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                 >
+                  {!isSubmitting && (
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                      animate={{ x: ["-100%", "100%"] }}
+                      transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                    />
+                  )}
                   {isSubmitting ? (
                     <div className="flex items-center space-x-2">
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <motion.div 
+                        className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      />
                       <span>Subscribing...</span>
                     </div>
                   ) : (
@@ -236,13 +278,37 @@ const Footer = () => {
               © 2024 Drave Digitals. All rights reserved.
             </div>
             <div className="flex items-center space-x-6 text-gray-600 text-sm">
-              <motion.a href="#" whileHover={{ y: -2 }} className="hover:text-red-600 transition-all">
+              <motion.a 
+                href="#" 
+                whileHover={{ 
+                  y: -3,
+                  color: "#dc2626",
+                  scale: 1.05
+                }} 
+                className="hover:text-red-600 transition-all"
+              >
                 Privacy Policy
               </motion.a>
-              <motion.a href="#" whileHover={{ y: -2 }} className="hover:text-red-600 transition-all">
+              <motion.a 
+                href="#" 
+                whileHover={{ 
+                  y: -3,
+                  color: "#dc2626",
+                  scale: 1.05
+                }} 
+                className="hover:text-red-600 transition-all"
+              >
                 Terms of Service
               </motion.a>
-              <motion.a href="#" whileHover={{ y: -2 }} className="hover:text-red-600 transition-all">
+              <motion.a 
+                href="#" 
+                whileHover={{ 
+                  y: -3,
+                  color: "#dc2626",
+                  scale: 1.05
+                }} 
+                className="hover:text-red-600 transition-all"
+              >
                 Cookie Policy
               </motion.a>
             </div>

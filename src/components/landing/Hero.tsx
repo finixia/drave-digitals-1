@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, Play, Star } from 'lucide-react';
+import { ArrowRight, Play, Star, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { apiService } from '../../utils/api';
 
@@ -58,6 +58,29 @@ const Hero = () => {
           transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
           className="absolute inset-0"
         />
+        
+        {/* Floating particles */}
+        {[...Array(6)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-2 h-2 bg-red-400/30 rounded-full"
+            animate={{
+              x: [0, 100, 0],
+              y: [0, -100, 0],
+              opacity: [0, 1, 0],
+            }}
+            transition={{
+              duration: 8 + i * 2,
+              repeat: Infinity,
+              delay: i * 1.5,
+              ease: "easeInOut"
+            }}
+            style={{
+              left: `${20 + i * 15}%`,
+              top: `${30 + i * 10}%`,
+            }}
+          />
+        ))}
       </div>
 
       {/* Floating Review Badges */}
@@ -101,9 +124,29 @@ const Hero = () => {
           transition={{ duration: 0.8 }}
           className="text-5xl md:text-7xl font-bold text-gray-900 mb-8 leading-tight"
         >
-          {heroContent.title.split(' ').slice(0, 2).join(' ')}{' '}
+          <motion.span
+            animate={{ 
+              textShadow: [
+                "0 0 0px rgba(239, 68, 68, 0)",
+                "0 0 20px rgba(239, 68, 68, 0.3)",
+                "0 0 0px rgba(239, 68, 68, 0)"
+              ]
+            }}
+            transition={{ duration: 3, repeat: Infinity }}
+          >
+            {heroContent.title.split(' ').slice(0, 2).join(' ')}
+          </motion.span>{' '}
           <span className="bg-gradient-to-r from-red-400 to-red-600 bg-clip-text text-transparent">
-            {heroContent.title.split(' ')[2]}
+            <motion.span
+              animate={{ 
+                backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"]
+              }}
+              transition={{ duration: 4, repeat: Infinity }}
+              style={{ backgroundSize: "200% 200%" }}
+              className="bg-gradient-to-r from-red-400 via-red-600 to-red-400 bg-clip-text text-transparent"
+            >
+              {heroContent.title.split(' ')[2]}
+            </motion.span>
           </span>
           <br />
           <span className="text-4xl md:text-5xl font-light">
@@ -127,22 +170,39 @@ const Hero = () => {
           className="flex flex-col sm:flex-row items-center justify-center gap-6 mb-16"
         >
           <motion.button
-            whileHover={{ scale: 1.05 }}
+            whileHover={{ 
+              scale: 1.05,
+              boxShadow: "0 20px 40px rgba(239, 68, 68, 0.3)"
+            }}
             whileTap={{ scale: 0.95 }}
             onClick={scrollToContact}
-            className="bg-gradient-to-r from-red-500 to-red-600 text-white px-10 py-4 rounded-full text-lg font-semibold hover:shadow-2xl transition-all inline-flex items-center space-x-2"
+            className="bg-gradient-to-r from-red-500 to-red-600 text-white px-10 py-4 rounded-full text-lg font-semibold hover:shadow-2xl transition-all inline-flex items-center space-x-2 relative overflow-hidden"
           >
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+              animate={{ x: ["-100%", "100%"] }}
+              transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+            />
+            <Sparkles size={20} className="animate-pulse" />
             <span>Get Started Today</span>
             <ArrowRight size={20} />
           </motion.button>
           
           <motion.button
-            whileHover={{ scale: 1.05 }}
+            whileHover={{ 
+              scale: 1.05,
+              borderColor: "rgba(239, 68, 68, 0.6)"
+            }}
             whileTap={{ scale: 0.95 }}
             onClick={scrollToServices} 
             className="border-2 border-gray-300 text-gray-700 px-10 py-4 rounded-full text-lg font-semibold hover:bg-gray-50 hover:border-red-400 transition-all inline-flex items-center space-x-2"
           >
-            <Play size={20} />
+            <motion.div
+              animate={{ rotate: [0, 360] }}
+              transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+            >
+              <Play size={20} />
+            </motion.div>
             <span>Explore Services</span>
           </motion.button>
         </motion.div>
@@ -155,10 +215,33 @@ const Hero = () => {
           className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto"
         >
           {heroContent.stats.map((stat, index) => (
-            <div key={index} className="bg-white/80 backdrop-blur-xl border border-gray-200 rounded-2xl p-6 shadow-lg">
-              <div className="text-3xl font-bold text-red-400 mb-2">{stat.value}</div>
+            <motion.div 
+              key={index} 
+              initial={{ opacity: 0, y: 30, scale: 0.8 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ delay: 1 + index * 0.2, duration: 0.6 }}
+              whileHover={{ 
+                y: -10,
+                boxShadow: "0 20px 40px rgba(0,0,0,0.1)"
+              }}
+              className="bg-white/80 backdrop-blur-xl border border-gray-200 rounded-2xl p-6 shadow-lg"
+            >
+              <motion.div 
+                className="text-3xl font-bold text-red-400 mb-2"
+                animate={{ 
+                  scale: [1, 1.1, 1],
+                  color: ["#f87171", "#dc2626", "#f87171"]
+                }}
+                transition={{ 
+                  duration: 2, 
+                  repeat: Infinity,
+                  delay: index * 0.5
+                }}
+              >
+                {stat.value}
+              </motion.div>
               <div className="text-gray-600">{stat.label}</div>
-            </div>
+            </motion.div>
           ))}
         </motion.div>
       </div>
