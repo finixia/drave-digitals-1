@@ -146,17 +146,6 @@ const Navbar = () => {
           >
             {navItems.map((item) => (
               <motion.button
-              <motion.button
-                whileHover={{ x: 10, color: "#dc2626" }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => {
-                  setIsOpen(false);
-                  navigate('/register');
-                }}
-                className="w-full mt-2 text-gray-700 hover:text-red-600 py-2 text-left"
-              >
-                Register
-              </motion.button>
                 key={item.name}
                 whileHover={{ x: 10, color: "#dc2626" }}
                 whileTap={{ scale: 0.95 }}
@@ -166,6 +155,17 @@ const Navbar = () => {
                 {item.name}
               </motion.button>
             ))}
+            <motion.button
+              whileHover={{ x: 10, color: "#dc2626" }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                setIsOpen(false);
+                navigate('/register');
+              }}
+              className="w-full mt-2 text-gray-700 hover:text-red-600 py-2 text-left"
+            >
+              Register
+            </motion.button>
             <motion.button
               whileHover={{ x: 10, color: "#dc2626" }}
               whileTap={{ scale: 0.95 }}
