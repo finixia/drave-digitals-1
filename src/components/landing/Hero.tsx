@@ -2,8 +2,10 @@ import React from 'react';
 import { ArrowRight, Play, Star, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { apiService } from '../../utils/api';
+import { useNavigate } from 'react-router-dom';
 
 const Hero = () => {
+  const navigate = useNavigate();
   const [heroContent, setHeroContent] = React.useState({
     title: 'Your Professional Success Partner',
     subtitle: 'From landing your dream job to protecting against cyber fraud, we provide comprehensive career solutions and digital security services that empower your professional journey.',
@@ -40,6 +42,10 @@ const Hero = () => {
     if (contactSection) {
       contactSection.scrollIntoView({ behavior: 'smooth' });
     }
+  };
+
+  const handleGetStarted = () => {
+    navigate('/register');
   };
 
   return (
@@ -175,7 +181,7 @@ const Hero = () => {
               boxShadow: "0 20px 40px rgba(239, 68, 68, 0.3)"
             }}
             whileTap={{ scale: 0.95 }}
-            onClick={scrollToContact}
+            onClick={handleGetStarted}
             className="bg-gradient-to-r from-red-500 to-red-600 text-white px-10 py-4 rounded-full text-lg font-semibold hover:shadow-2xl transition-all inline-flex items-center space-x-2 relative overflow-hidden"
           >
             <motion.div

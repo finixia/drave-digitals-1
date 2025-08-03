@@ -94,6 +94,35 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   role: { type: String, enum: ['admin', 'user'], default: 'user' },
+  
+  // Personal Details
+  phone: { type: String },
+  dateOfBirth: { type: Date },
+  gender: { type: String, enum: ['male', 'female', 'other', 'prefer-not-to-say'] },
+  address: { type: String },
+  city: { type: String },
+  state: { type: String },
+  pincode: { type: String },
+  
+  // Professional Details
+  currentPosition: { type: String },
+  experience: { type: String },
+  skills: { type: String },
+  education: { type: String },
+  expectedSalary: { type: String },
+  preferredLocation: { type: String },
+  
+  // Preferences
+  jobType: { type: String },
+  workMode: { type: String },
+  interestedServices: [{ type: String }],
+  
+  // Documents
+  resume: { type: String }, // File path
+  
+  // Profile completion
+  profileCompleted: { type: Boolean, default: false },
+  
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -257,6 +286,91 @@ app.post('/api/auth/register', async (req, res) => {
       }
     });
   } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+app.post('/api/auth/register-detailed', upload.single('resume'), async (req, res) => {
+  try {
+    const {
+      name, email, password, phone, dateOfBirth, gender, address, city, state, pincode,
+      currentPosition, experience, skills, education, expectedSalary, preferredLocation,
+      jobType, workMode, interestedServices
+    } = req.body;
+    
+    // Check if user exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: 'User already exists' });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Parse interested services if it's a string
+    let parsedServices = [];
+    if (interestedServices) {
+      try {
+        parsedServices = typeof interestedServices === 'string' 
+          ? JSON.parse(interestedServices) 
+          : interestedServices;
+      } catch (error) {
+        parsedServices = [];
+      }
+    }
+
+    // Create user with detailed information
+    const userData = {
+      name,
+      email,
+      password: hashedPassword,
+      phone,
+      dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
+      gender,
+      address,
+      city,
+      state,
+      pincode,
+      currentPosition,
+      experience,
+      skills,
+      education,
+      expectedSalary,
+      preferredLocation,
+      jobType,
+      workMode,
+      interestedServices: parsedServices,
+      profileCompleted: true
+    };
+
+    // Add resume path if uploaded
+    if (req.file) {
+      userData.resume = req.file.path;
+    }
+
+    const user = new User(userData);
+    await user.save();
+
+    // Generate token
+    const token = jwt.sign(
+      { userId: user._id, email: user.email, role: user.role },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '24h' }
+    );
+
+    res.status(201).json({
+      message: 'User registered successfully',
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        profileCompleted: user.profileCompleted
+      }
+    });
+  } catch (error) {
+    console.error('Detailed registration error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
