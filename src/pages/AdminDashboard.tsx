@@ -357,7 +357,7 @@ const AdminDashboard = () => {
         transition={{ duration: 0.3 }}
         className={`fixed lg:relative w-64 h-full bg-white border-r border-gray-200 z-50 shadow-lg ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-        }`}
+        } lg:translate-x-0 lg:static lg:inset-0 h-screen`}
       >
         <div className="p-6">
           <div className="flex items-center space-x-3 mb-8">
