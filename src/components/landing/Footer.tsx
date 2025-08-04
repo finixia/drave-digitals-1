@@ -169,7 +169,7 @@ const Footer = () => {
                 {links.map((link, index) => (
                   <li key={index}>
                     <motion.a
-                      href="#"
+                      href={link === 'Admin Panel' ? '/admin' : '#'}
                       whileHover={{ 
                         x: 8,
                         color: "#dc2626",
