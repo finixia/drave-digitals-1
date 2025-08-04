@@ -45,6 +45,7 @@ const AdminDashboard = () => {
   const [contacts, setContacts] = useState([]);
   const [jobApplications, setJobApplications] = useState([]);
   const [fraudCases, setFraudCases] = useState([]);
+  const [users, setUsers] = useState([]);
   const [websiteContent, setWebsiteContent] = useState({
     hero: {
       title: 'Your Professional Success Partner',
@@ -108,6 +109,7 @@ const AdminDashboard = () => {
     fetchContacts();
     fetchJobApplications();
     fetchFraudCases();
+    fetchUsers();
   }, []);
 
   const fetchDashboardData = async () => {
@@ -145,6 +147,15 @@ const AdminDashboard = () => {
       setFraudCases(data);
     } catch (error) {
       console.error('Failed to fetch fraud cases:', error);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      const data = await apiService.getUsers();
+      setUsers(data);
+    } catch (error) {
+      console.error('Failed to fetch users:', error);
     }
   };
 
@@ -307,10 +318,10 @@ const AdminDashboard = () => {
   const sidebarItems = [
     { id: 'overview', label: 'Overview', icon: BarChart3 },
     { id: 'content', label: 'Website Content', icon: Globe },
-    { id: 'clients', label: 'Clients', icon: Users },
+    { id: 'users', label: 'Registered Users', icon: Users },
+    { id: 'clients', label: 'Client Inquiries', icon: Mail },
     { id: 'jobs', label: 'Job Applications', icon: Briefcase },
     { id: 'fraud', label: 'Fraud Cases', icon: Shield },
-    { id: 'inquiries', label: 'Inquiries', icon: Mail },
     { id: 'settings', label: 'Settings', icon: Settings }
   ];
 
@@ -394,10 +405,10 @@ const AdminDashboard = () => {
                 <h1 className="text-2xl font-bold text-gray-900">
                   {activeTab === 'overview' && 'Dashboard Overview'}
                   {activeTab === 'content' && 'Website Content Management'}
-                  {activeTab === 'clients' && 'Client Management'}
+                  {activeTab === 'users' && 'Registered Users'}
+                  {activeTab === 'clients' && 'Client Inquiries'}
                   {activeTab === 'jobs' && 'Job Applications'}
                   {activeTab === 'fraud' && 'Fraud Cases'}
-                  {activeTab === 'inquiries' && 'Client Inquiries'}
                   {activeTab === 'settings' && 'Settings'}
                 </h1>
                 <p className="text-gray-600">Welcome back, {user?.name}</p>
@@ -454,12 +465,12 @@ const AdminDashboard = () => {
 
                 <motion.div
                   whileHover={{ scale: 1.02 }}
-                  onClick={() => setActiveTab('clients')}
+                  onClick={() => setActiveTab('users')}
                   className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm cursor-pointer hover:shadow-lg transition-all"
                 >
                   <Users className="text-green-400 mb-4" size={32} />
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">View Clients</h3>
-                  <p className="text-gray-600">Manage client inquiries and contacts</p>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">View Users</h3>
+                  <p className="text-gray-600">Manage registered users and profiles</p>
                 </motion.div>
 
                 <motion.div
@@ -594,13 +605,63 @@ const AdminDashboard = () => {
             </motion.div>
           )}
 
+          {activeTab === 'users' && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm"
+            >
+              <h3 className="text-xl font-bold text-gray-900 mb-6">Registered Users</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-200">
+                      <th className="text-left py-3 px-4 font-semibold text-gray-900">Name</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-900">Email</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-900">Phone</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-900">Experience</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-900">Skills</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-900">Profile</th>
+                      <th className="text-left py-3 px-4 font-semibold text-gray-900">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {users.map((user) => (
+                      <tr key={user._id} className="border-b border-gray-100 hover:bg-gray-50">
+                        <td className="py-3 px-4">{user.name}</td>
+                        <td className="py-3 px-4">{user.email}</td>
+                        <td className="py-3 px-4">{user.phone || 'N/A'}</td>
+                        <td className="py-3 px-4">{user.experience || 'N/A'}</td>
+                        <td className="py-3 px-4">
+                          <div className="max-w-xs truncate" title={user.skills}>
+                            {user.skills || 'N/A'}
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className={`px-2 py-1 rounded-full text-xs ${
+                            user.profileCompleted 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {user.profileCompleted ? 'Complete' : 'Incomplete'}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4">{new Date(user.createdAt).toLocaleDateString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </motion.div>
+          )}
+
           {activeTab === 'clients' && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm"
             >
-              <h3 className="text-xl font-bold text-gray-900 mb-6">Client Contacts</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-6">Client Inquiries</h3>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
