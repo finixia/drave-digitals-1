@@ -1100,145 +1100,145 @@ const AdminDashboard = () => {
             </>
           )}
         </div>
-
-        {/* Edit Modal */}
-        {editingContent && (
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="bg-white rounded-2xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto"
-            >
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-900">
-                  Edit {editingContent.section}
-                </h3>
-                <button
-                  onClick={() => setEditingContent(null)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <X size={24} />
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                {editingContent.section === 'hero' && (
-                  <>
-                    <div>
-                      <label className="block text-gray-600 text-sm font-medium mb-2">Title</label>
-                      <input
-                        type="text"
-                        value={editForm.title || ''}
-                        onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
-                        className="w-full border border-gray-300 rounded-lg px-4 py-2"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-gray-600 text-sm font-medium mb-2">Subtitle</label>
-                      <textarea
-                        value={editForm.subtitle || ''}
-                        onChange={(e) => setEditForm({ ...editForm, subtitle: e.target.value })}
-                        rows={4}
-                        className="w-full border border-gray-300 rounded-lg px-4 py-2"
-                      />
-                    </div>
-                  </>
-                )}
-
-                {editingContent.section === 'services' && (
-                  <>
-                    <div>
-                      <label className="block text-gray-600 text-sm font-medium mb-2">Title</label>
-                      <input
-                        type="text"
-                        value={editForm.title || ''}
-                        onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
-                        className="w-full border border-gray-300 rounded-lg px-4 py-2"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-gray-600 text-sm font-medium mb-2">Description</label>
-                      <textarea
-                        value={editForm.description || ''}
-                        onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                        rows={3}
-                        className="w-full border border-gray-300 rounded-lg px-4 py-2"
-                      />
-                    </div>
-                  </>
-                )}
-
-                {editingContent.section === 'testimonials' && (
-                  <>
-                    <div>
-                      <label className="block text-gray-600 text-sm font-medium mb-2">Name</label>
-                      <input
-                        type="text"
-                        value={editForm.name || ''}
-                        onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                        className="w-full border border-gray-300 rounded-lg px-4 py-2"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-gray-600 text-sm font-medium mb-2">Role</label>
-                      <input
-                        type="text"
-                        value={editForm.role || ''}
-                        onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
-                        className="w-full border border-gray-300 rounded-lg px-4 py-2"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-gray-600 text-sm font-medium mb-2">Company</label>
-                      <input
-                        type="text"
-                        value={editForm.company || ''}
-                        onChange={(e) => setEditForm({ ...editForm, company: e.target.value })}
-                        className="w-full border border-gray-300 rounded-lg px-4 py-2"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-gray-600 text-sm font-medium mb-2">Testimonial</label>
-                      <textarea
-                        value={editForm.text || ''}
-                        onChange={(e) => setEditForm({ ...editForm, text: e.target.value })}
-                        rows={4}
-                        className="w-full border border-gray-300 rounded-lg px-4 py-2"
-                      />
-                    </div>
-                  </>
-                )}
-              </div>
-
-              <div className="flex items-center justify-end space-x-4 mt-6">
-                <button
-                  onClick={() => setEditingContent(null)}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
-                >
-                  Cancel
-                </button>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleSaveContent}
-                  className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors inline-flex items-center space-x-2"
-                >
-                  <Save size={16} />
-                  <span>Save Changes</span>
-                </motion.button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-
-        {/* Sidebar Overlay */}
-        {sidebarOpen && (
-          <div
-            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-            onClick={() => setSidebarOpen(false)}
-          />
-        )}
       </div>
+
+      {/* Edit Modal */}
+      {editingContent && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-2xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-gray-900">
+                Edit {editingContent.section}
+              </h3>
+              <button
+                onClick={() => setEditingContent(null)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {editingContent.section === 'hero' && (
+                <>
+                  <div>
+                    <label className="block text-gray-600 text-sm font-medium mb-2">Title</label>
+                    <input
+                      type="text"
+                      value={editForm.title || ''}
+                      onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-gray-600 text-sm font-medium mb-2">Subtitle</label>
+                    <textarea
+                      value={editForm.subtitle || ''}
+                      onChange={(e) => setEditForm({ ...editForm, subtitle: e.target.value })}
+                      rows={4}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2"
+                    />
+                  </div>
+                </>
+              )}
+
+              {editingContent.section === 'services' && (
+                <>
+                  <div>
+                    <label className="block text-gray-600 text-sm font-medium mb-2">Title</label>
+                    <input
+                      type="text"
+                      value={editForm.title || ''}
+                      onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-gray-600 text-sm font-medium mb-2">Description</label>
+                    <textarea
+                      value={editForm.description || ''}
+                      onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                      rows={3}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2"
+                    />
+                  </div>
+                </>
+              )}
+
+              {editingContent.section === 'testimonials' && (
+                <>
+                  <div>
+                    <label className="block text-gray-600 text-sm font-medium mb-2">Name</label>
+                    <input
+                      type="text"
+                      value={editForm.name || ''}
+                      onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-gray-600 text-sm font-medium mb-2">Role</label>
+                    <input
+                      type="text"
+                      value={editForm.role || ''}
+                      onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-gray-600 text-sm font-medium mb-2">Company</label>
+                    <input
+                      type="text"
+                      value={editForm.company || ''}
+                      onChange={(e) => setEditForm({ ...editForm, company: e.target.value })}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-gray-600 text-sm font-medium mb-2">Testimonial</label>
+                    <textarea
+                      value={editForm.text || ''}
+                      onChange={(e) => setEditForm({ ...editForm, text: e.target.value })}
+                      rows={4}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2"
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end space-x-4 mt-6">
+              <button
+                onClick={() => setEditingContent(null)}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+              >
+                Cancel
+              </button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleSaveContent}
+                className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors inline-flex items-center space-x-2"
+              >
+                <Save size={16} />
+                <span>Save Changes</span>
+              </motion.button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Sidebar Overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
     </div>
   );
 };
