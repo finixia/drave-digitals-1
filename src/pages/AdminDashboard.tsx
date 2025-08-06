@@ -22,7 +22,9 @@ import {
   Eye,
   FileText,
   Image,
-  Globe,
+  ArrowLeft,
+  X,
+  Trash2
   Download,
   MapPin,
   Calendar,
