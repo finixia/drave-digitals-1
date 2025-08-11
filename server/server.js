@@ -54,7 +54,7 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json());
-app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 console.log("MONGODB_URI:", process.env.MONGODB_URI);
 
@@ -243,6 +243,36 @@ const authenticateAdmin = (req, res, next) => {
 };
 
 // Routes
+
+// File serving route
+app.get('/api/uploads/:filename', (req, res) => {
+  const filename = req.params.filename;
+  const filePath = path.join(__dirname, 'uploads', filename);
+  
+  // Check if file exists
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ message: 'File not found' });
+  }
+  
+  // Set appropriate headers
+  const ext = path.extname(filename).toLowerCase();
+  const mimeTypes = {
+    '.pdf': 'application/pdf',
+    '.doc': 'application/msword',
+    '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    '.jpg': 'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.png': 'image/png',
+    '.gif': 'image/gif'
+  };
+  
+  const mimeType = mimeTypes[ext] || 'application/octet-stream';
+  res.setHeader('Content-Type', mimeType);
+  res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+  
+  // Send file
+  res.sendFile(filePath);
+});
 
 // Auth Routes
 app.post('/api/auth/register', async (req, res) => {
