@@ -29,40 +29,18 @@ const Testimonials = () => {
         console.log('Fetching testimonials...');
         const data = await apiService.getTestimonials();
         console.log('Testimonials fetched:', data);
-        setTestimonials(data);
+        // Ensure we have an array of testimonials
+        if (Array.isArray(data)) {
+          setTestimonials(data);
+        } else {
+          console.error('Testimonials data is not an array:', data);
+          setTestimonials([]);
+        }
         setError(null);
       } catch (error) {
         console.error('Failed to fetch testimonials:', error);
         setError('Failed to load testimonials. Using fallback data.');
-        // Fallback to sample data if API fails
-        setTestimonials([
-          {
-            _id: '1',
-            name: 'Priya Sharma',
-            role: 'Software Engineer',
-            company: 'Tech Solutions Inc.',
-            rating: 5,
-            text: 'CareerGuard helped me land my dream job in just 2 weeks! Their resume building and interview preparation services are exceptional.',
-            avatar: '👩‍💻',
-            service: 'Job Consultancy',
-            featured: true,
-            approved: true,
-            createdAt: new Date().toISOString()
-          },
-          {
-            _id: '2',
-            name: 'Rajesh Kumar',
-            role: 'Business Owner',
-            company: 'Kumar Enterprises',
-            rating: 5,
-            text: 'When I faced cyber fraud, CareerGuard guided me through the entire process. They helped me file the FIR and recover my money.',
-            avatar: '👨‍💼',
-            service: 'Fraud Assistance',
-            featured: true,
-            approved: true,
-            createdAt: new Date().toISOString()
-          }
-        ]);
+        setTestimonials([]);
       } finally {
         setLoading(false);
       }
@@ -202,7 +180,7 @@ const Testimonials = () => {
             </div>
             <div className="w-px h-6 bg-gray-300" />
             <div className="text-slate-400">
-              Based on {testimonials.length > 0 ? `${testimonials.length * 100}+` : '5000+'} reviews
+              Based on {testimonials.length > 0 ? `${testimonials.length}+` : '0'} reviews
             </div>
           </div>
         </motion.div>

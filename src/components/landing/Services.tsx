@@ -40,44 +40,18 @@ const Services = () => {
         console.log('Fetching services...');
         const data = await apiService.getServices();
         console.log('Services fetched:', data);
-        setServices(data);
+        // Ensure we have an array of services
+        if (Array.isArray(data)) {
+          setServices(data);
+        } else {
+          console.error('Services data is not an array:', data);
+          setServices([]);
+        }
         setError(null);
       } catch (error) {
         console.error('Failed to fetch services:', error);
         setError('Failed to load services');
-        // Fallback to default services
-        setServices([
-          {
-            _id: '1',
-            title: 'Cyber Crime Fraud Assistance',
-            description: 'Complete protection against cyber fraud with expert guidance and legal support.',
-            icon: 'Shield',
-            color: 'from-red-500 to-pink-600',
-            features: [
-              'Cyber fraud complaint support',
-              'FIR filing guidance',
-              'Online complaint assistance',
-              'Prevention tips & awareness'
-            ],
-            active: true,
-            order: 1
-          },
-          {
-            _id: '2',
-            title: 'Job Consultancy Services',
-            description: 'End-to-end job placement services for IT & Non-IT professionals.',
-            icon: 'Briefcase',
-            color: 'from-blue-500 to-cyan-600',
-            features: [
-              'IT & Non-IT placements',
-              'Resume building support',
-              'Interview preparation',
-              'Work from home opportunities'
-            ],
-            active: true,
-            order: 2
-          }
-        ]);
+        setServices([]);
       } finally {
         setLoading(false);
       }
@@ -179,7 +153,7 @@ const Services = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {services.map((service, index) => {
             const IconComponent = iconMap[service.icon] || Shield;
-            const serviceId = service._id || service.id || index + 1;
+            const serviceId = service._id || index + 1;
             return (
             <motion.div
               key={serviceId}
@@ -226,7 +200,7 @@ const Services = () => {
               </p>
 
               <ul className="space-y-3 mb-8">
-                {service.features.map((feature, featureIndex) => (
+                {(service.features || []).map((feature, featureIndex) => (
                   <motion.li
                     key={featureIndex}
                     initial={{ opacity: 0, x: -20 }}
@@ -258,7 +232,7 @@ const Services = () => {
                   backgroundImage: "linear-gradient(to right, #ef4444, #dc2626)"
                 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => handleLearnMore(typeof serviceId === 'string' ? parseInt(serviceId) || index + 1 : serviceId)}
+                onClick={() => handleLearnMore(index + 1)}
                 className="w-full bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 py-3 rounded-xl font-semibold hover:from-red-500 hover:to-red-600 hover:text-white transition-all duration-300 relative overflow-hidden"
               >
                 <motion.div
