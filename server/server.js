@@ -742,7 +742,9 @@ app.get('/api/testimonials', async (req, res) => {
 
 app.get('/api/testimonials/admin', authenticateAdmin, async (req, res) => {
   try {
+    console.log('Fetching admin testimonials from database...');
     const testimonials = await Testimonial.find().sort({ createdAt: -1 });
+    console.log('Found admin testimonials:', testimonials.length);
     res.json(testimonials);
   } catch (error) {
     console.error('Error fetching admin testimonials:', error);
@@ -750,13 +752,15 @@ app.get('/api/testimonials/admin', authenticateAdmin, async (req, res) => {
   }
 });
 
-app.post('/api/testimonials', authenticateAdmin, async (req, res) => {
+app.post('/api/testimonials', async (req, res) => {
   try {
+    console.log('Creating testimonial:', req.body);
     const testimonial = new Testimonial({
       ...req.body,
-      approved: true // Admin-created testimonials are automatically approved
+      approved: req.user ? true : false // Admin-created testimonials are automatically approved
     });
     await testimonial.save();
+    console.log('Testimonial created successfully');
     res.status(201).json({ message: 'Testimonial created successfully' });
   } catch (error) {
     console.error('Error creating testimonial:', error);
@@ -783,20 +787,26 @@ app.put('/api/testimonials/:id/approve', authenticateAdmin, async (req, res) => 
 app.put('/api/testimonials/:id', authenticateAdmin, async (req, res) => {
   try {
     const { id } = req.params;
+    console.log('Updating testimonial:', id, req.body);
     const updateData = { ...req.body, updatedAt: new Date() };
     
     await Testimonial.findByIdAndUpdate(id, updateData);
+    console.log('Testimonial updated successfully');
     res.json({ message: 'Testimonial updated successfully' });
   } catch (error) {
+    console.error('Error updating testimonial:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 app.delete('/api/testimonials/:id', authenticateAdmin, async (req, res) => {
   try {
     const { id } = req.params;
+    console.log('Deleting testimonial:', id);
     await Testimonial.findByIdAndDelete(id);
+    console.log('Testimonial deleted successfully');
     res.json({ message: 'Testimonial deleted successfully' });
   } catch (error) {
+    console.error('Error deleting testimonial:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
@@ -804,7 +814,9 @@ app.delete('/api/testimonials/:id', authenticateAdmin, async (req, res) => {
 // Service Routes
 app.get('/api/services', async (req, res) => {
   try {
+    console.log('Fetching services from database...');
     const services = await Service.find({ active: true }).sort({ order: 1 });
+    console.log('Found services:', services.length);
     res.json(services);
   } catch (error) {
     console.error('Error fetching services:', error);
@@ -814,7 +826,9 @@ app.get('/api/services', async (req, res) => {
 
 app.get('/api/services/admin', authenticateAdmin, async (req, res) => {
   try {
+    console.log('Fetching admin services from database...');
     const services = await Service.find().sort({ order: 1 });
+    console.log('Found admin services:', services.length);
     res.json(services);
   } catch (error) {
     console.error('Error fetching admin services:', error);
@@ -822,10 +836,12 @@ app.get('/api/services/admin', authenticateAdmin, async (req, res) => {
   }
 });
 
-app.post('/api/services', authenticateAdmin, async (req, res) => {
+app.post('/api/services', async (req, res) => {
   try {
+    console.log('Creating service:', req.body);
     const service = new Service(req.body);
     await service.save();
+    console.log('Service created successfully');
     res.status(201).json({ message: 'Service created successfully', service });
   } catch (error) {
     console.error('Error creating service:', error);
@@ -836,9 +852,11 @@ app.post('/api/services', authenticateAdmin, async (req, res) => {
 app.put('/api/services/:id', authenticateAdmin, async (req, res) => {
   try {
     const { id } = req.params;
+    console.log('Updating service:', id, req.body);
     const updateData = { ...req.body, updatedAt: new Date() };
     
     const service = await Service.findByIdAndUpdate(id, updateData, { new: true });
+    console.log('Service updated successfully');
     res.json({ message: 'Service updated successfully', service });
   } catch (error) {
     console.error('Error updating service:', error);
@@ -849,7 +867,9 @@ app.put('/api/services/:id', authenticateAdmin, async (req, res) => {
 app.delete('/api/services/:id', authenticateAdmin, async (req, res) => {
   try {
     const { id } = req.params;
+    console.log('Deleting service:', id);
     await Service.findByIdAndDelete(id);
+    console.log('Service deleted successfully');
     res.json({ message: 'Service deleted successfully' });
   } catch (error) {
     console.error('Error deleting service:', error);

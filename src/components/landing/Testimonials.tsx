@@ -27,31 +27,37 @@ const Testimonials = () => {
       try {
         setLoading(true);
         console.log('Fetching testimonials...');
-        const response = await fetch('http://localhost:5000/api/testimonials');
-        console.log('Response status:', response.status);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
+        const data = await apiService.getTestimonials();
         console.log('Testimonials fetched:', data);
         setTestimonials(data);
         setError(null);
       } catch (error) {
         console.error('Failed to fetch testimonials:', error);
         setError('Failed to load testimonials. Using fallback data.');
-        // Fallback to empty array if API fails
+        // Fallback to sample data if API fails
         setTestimonials([
           {
             _id: '1',
-            name: 'Sample User',
+            name: 'Priya Sharma',
             role: 'Software Engineer',
-            company: 'Tech Company',
+            company: 'Tech Solutions Inc.',
             rating: 5,
-            text: 'Great service! Highly recommended.',
-            avatar: '👨‍💻',
+            text: 'CareerGuard helped me land my dream job in just 2 weeks! Their resume building and interview preparation services are exceptional.',
+            avatar: '👩‍💻',
             service: 'Job Consultancy',
+            featured: true,
+            approved: true,
+            createdAt: new Date().toISOString()
+          },
+          {
+            _id: '2',
+            name: 'Rajesh Kumar',
+            role: 'Business Owner',
+            company: 'Kumar Enterprises',
+            rating: 5,
+            text: 'When I faced cyber fraud, CareerGuard guided me through the entire process. They helped me file the FIR and recover my money.',
+            avatar: '👨‍💼',
+            service: 'Fraud Assistance',
             featured: true,
             approved: true,
             createdAt: new Date().toISOString()

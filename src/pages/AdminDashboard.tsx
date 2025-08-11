@@ -142,6 +142,7 @@ const AdminDashboard = () => {
   const handleTestimonialSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      console.log('Submitting testimonial:', testimonialForm);
       if (editingTestimonial) {
         await apiService.updateTestimonial(editingTestimonial._id, testimonialForm);
       } else {
@@ -151,16 +152,17 @@ const AdminDashboard = () => {
       setShowTestimonialModal(false);
       setEditingTestimonial(null);
       resetTestimonialForm();
-      fetchDashboardData();
+      await fetchDashboardData();
     } catch (error) {
       console.error('Failed to save testimonial:', error);
-      alert('Failed to save testimonial. Please try again.');
+      alert(`Failed to save testimonial: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
   const handleServiceSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      console.log('Submitting service:', serviceForm);
       if (editingService) {
         await apiService.updateService(editingService._id, serviceForm);
       } else {
@@ -170,21 +172,22 @@ const AdminDashboard = () => {
       setShowServiceModal(false);
       setEditingService(null);
       resetServiceForm();
-      fetchDashboardData();
+      await fetchDashboardData();
     } catch (error) {
       console.error('Failed to save service:', error);
-      alert('Failed to save service. Please try again.');
+      alert(`Failed to save service: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
   const handleDeleteTestimonial = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this testimonial?')) {
       try {
+        console.log('Deleting testimonial:', id);
         await apiService.deleteTestimonial(id);
-        fetchDashboardData();
+        await fetchDashboardData();
       } catch (error) {
         console.error('Failed to delete testimonial:', error);
-        alert('Failed to delete testimonial. Please try again.');
+        alert(`Failed to delete testimonial: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     }
   };
@@ -192,11 +195,12 @@ const AdminDashboard = () => {
   const handleDeleteService = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this service?')) {
       try {
+        console.log('Deleting service:', id);
         await apiService.deleteService(id);
-        fetchDashboardData();
+        await fetchDashboardData();
       } catch (error) {
         console.error('Failed to delete service:', error);
-        alert('Failed to delete service. Please try again.');
+        alert(`Failed to delete service: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     }
   };

@@ -289,19 +289,21 @@ class ApiService {
   // Testimonial endpoints
   async getTestimonials() {
     try {
+      console.log('API: Fetching testimonials...');
       return await this.request('/testimonials');
     } catch (error) {
       console.error('Failed to fetch testimonials:', error);
-      // Return empty array as fallback
-      return [];
+      throw error;
     }
   }
 
   async getTestimonialsAdmin() {
+    console.log('API: Fetching admin testimonials...');
     return this.request('/testimonials/admin');
   }
 
   async createTestimonial(data: TestimonialData) {
+    console.log('API: Creating testimonial...', data);
     return this.request('/testimonials', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -337,18 +339,21 @@ class ApiService {
   // Service endpoints
   async getServices() {
     try {
+      console.log('API: Fetching services...');
       return await this.request('/services');
     } catch (error) {
       console.error('Failed to fetch services:', error);
-      return [];
+      throw error;
     }
   }
 
   async getServicesAdmin() {
+    console.log('API: Fetching admin services...');
     return this.request('/services/admin');
   }
 
   async createService(data: ServiceData) {
+    console.log('API: Creating service...', data);
     return this.request('/services', {
       method: 'POST',
       body: JSON.stringify(data),
