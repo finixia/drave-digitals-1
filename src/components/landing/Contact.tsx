@@ -15,6 +15,13 @@ import {
 import { apiService, ContactFormData } from '../../utils/api';
 
 const Contact = () => {
+  const [contactInfo, setContactInfo] = React.useState<any>({
+    phone: ['+91 9876543210', '+91 9876543211'],
+    email: ['info@dravedigitals.com', 'support@dravedigitals.com'],
+    address: ['123 Business District', 'Bangalore, Karnataka 530068'],
+    workingHours: ['Mon - Fri: 9:00 AM - 7:00 PM', 'Sat: 10:00 AM - 4:00 PM']
+  });
+  
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -25,6 +32,24 @@ const Contact = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [statusMessage, setStatusMessage] = useState('');
+
+  React.useEffect(() => {
+    const fetchContactInfo = async () => {
+      try {
+        console.log('Fetching contact info...');
+        const data = await apiService.getContactInfo();
+        console.log('Contact info fetched:', data);
+        if (data && Object.keys(data).length > 0) {
+          setContactInfo(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch contact info:', error);
+        // Keep default contact info on error
+      }
+    };
+
+    fetchContactInfo();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,25 +86,25 @@ const Contact = () => {
     {
       icon: Phone,
       title: 'Call Us',
-      details: ['+91 9876543210', '+91 9876543211'],
+      details: contactInfo.phone || ['+91 9876543210', '+91 9876543211'],
       color: 'text-green-400'
     },
     {
       icon: Mail,
       title: 'Email Us',
-      details: ['info@dravedigitals.com', 'support@dravedigitals.com'],
+      details: contactInfo.email || ['info@dravedigitals.com', 'support@dravedigitals.com'],
       color: 'text-blue-400'
     },
     {
       icon: MapPin,
       title: 'Visit Us',
-      details: ['123 Business District', 'Bangalore, Karnataka 530068'],
+      details: contactInfo.address || ['123 Business District', 'Bangalore, Karnataka 530068'],
       color: 'text-purple-400'
     },
     {
       icon: Clock,
       title: 'Working Hours',
-      details: ['Mon - Fri: 9:00 AM - 7:00 PM', 'Sat: 10:00 AM - 4:00 PM'],
+      details: contactInfo.workingHours || ['Mon - Fri: 9:00 AM - 7:00 PM', 'Sat: 10:00 AM - 4:00 PM'],
       color: 'text-orange-400'
     }
   ];

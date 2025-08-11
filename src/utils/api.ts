@@ -429,6 +429,44 @@ class ApiService {
       body: JSON.stringify(data),
     });
   }
+
+  // Contact Info endpoints
+  async getContactInfo() {
+    try {
+      console.log('API: Fetching contact info...');
+      return await this.request('/contact-info');
+    } catch (error) {
+      console.error('Failed to fetch contact info:', error);
+      throw error;
+    }
+  }
+
+  async updateContactInfo(data: ContactInfoData) {
+    console.log('API: Updating contact info...', data);
+    return this.request('/contact-info', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Dashboard Stats endpoints
+  async getDashboardStatsData() {
+    try {
+      console.log('API: Fetching dashboard stats...');
+      return await this.request('/dashboard-stats');
+    } catch (error) {
+      console.error('Failed to fetch dashboard stats:', error);
+      throw error;
+    }
+  }
+
+  async updateDashboardStats(data: DashboardStatsData) {
+    console.log('API: Updating dashboard stats...', data);
+    return this.request('/dashboard-stats', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
 }
 
 export const apiService = new ApiService();

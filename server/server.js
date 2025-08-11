@@ -1115,6 +1115,8 @@ app.listen(PORT, () => {
     await createDefaultAdmin();
     await createDefaultTestimonials();
     await createDefaultServices();
+    await createDefaultContactInfo();
+    await createDefaultDashboardStats();
     // await createDefaultContent();
     console.log('Server initialization complete');
   });
