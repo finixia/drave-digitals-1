@@ -12,8 +12,7 @@ import {
   CheckCircle,
   AlertCircle,
   Edit,
-  Download,
-  Phone
+  Trash2,
   Plus,
   Star,
   Eye,
@@ -455,13 +454,12 @@ const AdminDashboard = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <img
-              src="/company logo.png"
+              src="/logo.png"
               alt="Drave Capitals Logo"
               className="w-12 h-12 object-contain"
             />
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-              <p className="text-gray-600">Welcome back, {user?.name}</p>
             </div>
           </div>
           <motion.button
