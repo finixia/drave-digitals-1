@@ -93,7 +93,6 @@ export interface ServiceData {
   active?: boolean;
   order?: number;
 }
-class ApiService {
 export interface AboutContentData {
   title: string;
   subtitle: string;
@@ -107,6 +106,7 @@ export interface AboutContentData {
   active?: boolean;
 }
 
+class ApiService {
   private async request(endpoint: string, options: RequestInit = {}) {
     const url = `${API_BASE_URL}${endpoint}`;
     const config: RequestInit = {
