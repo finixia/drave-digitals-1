@@ -12,7 +12,8 @@ import {
   CheckCircle,
   AlertCircle,
   Edit,
-  Trash2,
+  Download,
+  Phone
   Plus,
   Star,
   Eye,
