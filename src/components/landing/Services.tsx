@@ -12,76 +12,47 @@ import {
   Search,
   Award
 } from 'lucide-react';
+import { apiService } from '../../utils/api';
 
-const services = [
-  {
-    id: 1,
-    title: 'Cyber Crime Fraud Assistance',
-    description: 'Complete protection against cyber fraud with expert guidance and legal support.',
-    icon: Shield,
-    color: 'from-red-500 to-pink-600',
-    features: [
-      'Cyber fraud complaint support',
-      'FIR filing guidance',
-      'Online complaint assistance',
-      'Prevention tips & awareness'
-    ]
-  },
-  {
-    id: 2,
-    title: 'Job Consultancy Services',
-    description: 'End-to-end job placement services for IT & Non-IT professionals.',
-    icon: Briefcase,
-    color: 'from-blue-500 to-cyan-600',
-    features: [
-      'IT & Non-IT placements',
-      'Resume building support',
-      'Interview preparation',
-      'Work from home opportunities'
-    ]
-  },
-  {
-    id: 3,
-    title: 'Web & App Development',
-    description: 'Custom digital solutions from websites to mobile applications.',
-    icon: Code,
-    color: 'from-green-500 to-emerald-600',
-    features: [
-      'Website development',
-      'E-commerce platforms',
-      'Mobile app development',
-      'UI/UX design services'
-    ]
-  },
-  {
-    id: 4,
-    title: 'Digital Marketing',
-    description: 'Comprehensive digital marketing solutions to grow your business online.',
-    icon: TrendingUp,
-    color: 'from-purple-500 to-violet-600',
-    features: [
-      'Social media marketing',
-      'SEO optimization',
-      'Google Ads management',
-      'Meta Ads campaigns'
-    ]
-  },
-  {
-    id: 5,
-    title: 'Training & Certification',
-    description: 'Professional skill development programs with industry certifications.',
-    icon: GraduationCap,
-    color: 'from-orange-500 to-amber-600',
-    features: [
-      'IT training programs',
-      'Digital marketing courses',
-      'Freelancing skills',
-      'Industry certifications'
-    ]
-  }
-];
+// Icon mapping for dynamic services
+const iconMap: { [key: string]: React.ComponentType<any> } = {
+  Shield,
+  Briefcase,
+  Code,
+  TrendingUp,
+  GraduationCap,
+  AlertTriangle,
+  Users,
+  Smartphone,
+  Search,
+  Award
+};
 
 const Services = () => {
+  const [services, setServices] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        setLoading(true);
+        const data = await apiService.getServices();
+        setServices(data);
+        setError(null);
+      } catch (error) {
+        console.error('Failed to fetch services:', error);
+        setError('Failed to load services');
+        // Fallback to empty array
+        setServices([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchServices();
+  }, []);
+
   const handleLearnMore = (serviceId: number) => {
     // Scroll to contact form and pre-select the service
     const contactSection = document.getElementById('contact');
@@ -113,6 +84,34 @@ const Services = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <section id="services" className="py-32 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              className="inline-block w-8 h-8 border-4 border-red-400 border-t-transparent rounded-full"
+            />
+            <p className="mt-4 text-gray-600">Loading services...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (error && services.length === 0) {
+    return (
+      <section id="services" className="py-32 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center">
+            <p className="text-red-600">{error}</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
   return (
     <section id="services" className="py-32 bg-gray-50">
       <div className="max-w-7xl mx-auto px-6">
@@ -146,6 +145,7 @@ const Services = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {services.map((service, index) => (
+            const IconComponent = iconMap[service.icon] || Shield;
             <motion.div
               key={service.id}
               initial={{ opacity: 0, y: 30 }}
@@ -160,7 +160,7 @@ const Services = () => {
               className="group bg-white backdrop-blur-xl border border-gray-200 rounded-3xl p-8 hover:shadow-xl transition-all duration-300"
             >
               <motion.div
-                whileHover={{ 
+                key={service._id}
                   scale: 1.2, 
                   rotate: [0, -10, 10, 0],
                   boxShadow: "0 10px 30px rgba(0,0,0,0.2)"
@@ -170,7 +170,7 @@ const Services = () => {
               >
                 <motion.div
                   animate={{ 
-                    rotate: [0, 5, -5, 0],
+                  onClick={() => handleLearnMore(index + 1)}
                     scale: [1, 1.1, 1]
                   }}
                   transition={{ 
@@ -178,7 +178,7 @@ const Services = () => {
                     repeat: Infinity,
                     delay: index * 0.5
                   }}
-                >
+                    <IconComponent className="text-white" size={28} />
                   <service.icon className="text-white" size={28} />
                 </motion.div>
               </motion.div>
@@ -235,7 +235,7 @@ const Services = () => {
                 />
                 Learn More
               </motion.button>
-            </motion.div>
+            );
           ))}
         </div>
 

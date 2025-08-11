@@ -215,6 +215,101 @@ const websiteContentSchema = new mongoose.Schema({
 
 const WebsiteContent = mongoose.model('WebsiteContent', websiteContentSchema);
 
+// Service Schema
+const serviceSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  description: { type: String, required: true },
+  icon: { type: String, required: true },
+  color: { type: String, required: true },
+  features: [{ type: String }],
+  active: { type: Boolean, default: true },
+  order: { type: Number, default: 0 },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+const Service = mongoose.model('Service', serviceSchema);
+
+// Create default services
+const createDefaultServices = async () => {
+  try {
+    const serviceCount = await Service.countDocuments();
+    if (serviceCount === 0) {
+      const defaultServices = [
+        {
+          title: 'Cyber Crime Fraud Assistance',
+          description: 'Complete protection against cyber fraud with expert guidance and legal support.',
+          icon: 'Shield',
+          color: 'from-red-500 to-pink-600',
+          features: [
+            'Cyber fraud complaint support',
+            'FIR filing guidance',
+            'Online complaint assistance',
+            'Prevention tips & awareness'
+          ],
+          order: 1
+        },
+        {
+          title: 'Job Consultancy Services',
+          description: 'End-to-end job placement services for IT & Non-IT professionals.',
+          icon: 'Briefcase',
+          color: 'from-blue-500 to-cyan-600',
+          features: [
+            'IT & Non-IT placements',
+            'Resume building support',
+            'Interview preparation',
+            'Work from home opportunities'
+          ],
+          order: 2
+        },
+        {
+          title: 'Web & App Development',
+          description: 'Custom digital solutions from websites to mobile applications.',
+          icon: 'Code',
+          color: 'from-green-500 to-emerald-600',
+          features: [
+            'Website development',
+            'E-commerce platforms',
+            'Mobile app development',
+            'UI/UX design services'
+          ],
+          order: 3
+        },
+        {
+          title: 'Digital Marketing',
+          description: 'Comprehensive digital marketing solutions to grow your business online.',
+          icon: 'TrendingUp',
+          color: 'from-purple-500 to-violet-600',
+          features: [
+            'Social media marketing',
+            'SEO optimization',
+            'Google Ads management',
+            'Meta Ads campaigns'
+          ],
+          order: 4
+        },
+        {
+          title: 'Training & Certification',
+          description: 'Professional skill development programs with industry certifications.',
+          icon: 'GraduationCap',
+          color: 'from-orange-500 to-amber-600',
+          features: [
+            'IT training programs',
+            'Digital marketing courses',
+            'Freelancing skills',
+            'Industry certifications'
+          ],
+          order: 5
+        }
+      ];
+      
+      await Service.insertMany(defaultServices);
+      console.log('Default services created');
+    }
+  } catch (error) {
+    console.error('Error creating default services:', error);
+  }
+};
 // Testimonial Schema
 const testimonialSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -685,6 +780,17 @@ app.put('/api/testimonials/:id/approve', authenticateAdmin, async (req, res) => 
   }
 });
 
+app.put('/api/testimonials/:id', authenticateAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = { ...req.body, updatedAt: new Date() };
+    
+    await Testimonial.findByIdAndUpdate(id, updateData);
+    res.json({ message: 'Testimonial updated successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
 app.delete('/api/testimonials/:id', authenticateAdmin, async (req, res) => {
   try {
     const { id } = req.params;
@@ -695,6 +801,61 @@ app.delete('/api/testimonials/:id', authenticateAdmin, async (req, res) => {
   }
 });
 
+// Service Routes
+app.get('/api/services', async (req, res) => {
+  try {
+    const services = await Service.find({ active: true }).sort({ order: 1 });
+    res.json(services);
+  } catch (error) {
+    console.error('Error fetching services:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+app.get('/api/services/admin', authenticateAdmin, async (req, res) => {
+  try {
+    const services = await Service.find().sort({ order: 1 });
+    res.json(services);
+  } catch (error) {
+    console.error('Error fetching admin services:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+app.post('/api/services', authenticateAdmin, async (req, res) => {
+  try {
+    const service = new Service(req.body);
+    await service.save();
+    res.status(201).json({ message: 'Service created successfully', service });
+  } catch (error) {
+    console.error('Error creating service:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+app.put('/api/services/:id', authenticateAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = { ...req.body, updatedAt: new Date() };
+    
+    const service = await Service.findByIdAndUpdate(id, updateData, { new: true });
+    res.json({ message: 'Service updated successfully', service });
+  } catch (error) {
+    console.error('Error updating service:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+app.delete('/api/services/:id', authenticateAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await Service.findByIdAndDelete(id);
+    res.json({ message: 'Service deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting service:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
 // Dashboard Stats
 app.get('/api/dashboard/stats', authenticateAdmin, async (req, res) => {
   try {
@@ -847,6 +1008,7 @@ app.listen(PORT, () => {
     console.log('MongoDB connection established');
     await createDefaultAdmin();
     await createDefaultTestimonials();
+    await createDefaultServices();
     // await createDefaultContent();
     console.log('Server initialization complete');
   });

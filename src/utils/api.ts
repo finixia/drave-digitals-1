@@ -72,6 +72,27 @@ export interface DetailedRegistrationData {
   resume?: File;
 }
 
+export interface TestimonialData {
+  name: string;
+  role: string;
+  company: string;
+  rating: number;
+  text: string;
+  avatar: string;
+  service: string;
+  featured?: boolean;
+  approved?: boolean;
+}
+
+export interface ServiceData {
+  title: string;
+  description: string;
+  icon: string;
+  color: string;
+  features: string[];
+  active?: boolean;
+  order?: number;
+}
 class ApiService {
   private async request(endpoint: string, options: RequestInit = {}) {
     const url = `${API_BASE_URL}${endpoint}`;
@@ -280,6 +301,19 @@ class ApiService {
     return this.request('/testimonials/admin');
   }
 
+  async createTestimonial(data: TestimonialData) {
+    return this.request('/testimonials', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateTestimonial(testimonialId: string, data: TestimonialData) {
+    return this.request(`/testimonials/${testimonialId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
   async updateTestimonialStatus(testimonialId: string, approved: boolean, featured?: boolean) {
     return this.request(`/testimonials/${testimonialId}/approve`, {
       method: 'PUT',
@@ -293,6 +327,46 @@ class ApiService {
     });
   }
 
+  async submitTestimonial(data: TestimonialData) {
+    return this.request('/testimonials', {
+      method: 'POST',
+      body: JSON.stringify({ ...data, approved: false }),
+    });
+  }
+
+  // Service endpoints
+  async getServices() {
+    try {
+      return await this.request('/services');
+    } catch (error) {
+      console.error('Failed to fetch services:', error);
+      return [];
+    }
+  }
+
+  async getServicesAdmin() {
+    return this.request('/services/admin');
+  }
+
+  async createService(data: ServiceData) {
+    return this.request('/services', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateService(serviceId: string, data: ServiceData) {
+    return this.request(`/services/${serviceId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteService(serviceId: string) {
+    return this.request(`/services/${serviceId}`, {
+      method: 'DELETE',
+    });
+  }
   // Contact status updates
   async updateContactStatus(contactId: string, status: string) {
     return this.request(`/contacts/${contactId}/status`, {
