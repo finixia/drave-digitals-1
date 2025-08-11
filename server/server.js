@@ -328,6 +328,46 @@ const createDefaultServices = async () => {
   }
 };
 // Testimonial Schema
+// Create default contact info
+const createDefaultContactInfo = async () => {
+  try {
+    const contactInfoExists = await ContactInfo.findOne({ active: true });
+    if (!contactInfoExists) {
+      const defaultContactInfo = new ContactInfo({
+        phone: ['+91 9876543210', '+91 9876543211'],
+        email: ['info@dravedigitals.com', 'support@dravedigitals.com'],
+        address: ['123 Business District', 'Bangalore, Karnataka 530068'],
+        workingHours: ['Mon - Fri: 9:00 AM - 7:00 PM', 'Sat: 10:00 AM - 4:00 PM'],
+        active: true
+      });
+      await defaultContactInfo.save();
+      console.log('Default contact info created');
+    }
+  } catch (error) {
+    console.error('Error creating default contact info:', error);
+  }
+};
+
+// Create default dashboard stats
+const createDefaultDashboardStats = async () => {
+  try {
+    const dashboardStatsExists = await DashboardStats.findOne({ active: true });
+    if (!dashboardStatsExists) {
+      const defaultStats = new DashboardStats({
+        happyClients: '5000+',
+        successRate: '98%',
+        growthRate: '150%',
+        fraudCasesResolved: '1200+',
+        active: true
+      });
+      await defaultStats.save();
+      console.log('Default dashboard stats created');
+    }
+  } catch (error) {
+    console.error('Error creating default dashboard stats:', error);
+  }
+};
+
 const testimonialSchema = new mongoose.Schema({
   name: { type: String, required: true },
   role: { type: String, required: true },
