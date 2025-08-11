@@ -27,15 +27,36 @@ const Testimonials = () => {
       try {
         setLoading(true);
         console.log('Fetching testimonials...');
-        const data = await apiService.getTestimonials(); // Get all approved testimonials
+        const response = await fetch('http://localhost:5000/api/testimonials');
+        console.log('Response status:', response.status);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
         console.log('Testimonials fetched:', data);
         setTestimonials(data);
         setError(null);
       } catch (error) {
         console.error('Failed to fetch testimonials:', error);
-        setError(`Failed to load testimonials: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        setError('Failed to load testimonials. Using fallback data.');
         // Fallback to empty array if API fails
-        setTestimonials([]);
+        setTestimonials([
+          {
+            _id: '1',
+            name: 'Sample User',
+            role: 'Software Engineer',
+            company: 'Tech Company',
+            rating: 5,
+            text: 'Great service! Highly recommended.',
+            avatar: '👨‍💻',
+            service: 'Job Consultancy',
+            featured: true,
+            approved: true,
+            createdAt: new Date().toISOString()
+          }
+        ]);
       } finally {
         setLoading(false);
       }

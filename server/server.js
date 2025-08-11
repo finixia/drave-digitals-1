@@ -50,7 +50,7 @@ const upload = multer({
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:5173','http://127.0.0.1:5173','https://dravedigitals.in'],
+  origin: ['http://localhost:5173', 'http://localhost:3000', 'http://127.0.0.1:5173', 'https://dravedigitals.in'],
   credentials: true
 }));
 app.use(express.json());
@@ -634,8 +634,10 @@ app.post('/api/newsletter', async (req, res) => {
 // Testimonial Routes
 app.get('/api/testimonials', async (req, res) => {
   try {
-    // Get all testimonials from the database
-    const testimonials = await Testimonial.find().sort({ createdAt: -1 });
+    console.log('Fetching testimonials from database...');
+    // Get all approved testimonials from the database
+    const testimonials = await Testimonial.find({ approved: true }).sort({ createdAt: -1 });
+    console.log('Found testimonials:', testimonials.length);
     res.json(testimonials);
   } catch (error) {
     console.error('Error fetching testimonials:', error);
