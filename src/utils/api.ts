@@ -266,20 +266,8 @@ class ApiService {
   }
 
   // Testimonial endpoints
-  async getTestimonials(featured?: boolean) {
-    const params = new URLSearchParams();
-    if (featured !== undefined) {
-      params.append('featured', featured.toString());
-    }
-    const queryString = params.toString();
-    return this.request(`/testimonials${queryString ? `?${queryString}` : ''}`);
-  }
-
-  async submitTestimonial(data: TestimonialData) {
-    return this.request('/testimonials', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
+  async getTestimonials() {
+    return this.request('/testimonials');
   }
 
   async getTestimonialsAdmin() {

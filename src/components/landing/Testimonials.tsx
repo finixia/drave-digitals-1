@@ -1,8 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Star, Quote, Shield, Briefcase, Code } from 'lucide-react';
+import { Star, Quote } from 'lucide-react';
 import { apiService } from '../../utils/api';
-import TestimonialForm from '../TestimonialForm';
 
 interface Testimonial {
   _id: string;
@@ -22,13 +21,12 @@ const Testimonials = () => {
   const [testimonials, setTestimonials] = React.useState<Testimonial[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-  const [showTestimonialForm, setShowTestimonialForm] = React.useState(false);
 
   React.useEffect(() => {
     const fetchTestimonials = async () => {
       try {
         setLoading(true);
-        const data = await apiService.getTestimonials(true); // Get featured testimonials
+        const data = await apiService.getTestimonials(); // Get all approved testimonials
         setTestimonials(data);
         setError(null);
       } catch (error) {
@@ -178,21 +176,7 @@ const Testimonials = () => {
               Based on {testimonials.length > 0 ? `${testimonials.length * 100}+` : '5000+'} reviews
             </div>
           </div>
-          
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setShowTestimonialForm(true)}
-            className="mt-8 bg-gradient-to-r from-red-500 to-red-600 text-white px-8 py-3 rounded-full font-medium hover:shadow-lg transition-all"
-          >
-            Share Your Story
-          </motion.button>
         </motion.div>
-        
-        <TestimonialForm 
-          isOpen={showTestimonialForm} 
-          onClose={() => setShowTestimonialForm(false)} 
-        />
       </div>
     </section>
   );
