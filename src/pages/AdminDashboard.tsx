@@ -637,7 +637,7 @@ const AdminDashboard = () => {
                             {contact.service}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={\`px-2 py-1 text-xs rounded-full ${
+                            <span className={`px-2 py-1 text-xs rounded-full ${
                               contact.status === 'resolved' 
                                 ? 'bg-green-100 text-green-800'
                                 : contact.status === 'contacted'
@@ -702,7 +702,7 @@ const AdminDashboard = () => {
                             {user.email}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={\`px-2 py-1 text-xs rounded-full ${
+                            <span className={`px-2 py-1 text-xs rounded-full ${
                               user.role === 'admin' 
                                 ? 'bg-purple-100 text-purple-800'
                                 : 'bg-blue-100 text-blue-800'
@@ -711,13 +711,13 @@ const AdminDashboard = () => {
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                            {user.city && user.state ? \`${user.city}, ${user.state}` : 'Not provided'}
+                            {user.city && user.state ? `${user.city}, ${user.state}` : 'Not provided'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                             {user.experience || 'Not specified'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={\`px-2 py-1 text-xs rounded-full ${
+                            <span className={`px-2 py-1 text-xs rounded-full ${
                               user.profileCompleted 
                                 ? 'bg-green-100 text-green-800'
                                 : 'bg-yellow-100 text-yellow-800'
@@ -845,7 +845,7 @@ const AdminDashboard = () => {
                             Featured
                           </span>
                         )}
-                        <span className={\`px-2 py-1 rounded-full text-xs ${
+                        <span className={`px-2 py-1 rounded-full text-xs ${
                           testimonial.approved 
                             ? 'bg-green-100 text-green-800'
                             : 'bg-red-100 text-red-800'
@@ -887,7 +887,7 @@ const AdminDashboard = () => {
                     className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm"
                   >
                     <div className="flex items-center justify-between mb-4">
-                      <div className={\`w-12 h-12 bg-gradient-to-r ${service.color} rounded-xl flex items-center justify-center`}>
+                      <div className={`w-12 h-12 bg-gradient-to-r ${service.color} rounded-xl flex items-center justify-center`}>
                         <span className="text-white text-xl">🛡️</span>
                       </div>
                       <div className="flex items-center space-x-2">
@@ -923,7 +923,7 @@ const AdminDashboard = () => {
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <span className={\`px-2 py-1 rounded-full text-xs ${
+                      <span className={`px-2 py-1 rounded-full text-xs ${
                         service.active 
                           ? 'bg-green-100 text-green-800'
                           : 'bg-red-100 text-red-800'
@@ -1073,7 +1073,7 @@ const AdminDashboard = () => {
                       >
                         <Star
                           size={24}
-                          className={\`${
+                          className={`${
                             rating <= testimonialForm.rating
                               ? 'text-yellow-400 fill-current'
                               : 'text-gray-300'
@@ -1091,7 +1091,7 @@ const AdminDashboard = () => {
                         key={avatar}
                         type="button"
                         onClick={() => setTestimonialForm(prev => ({ ...prev, avatar }))}
-                        className={\`w-10 h-10 rounded-lg border-2 flex items-center justify-center text-xl hover:border-red-400 transition-colors ${
+                        className={`w-10 h-10 rounded-lg border-2 flex items-center justify-center text-xl hover:border-red-400 transition-colors ${
                           testimonialForm.avatar === avatar ? 'border-red-400 bg-red-50' : 'border-gray-300'
                         }`}
                       >
