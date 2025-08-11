@@ -730,8 +730,15 @@ app.post('/api/newsletter', async (req, res) => {
 app.get('/api/testimonials', async (req, res) => {
   try {
     console.log('Fetching testimonials from database...');
+    // Check MongoDB connection
+    if (mongoose.connection.readyState !== 1) {
+      console.error('MongoDB not connected');
+      return res.status(500).json({ message: 'Database connection error' });
+    }
+    
     const testimonials = await Testimonial.find({ approved: true }).sort({ createdAt: -1 });
     console.log('Found testimonials:', testimonials.length);
+    console.log('Sample testimonial:', testimonials[0]);
     res.json(testimonials);
   } catch (error) {
     console.error('Error fetching testimonials:', error);
@@ -753,6 +760,12 @@ app.get('/api/testimonials/admin', authenticateAdmin, async (req, res) => {
 
 app.post('/api/testimonials', async (req, res) => {
   try {
+    // Check MongoDB connection
+    if (mongoose.connection.readyState !== 1) {
+      console.error('MongoDB not connected');
+      return res.status(500).json({ message: 'Database connection error' });
+    }
+    
     console.log('Creating testimonial:', req.body);
     const testimonial = new Testimonial({
       ...req.body,
@@ -814,8 +827,15 @@ app.delete('/api/testimonials/:id', authenticateAdmin, async (req, res) => {
 app.get('/api/services', async (req, res) => {
   try {
     console.log('Fetching services from database...');
+    // Check MongoDB connection
+    if (mongoose.connection.readyState !== 1) {
+      console.error('MongoDB not connected');
+      return res.status(500).json({ message: 'Database connection error' });
+    }
+    
     const services = await Service.find({ active: true }).sort({ order: 1 });
     console.log('Found services:', services.length);
+    console.log('Sample service:', services[0]);
     res.json(services);
   } catch (error) {
     console.error('Error fetching services:', error);
@@ -837,6 +857,12 @@ app.get('/api/services/admin', authenticateAdmin, async (req, res) => {
 
 app.post('/api/services', async (req, res) => {
   try {
+    // Check MongoDB connection
+    if (mongoose.connection.readyState !== 1) {
+      console.error('MongoDB not connected');
+      return res.status(500).json({ message: 'Database connection error' });
+    }
+    
     console.log('Creating service:', req.body);
     const service = new Service(req.body);
     await service.save();
