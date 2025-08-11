@@ -65,6 +65,21 @@ interface Service extends ServiceData {
   updatedAt?: string;
 }
 
+interface User {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+  phone?: string;
+  city?: string;
+  state?: string;
+  experience?: string;
+  skills?: string;
+  interestedServices?: string[];
+  profileCompleted?: boolean;
+  createdAt: string;
+}
+
 const AdminDashboard = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -73,6 +88,7 @@ const AdminDashboard = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [services, setServices] = useState<Service[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -114,17 +130,19 @@ const AdminDashboard = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const [statsData, contactsData, testimonialsData, servicesData] = await Promise.all([
+      const [statsData, contactsData, testimonialsData, servicesData, usersData] = await Promise.all([
         apiService.getDashboardStats(),
         apiService.getContacts(),
         apiService.getTestimonialsAdmin(),
-        apiService.getServicesAdmin()
+        apiService.getServicesAdmin(),
+        apiService.getUsers()
       ]);
 
       setStats(statsData);
       setContacts(contactsData);
       setTestimonials(testimonialsData);
       setServices(servicesData);
+      setUsers(usersData);
       setError(null);
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
@@ -348,6 +366,7 @@ const AdminDashboard = () => {
             {[
               { id: 'overview', label: 'Overview', icon: BarChart3 },
               { id: 'contacts', label: 'Contacts', icon: MessageSquare },
+              { id: 'users', label: 'Users', icon: Users },
               { id: 'testimonials', label: 'Testimonials', icon: Star },
               { id: 'services', label: 'Services', icon: Settings }
             ].map((tab) => (
@@ -449,6 +468,89 @@ const AdminDashboard = () => {
                     </tbody>
                   </table>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'users' && (
+            <div className="space-y-6">
+              <h2 className="text-3xl font-bold text-gray-900">User Management</h2>
+              
+              <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Location</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Experience</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Profile</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Registered</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {users.map((user) => (
+                        <tr key={user._id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <div className="flex-shrink-0 h-10 w-10">
+                                <div className="h-10 w-10 rounded-full bg-gradient-to-r from-red-400 to-red-600 flex items-center justify-center">
+                                  <span className="text-white font-medium text-sm">
+                                    {user.name.charAt(0).toUpperCase()}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="ml-4">
+                                <div className="text-sm font-medium text-gray-900">{user.name}</div>
+                                <div className="text-sm text-gray-500">{user.phone || 'No phone'}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                            {user.email}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`px-2 py-1 text-xs rounded-full ${
+                              user.role === 'admin' 
+                                ? 'bg-purple-100 text-purple-800'
+                                : 'bg-blue-100 text-blue-800'
+                            }`}>
+                              {user.role}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                            {user.city && user.state ? `${user.city}, ${user.state}` : 'Not provided'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                            {user.experience || 'Not specified'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`px-2 py-1 text-xs rounded-full ${
+                              user.profileCompleted 
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {user.profileCompleted ? 'Complete' : 'Incomplete'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                            {new Date(user.createdAt).toLocaleDateString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                
+                {users.length === 0 && (
+                  <div className="text-center py-8">
+                    <Users className="mx-auto h-12 w-12 text-gray-400" />
+                    <h3 className="mt-2 text-sm font-medium text-gray-900">No users found</h3>
+                    <p className="mt-1 text-sm text-gray-500">No registered users in the system yet.</p>
+                  </div>
+                )}
               </div>
             </div>
           )}
