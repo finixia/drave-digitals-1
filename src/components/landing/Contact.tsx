@@ -82,7 +82,7 @@ const Contact = () => {
     });
   };
 
-  const contactInfo = [
+  const contactInfoItems = [
     {
       icon: Phone,
       title: 'Call Us',
@@ -308,7 +308,7 @@ const Contact = () => {
               <h3 className="text-3xl font-bold text-gray-900 mb-8">Get in touch</h3>
               
               <div className="space-y-6">
-                {contactInfo.map((info, index) => (
+                {contactInfoItems.map((info, index) => (
                   <motion.div
                     key={index}
                     initial={{ opacity: 0, y: 20 }}
