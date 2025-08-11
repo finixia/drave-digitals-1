@@ -144,8 +144,9 @@ const Services = () => {
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {services.map((service, index) => (
+          {services.map((service, index) => {
             const IconComponent = iconMap[service.icon] || Shield;
+            return (
             <motion.div
               key={service.id}
               initial={{ opacity: 0, y: 30 }}
@@ -160,7 +161,7 @@ const Services = () => {
               className="group bg-white backdrop-blur-xl border border-gray-200 rounded-3xl p-8 hover:shadow-xl transition-all duration-300"
             >
               <motion.div
-                key={service._id}
+                whileHover={{
                   scale: 1.2, 
                   rotate: [0, -10, 10, 0],
                   boxShadow: "0 10px 30px rgba(0,0,0,0.2)"
@@ -170,7 +171,6 @@ const Services = () => {
               >
                 <motion.div
                   animate={{ 
-                  onClick={() => handleLearnMore(index + 1)}
                     scale: [1, 1.1, 1]
                   }}
                   transition={{ 
@@ -178,8 +178,8 @@ const Services = () => {
                     repeat: Infinity,
                     delay: index * 0.5
                   }}
-                    <IconComponent className="text-white" size={28} />
-                  <service.icon className="text-white" size={28} />
+                >
+                  <IconComponent className="text-white" size={28} />
                 </motion.div>
               </motion.div>
 
@@ -235,8 +235,9 @@ const Services = () => {
                 />
                 Learn More
               </motion.button>
+            </motion.div>
             );
-          ))}
+          })}
         </div>
 
         <motion.div
