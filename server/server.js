@@ -215,6 +215,23 @@ const websiteContentSchema = new mongoose.Schema({
 
 const WebsiteContent = mongoose.model('WebsiteContent', websiteContentSchema);
 
+// About Content Schema
+const aboutContentSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  subtitle: { type: String, required: true },
+  description: { type: String, required: true },
+  values: [{
+    title: { type: String, required: true },
+    description: { type: String, required: true },
+    icon: { type: String, required: true }
+  }],
+  commitments: [{ type: String }],
+  active: { type: Boolean, default: true },
+  createdAt: { type: Date, default: Date.now }
+});
+
+const AboutContent = mongoose.model('AboutContent', aboutContentSchema, 'aboutcontents');
+
 // Service Schema
 const serviceSchema = new mongoose.Schema({
   title: { type: String, required: true },
@@ -902,6 +919,50 @@ app.delete('/api/services/:id', async (req, res) => {
   }
 });
 // Dashboard Stats
+// About Content Routes
+app.get('/api/about-content', async (req, res) => {
+  try {
+    console.log('Fetching about content from database...');
+    // Check MongoDB connection
+    if (mongoose.connection.readyState !== 1) {
+      console.error('MongoDB not connected');
+      return res.status(500).json({ message: 'Database connection error' });
+    }
+    
+    const aboutContent = await AboutContent.findOne({ active: true });
+    console.log('Found about content:', aboutContent);
+    res.json(aboutContent || {});
+  } catch (error) {
+    console.error('Error fetching about content:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+app.put('/api/about-content', authenticateAdmin, async (req, res) => {
+  try {
+    console.log('Updating about content:', req.body);
+    
+    // Find existing content or create new
+    let aboutContent = await AboutContent.findOne({ active: true });
+    
+    if (aboutContent) {
+      // Update existing
+      Object.assign(aboutContent, req.body);
+      await aboutContent.save();
+    } else {
+      // Create new
+      aboutContent = new AboutContent({ ...req.body, active: true });
+      await aboutContent.save();
+    }
+    
+    console.log('About content updated successfully');
+    res.json({ message: 'About content updated successfully' });
+  } catch (error) {
+    console.error('Error updating about content:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
 app.get('/api/dashboard/stats', authenticateAdmin, async (req, res) => {
   try {
     const totalContacts = await Contact.countDocuments();

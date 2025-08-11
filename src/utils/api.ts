@@ -94,6 +94,19 @@ export interface ServiceData {
   order?: number;
 }
 class ApiService {
+export interface AboutContentData {
+  title: string;
+  subtitle: string;
+  description: string;
+  values: Array<{
+    title: string;
+    description: string;
+    icon: string;
+  }>;
+  commitments: string[];
+  active?: boolean;
+}
+
   private async request(endpoint: string, options: RequestInit = {}) {
     const url = `${API_BASE_URL}${endpoint}`;
     const config: RequestInit = {
@@ -395,6 +408,25 @@ class ApiService {
     return this.request(`/fraud-cases/${caseId}/status`, {
       method: 'PUT',
       body: JSON.stringify({ status }),
+    });
+  }
+
+  // About Content endpoints
+  async getAboutContent() {
+    try {
+      console.log('API: Fetching about content...');
+      return await this.request('/about-content');
+    } catch (error) {
+      console.error('Failed to fetch about content:', error);
+      throw error;
+    }
+  }
+
+  async updateAboutContent(data: AboutContentData) {
+    console.log('API: Updating about content...', data);
+    return this.request('/about-content', {
+      method: 'PUT',
+      body: JSON.stringify(data),
     });
   }
 }
