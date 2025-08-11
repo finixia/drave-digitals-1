@@ -9,22 +9,47 @@ const Hero = () => {
   const [heroContent, setHeroContent] = React.useState({
     title: 'Your Professional Success Partner',
     subtitle: 'From landing your dream job to protecting against cyber fraud, we provide comprehensive career solutions and digital security services that empower your professional journey.',
-    stats: [
-      { label: 'Happy Clients', value: '5000+' },
-      { label: 'Success Rate', value: '98%' },
-      { label: 'Support', value: '24/7' }
-    ]
+    stats: []
   });
+  const [dashboardStats, setDashboardStats] = React.useState<any>({});
 
   React.useEffect(() => {
     const fetchContent = async () => {
       try {
-        const content = await apiService.getWebsiteContent();
-        if (content.hero) {
-          setHeroContent(content.hero);
+        const statsData = await apiService.getDashboardStatsData();
+        if (statsData && Object.keys(statsData).length > 0) {
+          setDashboardStats(statsData);
+          // Update hero stats with dynamic data
+          setHeroContent(prev => ({
+            ...prev,
+            stats: [
+              { label: 'Happy Clients', value: statsData.happyClients || '5000+' },
+              { label: 'Success Rate', value: statsData.successRate || '98%' },
+              { label: 'Growth Rate', value: statsData.growthRate || '150%' }
+            ]
+          }));
+        } else {
+          // Fallback to default stats
+          setHeroContent(prev => ({
+            ...prev,
+            stats: [
+              { label: 'Happy Clients', value: '5000+' },
+              { label: 'Success Rate', value: '98%' },
+              { label: 'Growth Rate', value: '150%' }
+            ]
+          }));
         }
       } catch (error) {
-        console.error('Failed to fetch hero content:', error);
+        console.error('Failed to fetch dashboard stats:', error);
+        // Use default stats on error
+        setHeroContent(prev => ({
+          ...prev,
+          stats: [
+            { label: 'Happy Clients', value: '5000+' },
+            { label: 'Success Rate', value: '98%' },
+            { label: 'Growth Rate', value: '150%' }
+          ]
+        }));
       }
     };
     fetchContent();
