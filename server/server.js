@@ -836,13 +836,13 @@ app.get('/api/services/admin', authenticateAdmin, async (req, res) => {
   }
 });
 
-app.post('/api/services', async (req, res) => {
+app.post('/api/services', authenticateAdmin, async (req, res) => {
   try {
     console.log('Creating service:', req.body);
     const service = new Service(req.body);
     await service.save();
     console.log('Service created successfully');
-    res.status(201).json({ message: 'Service created successfully', service });
+    res.status(201).json({ message: 'Service created successfully' });
   } catch (error) {
     console.error('Error creating service:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -855,9 +855,9 @@ app.put('/api/services/:id', authenticateAdmin, async (req, res) => {
     console.log('Updating service:', id, req.body);
     const updateData = { ...req.body, updatedAt: new Date() };
     
-    const service = await Service.findByIdAndUpdate(id, updateData, { new: true });
+    await Service.findByIdAndUpdate(id, updateData);
     console.log('Service updated successfully');
-    res.json({ message: 'Service updated successfully', service });
+    res.json({ message: 'Service updated successfully' });
   } catch (error) {
     console.error('Error updating service:', error);
     res.status(500).json({ message: 'Server error', error: error.message });

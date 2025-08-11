@@ -354,10 +354,12 @@ class ApiService {
 
   async createService(data: ServiceData) {
     console.log('API: Creating service...', data);
-    return this.request('/services', {
+    const response = await this.request('/services', {
       method: 'POST',
       body: JSON.stringify(data),
     });
+    console.log('Service creation response:', response);
+    return response;
   }
 
   async updateService(serviceId: string, data: ServiceData) {

@@ -163,6 +163,14 @@ const AdminDashboard = () => {
     e.preventDefault();
     try {
       console.log('Submitting service:', serviceForm);
+      
+      // Check if user is authenticated
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Please login to perform this action');
+        return;
+      }
+      
       if (editingService) {
         await apiService.updateService(editingService._id, serviceForm);
       } else {
@@ -175,7 +183,9 @@ const AdminDashboard = () => {
       await fetchDashboardData();
     } catch (error) {
       console.error('Failed to save service:', error);
-      alert(`Failed to save service: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Service save error details:', errorMessage);
+      alert(`Failed to save service: ${errorMessage}`);
     }
   };
 
