@@ -24,7 +24,10 @@ import {
   MessageSquare,
   Settings,
   Award,
-  Code
+  Code,
+  FileText,
+  Download,
+  ExternalLink
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -83,6 +86,7 @@ interface User {
   skills?: string;
   interestedServices?: string[];
   profileCompleted?: boolean;
+  resume?: string;
   createdAt: string;
 }
 
@@ -98,6 +102,8 @@ const AdminDashboard = () => {
   const [aboutContent, setAboutContent] = useState<AboutContent | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [resumeViewUrl, setResumeViewUrl] = useState<string | null>(null);
+  const [showResumeModal, setShowResumeModal] = useState(false);
 
   // Modal states
   const [showTestimonialModal, setShowTestimonialModal] = useState(false);
@@ -310,6 +316,22 @@ const AdminDashboard = () => {
       });
     }
     setShowAboutModal(true);
+  };
+
+  const handleViewResume = (resumePath: string) => {
+    const resumeUrl = `${import.meta.env.VITE_API_URL || '/api'}/uploads/${resumePath.split('/').pop()}`;
+    setResumeViewUrl(resumeUrl);
+    setShowResumeModal(true);
+  };
+
+  const handleDownloadResume = (resumePath: string, userName: string) => {
+    const resumeUrl = `${import.meta.env.VITE_API_URL || '/api'}/uploads/${resumePath.split('/').pop()}`;
+    const link = document.createElement('a');
+    link.href = resumeUrl;
+    link.download = `${userName.replace(/\s+/g, '_')}_Resume.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const resetTestimonialForm = () => {
@@ -582,6 +604,9 @@ const AdminDashboard = () => {
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Location</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Experience</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Profile</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Resume
+                        </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Registered</th>
                       </tr>
                     </thead>
@@ -630,6 +655,38 @@ const AdminDashboard = () => {
                               {user.profileCompleted ? 'Complete' : 'Incomplete'}
                             </span>
                           </td>
+
+                          {/* Resume Column */}
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {user.resume ? (
+                              <div className="flex items-center space-x-2">
+                                <motion.button
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={() => handleViewResume(user.resume)}
+                                  className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors"
+                                >
+                                  <FileText size={12} className="mr-1" />
+                                  View
+                                </motion.button>
+                                <motion.button
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                  onClick={() => handleDownloadResume(user.resume, user.name)}
+                                  className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 hover:bg-green-200 transition-colors"
+                                >
+                                  <Download size={12} className="mr-1" />
+                                  Download
+                                </motion.button>
+                              </div>
+                            ) : (
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                <X size={12} className="mr-1" />
+                                No Resume
+                              </span>
+                            )}
+                          </td>
+
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                             {new Date(user.createdAt).toLocaleDateString()}
                           </td>
@@ -1368,6 +1425,67 @@ const AdminDashboard = () => {
                 </button>
               </div>
             </form>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Resume View Modal */}
+      {showResumeModal && resumeViewUrl && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="bg-white rounded-3xl p-6 max-w-4xl w-full max-h-[90vh] overflow-hidden"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-gray-900">Resume Preview</h3>
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => {
+                  setShowResumeModal(false);
+                  setResumeViewUrl(null);
+                }}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <X size={20} />
+              </motion.button>
+            </div>
+            
+            <div className="h-[70vh] border border-gray-200 rounded-xl overflow-hidden">
+              <iframe
+                src={resumeViewUrl}
+                className="w-full h-full"
+                title="Resume Preview"
+              />
+            </div>
+            
+            <div className="flex justify-end mt-4 space-x-3">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => window.open(resumeViewUrl, '_blank')}
+                className="px-4 py-2 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-colors inline-flex items-center space-x-2"
+              >
+                <ExternalLink size={16} />
+                <span>Open in New Tab</span>
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => {
+                  const link = document.createElement('a');
+                  link.href = resumeViewUrl;
+                  link.download = 'resume.pdf';
+                  link.click();
+                }}
+                className="px-4 py-2 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-colors inline-flex items-center space-x-2"
+              >
+                <Download size={16} />
+                <span>Download</span>
+              </motion.button>
+            </div>
           </motion.div>
         </div>
       )}
