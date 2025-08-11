@@ -634,10 +634,11 @@ app.post('/api/newsletter', async (req, res) => {
 // Testimonial Routes
 app.get('/api/testimonials', async (req, res) => {
   try {
-    // Get all approved testimonials for public display
-    const testimonials = await Testimonial.find({ approved: true }).sort({ createdAt: -1 });
+    // Get all testimonials from the database
+    const testimonials = await Testimonial.find().sort({ createdAt: -1 });
     res.json(testimonials);
   } catch (error) {
+    console.error('Error fetching testimonials:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
@@ -647,6 +648,7 @@ app.get('/api/testimonials/admin', authenticateAdmin, async (req, res) => {
     const testimonials = await Testimonial.find().sort({ createdAt: -1 });
     res.json(testimonials);
   } catch (error) {
+    console.error('Error fetching admin testimonials:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
@@ -660,6 +662,7 @@ app.post('/api/testimonials', authenticateAdmin, async (req, res) => {
     await testimonial.save();
     res.status(201).json({ message: 'Testimonial created successfully' });
   } catch (error) {
+    console.error('Error creating testimonial:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });

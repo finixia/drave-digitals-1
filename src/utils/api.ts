@@ -267,7 +267,13 @@ class ApiService {
 
   // Testimonial endpoints
   async getTestimonials() {
-    return this.request('/testimonials');
+    try {
+      return await this.request('/testimonials');
+    } catch (error) {
+      console.error('Failed to fetch testimonials:', error);
+      // Return empty array as fallback
+      return [];
+    }
   }
 
   async getTestimonialsAdmin() {

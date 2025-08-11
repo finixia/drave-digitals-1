@@ -26,12 +26,14 @@ const Testimonials = () => {
     const fetchTestimonials = async () => {
       try {
         setLoading(true);
+        console.log('Fetching testimonials...');
         const data = await apiService.getTestimonials(); // Get all approved testimonials
+        console.log('Testimonials fetched:', data);
         setTestimonials(data);
         setError(null);
       } catch (error) {
         console.error('Failed to fetch testimonials:', error);
-        setError('Failed to load testimonials');
+        setError(`Failed to load testimonials: ${error instanceof Error ? error.message : 'Unknown error'}`);
         // Fallback to empty array if API fails
         setTestimonials([]);
       } finally {
