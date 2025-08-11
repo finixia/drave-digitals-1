@@ -155,16 +155,19 @@ const AdminDashboard = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const [statsData, contactsData, testimonialsData, servicesData, usersData, aboutData] = await Promise.all([
+      const [statsData, contactsData, applicationsData, fraudData, usersData, testimonialsData, servicesData, contactInfoData, dashboardStatsData] = await Promise.all([
         apiService.getDashboardStats(),
         apiService.getContacts(),
         apiService.getTestimonialsAdmin(),
         apiService.getServicesAdmin(),
         apiService.getUsers(),
-        apiService.getAboutContent()
+        apiService.getAboutContent(),
+        apiService.getServicesAdmin(),
+        apiService.getContactInfo(),
+        apiService.getDashboardStatsData()
       ]);
 
-      setStats(statsData);
+      setStats({...statsData, ...dashboardStatsData});
       setContacts(contactsData);
       setTestimonials(testimonialsData);
       setServices(servicesData);
@@ -454,12 +457,13 @@ const AdminDashboard = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <img
-              src="/logo.png"
+              src="/company logo.png"
               alt="Drave Capitals Logo"
               className="w-12 h-12 object-contain"
             />
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+              <p className="text-gray-600">Welcome back, {user?.name}</p>
             </div>
           </div>
           <motion.button
