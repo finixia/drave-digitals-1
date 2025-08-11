@@ -27,7 +27,9 @@ import {
   Code,
   FileText,
   Download,
-  ExternalLink
+  ExternalLink,
+  Heart,
+  Target
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -43,6 +45,8 @@ interface DashboardStats {
   newsletterSubscribers: number;
   totalTestimonials: number;
   successRate: number;
+  happyClients: number;
+  growthRate: string;
 }
 
 interface Contact {
@@ -104,6 +108,8 @@ const AdminDashboard = () => {
   const [error, setError] = useState<string | null>(null);
   const [resumeViewUrl, setResumeViewUrl] = useState<string | null>(null);
   const [showResumeModal, setShowResumeModal] = useState(false);
+  const [editingStats, setEditingStats] = useState<{[key: string]: boolean}>({});
+  const [tempStats, setTempStats] = useState<{[key: string]: string}>({});
 
   // Modal states
   const [showTestimonialModal, setShowTestimonialModal] = useState(false);
@@ -155,19 +161,16 @@ const AdminDashboard = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const [statsData, contactsData, applicationsData, fraudData, usersData, testimonialsData, servicesData, contactInfoData, dashboardStatsData] = await Promise.all([
+      const [statsData, contactsData, testimonialsData, servicesData, usersData, aboutData] = await Promise.all([
         apiService.getDashboardStats(),
         apiService.getContacts(),
         apiService.getTestimonialsAdmin(),
         apiService.getServicesAdmin(),
         apiService.getUsers(),
-        apiService.getAboutContent(),
-        apiService.getServicesAdmin(),
-        apiService.getContactInfo(),
-        apiService.getDashboardStatsData()
+        apiService.getAboutContent()
       ]);
 
-      setStats({...statsData, ...dashboardStatsData});
+      setStats(statsData);
       setContacts(contactsData);
       setTestimonials(testimonialsData);
       setServices(servicesData);
@@ -185,6 +188,34 @@ const AdminDashboard = () => {
   const handleLogout = () => {
     logout();
     navigate('/admin/login');
+  };
+
+  const handleEditStat = (key: string) => {
+    setEditingStats(prev => ({ ...prev, [key]: true }));
+    if (stats) {
+      setTempStats(prev => ({ ...prev, [key]: String(stats[key as keyof DashboardStats]) }));
+    }
+  };
+
+  const handleSaveStat = async (key: string) => {
+    try {
+      // Here you would call an API to update the stat
+      // await apiService.updateStat(key, tempStats[key]);
+      setEditingStats(prev => ({ ...prev, [key]: false }));
+      // Refresh stats
+      await fetchDashboardData();
+    } catch (error) {
+      console.error('Failed to update stat:', error);
+    }
+  };
+
+  const handleCancelEdit = (key: string) => {
+    setEditingStats(prev => ({ ...prev, [key]: false }));
+    setTempStats(prev => {
+      const newStats = { ...prev };
+      delete newStats[key];
+      return newStats;
+    });
   };
 
   const handleTestimonialSubmit = async (e: React.FormEvent) => {
@@ -488,7 +519,7 @@ const AdminDashboard = () => {
               { id: 'users', label: 'Users', icon: Users },
               { id: 'testimonials', label: 'Testimonials', icon: Star },
               { id: 'services', label: 'Services', icon: Settings },
-              { id: 'about', label: 'About Us', icon: Users }
+              { id: 'about', label: 'About Us', icon: FileText }
             ].map((tab) => (
               <motion.button
                 key={tab.id}
@@ -496,7 +527,7 @@ const AdminDashboard = () => {
                 onClick={() => setActiveTab(tab.id)}
                 className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors ${
                   activeTab === tab.id
-                    ? 'bg-red-500 text-white'
+                    ? 'bg-red-50 text-red-600 border-r-2 border-red-600'
                     : 'text-gray-700 hover:bg-gray-100'
                 }`}
               >
@@ -516,10 +547,13 @@ const AdminDashboard = () => {
               {/* Stats Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {[
-                  { label: 'Total Contacts', value: stats.totalContacts, icon: Mail, color: 'text-blue-400' },
-                  { label: 'Job Applications', value: stats.totalApplications, icon: Briefcase, color: 'text-green-400' },
-                  { label: 'Fraud Cases', value: stats.totalFraudCases, icon: Shield, color: 'text-red-400' },
-                  { label: 'Success Rate', value: `${stats.successRate}%`, icon: TrendingUp, color: 'text-purple-400' }
+                  { label: 'Total Contacts', value: stats.totalContacts, icon: Mail, color: 'text-blue-400', key: 'totalContacts', editable: false },
+                  { label: 'Job Applications', value: stats.totalApplications, icon: Briefcase, color: 'text-green-400', key: 'totalApplications', editable: false },
+                  { label: 'Fraud Cases', value: stats.totalFraudCases, icon: Shield, color: 'text-red-400', key: 'totalFraudCases', editable: false },
+                  { label: 'Total Users', value: stats.totalUsers, icon: Users, color: 'text-blue-400', key: 'totalUsers', editable: false },
+                  { label: 'Happy Clients', value: stats.happyClients, icon: Heart, color: 'text-green-400', key: 'happyClients', editable: true },
+                  { label: 'Success Rate', value: stats.successRate + '%', icon: TrendingUp, color: 'text-purple-400', key: 'successRate', editable: true },
+                  { label: 'Growth Rate', value: stats.growthRate, icon: Award, color: 'text-orange-400', key: 'growthRate', editable: true }
                 ].map((stat, index) => (
                   <motion.div
                     key={index}
@@ -528,12 +562,45 @@ const AdminDashboard = () => {
                     transition={{ delay: index * 0.1 }}
                     className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm"
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between mb-4 relative">
                       <div>
                         <p className="text-gray-600 text-sm">{stat.label}</p>
-                        <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
                       </div>
                       <stat.icon className={stat.color} size={32} />
+                      {stat.editable && (
+                        <Edit 
+                          className="text-gray-400 cursor-pointer hover:text-gray-600" 
+                          size={16}
+                          onClick={() => handleEditStat(stat.key)}
+                        />
+                      )}
+                    </div>
+                    <div className="text-3xl font-bold text-gray-900 mb-2">
+                      {editingStats[stat.key] ? (
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="text"
+                            value={tempStats[stat.key] || ''}
+                            onChange={(e) => setTempStats(prev => ({ ...prev, [stat.key]: e.target.value }))}
+                            className="text-lg border border-gray-300 rounded px-2 py-1 w-24"
+                            autoFocus
+                          />
+                          <button
+                            onClick={() => handleSaveStat(stat.key)}
+                            className="text-green-600 hover:text-green-800"
+                          >
+                            <CheckCircle size={16} />
+                          </button>
+                          <button
+                            onClick={() => handleCancelEdit(stat.key)}
+                            className="text-red-600 hover:text-red-800"
+                          >
+                            <X size={16} />
+                          </button>
+                        </div>
+                      ) : (
+                        stat.value
+                      )}
                     </div>
                   </motion.div>
                 ))}
@@ -570,7 +637,7 @@ const AdminDashboard = () => {
                             {contact.service}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 py-1 text-xs rounded-full ${
+                            <span className={\`px-2 py-1 text-xs rounded-full ${
                               contact.status === 'resolved' 
                                 ? 'bg-green-100 text-green-800'
                                 : contact.status === 'contacted'
@@ -635,7 +702,7 @@ const AdminDashboard = () => {
                             {user.email}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 py-1 text-xs rounded-full ${
+                            <span className={\`px-2 py-1 text-xs rounded-full ${
                               user.role === 'admin' 
                                 ? 'bg-purple-100 text-purple-800'
                                 : 'bg-blue-100 text-blue-800'
@@ -644,13 +711,13 @@ const AdminDashboard = () => {
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                            {user.city && user.state ? `${user.city}, ${user.state}` : 'Not provided'}
+                            {user.city && user.state ? \`${user.city}, ${user.state}` : 'Not provided'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                             {user.experience || 'Not specified'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 py-1 text-xs rounded-full ${
+                            <span className={\`px-2 py-1 text-xs rounded-full ${
                               user.profileCompleted 
                                 ? 'bg-green-100 text-green-800'
                                 : 'bg-yellow-100 text-yellow-800'
@@ -666,7 +733,7 @@ const AdminDashboard = () => {
                                 <motion.button
                                   whileHover={{ scale: 1.05 }}
                                   whileTap={{ scale: 0.95 }}
-                                  onClick={() => handleViewResume(user.resume)}
+                                  onClick={() => handleViewResume(user.resume!)}
                                   className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 hover:bg-blue-200 transition-colors"
                                 >
                                   <FileText size={12} className="mr-1" />
@@ -675,7 +742,7 @@ const AdminDashboard = () => {
                                 <motion.button
                                   whileHover={{ scale: 1.05 }}
                                   whileTap={{ scale: 0.95 }}
-                                  onClick={() => handleDownloadResume(user.resume, user.name)}
+                                  onClick={() => handleDownloadResume(user.resume!, user.name)}
                                   className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 hover:bg-green-200 transition-colors"
                                 >
                                   <Download size={12} className="mr-1" />
@@ -778,7 +845,7 @@ const AdminDashboard = () => {
                             Featured
                           </span>
                         )}
-                        <span className={`px-2 py-1 rounded-full text-xs ${
+                        <span className={\`px-2 py-1 rounded-full text-xs ${
                           testimonial.approved 
                             ? 'bg-green-100 text-green-800'
                             : 'bg-red-100 text-red-800'
@@ -820,7 +887,7 @@ const AdminDashboard = () => {
                     className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm"
                   >
                     <div className="flex items-center justify-between mb-4">
-                      <div className={`w-12 h-12 bg-gradient-to-r ${service.color} rounded-xl flex items-center justify-center`}>
+                      <div className={\`w-12 h-12 bg-gradient-to-r ${service.color} rounded-xl flex items-center justify-center`}>
                         <span className="text-white text-xl">🛡️</span>
                       </div>
                       <div className="flex items-center space-x-2">
@@ -856,7 +923,7 @@ const AdminDashboard = () => {
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <span className={`px-2 py-1 rounded-full text-xs ${
+                      <span className={\`px-2 py-1 rounded-full text-xs ${
                         service.active 
                           ? 'bg-green-100 text-green-800'
                           : 'bg-red-100 text-red-800'
@@ -1006,7 +1073,7 @@ const AdminDashboard = () => {
                       >
                         <Star
                           size={24}
-                          className={`${
+                          className={\`${
                             rating <= testimonialForm.rating
                               ? 'text-yellow-400 fill-current'
                               : 'text-gray-300'
@@ -1024,7 +1091,7 @@ const AdminDashboard = () => {
                         key={avatar}
                         type="button"
                         onClick={() => setTestimonialForm(prev => ({ ...prev, avatar }))}
-                        className={`w-10 h-10 rounded-lg border-2 flex items-center justify-center text-xl hover:border-red-400 transition-colors ${
+                        className={\`w-10 h-10 rounded-lg border-2 flex items-center justify-center text-xl hover:border-red-400 transition-colors ${
                           testimonialForm.avatar === avatar ? 'border-red-400 bg-red-50' : 'border-gray-300'
                         }`}
                       >
