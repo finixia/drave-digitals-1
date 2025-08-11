@@ -215,6 +215,104 @@ const websiteContentSchema = new mongoose.Schema({
 
 const WebsiteContent = mongoose.model('WebsiteContent', websiteContentSchema);
 
+// Testimonial Schema
+const testimonialSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  role: { type: String, required: true },
+  company: { type: String, required: true },
+  rating: { type: Number, required: true, min: 1, max: 5 },
+  text: { type: String, required: true },
+  avatar: { type: String, default: '👤' },
+  service: { type: String, required: true },
+  featured: { type: Boolean, default: false },
+  approved: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now }
+});
+
+const Testimonial = mongoose.model('Testimonial', testimonialSchema);
+
+// Create default testimonials
+const createDefaultTestimonials = async () => {
+  try {
+    const testimonialCount = await Testimonial.countDocuments();
+    if (testimonialCount === 0) {
+      const defaultTestimonials = [
+        {
+          name: 'Priya Sharma',
+          role: 'Software Engineer',
+          company: 'Tech Solutions Inc.',
+          rating: 5,
+          text: 'CareerGuard helped me land my dream job in just 2 weeks! Their resume building and interview preparation services are exceptional.',
+          avatar: '👩‍💻',
+          service: 'Job Consultancy',
+          featured: true,
+          approved: true
+        },
+        {
+          name: 'Rajesh Kumar',
+          role: 'Business Owner',
+          company: 'Kumar Enterprises',
+          rating: 5,
+          text: 'When I faced cyber fraud, CareerGuard guided me through the entire process. They helped me file the FIR and recover my money.',
+          avatar: '👨‍💼',
+          service: 'Fraud Assistance',
+          featured: true,
+          approved: true
+        },
+        {
+          name: 'Anita Patel',
+          role: 'Digital Marketer',
+          company: 'Creative Agency',
+          rating: 5,
+          text: 'The digital marketing training program transformed my career. Now I run successful campaigns for multiple clients.',
+          avatar: '👩‍🎨',
+          service: 'Training',
+          featured: true,
+          approved: true
+        },
+        {
+          name: 'Vikram Singh',
+          role: 'Startup Founder',
+          company: 'InnovateTech',
+          rating: 5,
+          text: 'Their web development team created an amazing e-commerce platform for my business. Professional and timely delivery!',
+          avatar: '👨‍💻',
+          service: 'Development',
+          featured: true,
+          approved: true
+        },
+        {
+          name: 'Meera Joshi',
+          role: 'HR Manager',
+          company: 'Global Corp',
+          rating: 5,
+          text: 'CareerGuard provided excellent candidates for our IT positions. Their screening process is thorough and reliable.',
+          avatar: '👩‍💼',
+          service: 'Recruitment',
+          featured: true,
+          approved: true
+        },
+        {
+          name: 'Arjun Reddy',
+          role: 'Freelancer',
+          company: 'Independent',
+          rating: 5,
+          text: 'The freelancing skills program helped me build a successful remote career. Earning 6 figures now working from home!',
+          avatar: '👨‍🎯',
+          service: 'Training',
+          featured: true,
+          approved: true
+        }
+      ];
+      
+      await Testimonial.insertMany(defaultTestimonials);
+      console.log('Default testimonials created');
+    }
+  } catch (error) {
+    console.error('Error creating default testimonials:', error);
+  }
+};
+
 // Middleware for authentication
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
@@ -533,6 +631,68 @@ app.post('/api/newsletter', async (req, res) => {
   }
 });
 
+// Testimonial Routes
+app.get('/api/testimonials', async (req, res) => {
+  try {
+    const { featured, approved = true } = req.query;
+    const query = { approved: approved === 'true' };
+    
+    if (featured === 'true') {
+      query.featured = true;
+    }
+    
+    const testimonials = await Testimonial.find(query).sort({ createdAt: -1 });
+    res.json(testimonials);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+app.post('/api/testimonials', async (req, res) => {
+  try {
+    const testimonial = new Testimonial(req.body);
+    await testimonial.save();
+    res.status(201).json({ message: 'Testimonial submitted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+app.get('/api/testimonials/admin', authenticateAdmin, async (req, res) => {
+  try {
+    const testimonials = await Testimonial.find().sort({ createdAt: -1 });
+    res.json(testimonials);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+app.put('/api/testimonials/:id/approve', authenticateAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { approved, featured } = req.body;
+    
+    const updateData = {};
+    if (typeof approved === 'boolean') updateData.approved = approved;
+    if (typeof featured === 'boolean') updateData.featured = featured;
+    
+    await Testimonial.findByIdAndUpdate(id, updateData);
+    res.json({ message: 'Testimonial updated successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+app.delete('/api/testimonials/:id', authenticateAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await Testimonial.findByIdAndDelete(id);
+    res.json({ message: 'Testimonial deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
 // Dashboard Stats
 app.get('/api/dashboard/stats', authenticateAdmin, async (req, res) => {
   try {
@@ -543,6 +703,7 @@ app.get('/api/dashboard/stats', authenticateAdmin, async (req, res) => {
     const resolvedFraudCases = await FraudCase.countDocuments({ status: 'resolved' });
     const totalUsers = await User.countDocuments();
     const newsletterSubscribers = await Newsletter.countDocuments();
+    const totalTestimonials = await Testimonial.countDocuments({ approved: true });
 
     res.json({
       totalContacts,
@@ -552,6 +713,7 @@ app.get('/api/dashboard/stats', authenticateAdmin, async (req, res) => {
       resolvedFraudCases,
       totalUsers,
       newsletterSubscribers,
+      totalTestimonials,
       successRate: totalApplications > 0 ? Math.round((placedJobs / totalApplications) * 100) : 0
     });
   } catch (error) {
@@ -682,6 +844,7 @@ app.listen(PORT, () => {
   mongoose.connection.once('open', async () => {
     console.log('MongoDB connection established');
     await createDefaultAdmin();
+    await createDefaultTestimonials();
     // await createDefaultContent();
     console.log('Server initialization complete');
   });

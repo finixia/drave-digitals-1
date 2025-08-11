@@ -1,65 +1,78 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Star, Quote, Shield, Briefcase, Code } from 'lucide-react';
+import { apiService } from '../../utils/api';
+import TestimonialForm from '../TestimonialForm';
 
-const testimonials = [
-  {
-    name: 'Priya Sharma',
-    role: 'Software Engineer',
-    company: 'Tech Solutions Inc.',
-    rating: 5,
-    text: 'CareerGuard helped me land my dream job in just 2 weeks! Their resume building and interview preparation services are exceptional.',
-    avatar: '👩‍💻',
-    service: 'Job Consultancy'
-  },
-  {
-    name: 'Rajesh Kumar',
-    role: 'Business Owner',
-    company: 'Kumar Enterprises',
-    rating: 5,
-    text: 'When I faced cyber fraud, CareerGuard guided me through the entire process. They helped me file the FIR and recover my money.',
-    avatar: '👨‍💼',
-    service: 'Fraud Assistance'
-  },
-  {
-    name: 'Anita Patel',
-    role: 'Digital Marketer',
-    company: 'Creative Agency',
-    rating: 5,
-    text: 'The digital marketing training program transformed my career. Now I run successful campaigns for multiple clients.',
-    avatar: '👩‍🎨',
-    service: 'Training'
-  },
-  {
-    name: 'Vikram Singh',
-    role: 'Startup Founder',
-    company: 'InnovateTech',
-    rating: 5,
-    text: 'Their web development team created an amazing e-commerce platform for my business. Professional and timely delivery!',
-    avatar: '👨‍💻',
-    service: 'Development'
-  },
-  {
-    name: 'Meera Joshi',
-    role: 'HR Manager',
-    company: 'Global Corp',
-    rating: 5,
-    text: 'CareerGuard provided excellent candidates for our IT positions. Their screening process is thorough and reliable.',
-    avatar: '👩‍💼',
-    service: 'Recruitment'
-  },
-  {
-    name: 'Arjun Reddy',
-    role: 'Freelancer',
-    company: 'Independent',
-    rating: 5,
-    text: 'The freelancing skills program helped me build a successful remote career. Earning 6 figures now working from home!',
-    avatar: '👨‍🎯',
-    service: 'Training'
-  }
-];
+interface Testimonial {
+  _id: string;
+  name: string;
+  role: string;
+  company: string;
+  rating: number;
+  text: string;
+  avatar: string;
+  service: string;
+  featured: boolean;
+  approved: boolean;
+  createdAt: string;
+}
 
 const Testimonials = () => {
+  const [testimonials, setTestimonials] = React.useState<Testimonial[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+  const [showTestimonialForm, setShowTestimonialForm] = React.useState(false);
+
+  React.useEffect(() => {
+    const fetchTestimonials = async () => {
+      try {
+        setLoading(true);
+        const data = await apiService.getTestimonials(true); // Get featured testimonials
+        setTestimonials(data);
+        setError(null);
+      } catch (error) {
+        console.error('Failed to fetch testimonials:', error);
+        setError('Failed to load testimonials');
+        // Fallback to empty array if API fails
+        setTestimonials([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTestimonials();
+  }, []);
+
+  if (loading) {
+    return (
+      <section id="testimonials" className="py-32 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              className="inline-block w-8 h-8 border-4 border-red-400 border-t-transparent rounded-full"
+            />
+            <p className="mt-4 text-gray-600">Loading testimonials...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (error && testimonials.length === 0) {
+    return (
+      <section id="testimonials" className="py-32 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center">
+            <p className="text-red-600">{error}</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section id="testimonials" className="py-32 bg-gray-50 overflow-hidden">
       <div className="max-w-7xl mx-auto px-6">
@@ -103,7 +116,7 @@ const Testimonials = () => {
           >
             {[...testimonials, ...testimonials].map((testimonial, index) => (
               <motion.div
-                key={index}
+                key={`${testimonial._id}-${index}`}
                 whileHover={{ scale: 1.05 }}
                 className="flex-shrink-0 w-96 bg-white backdrop-blur-xl border border-gray-200 rounded-3xl p-8 shadow-lg"
               >
@@ -162,10 +175,24 @@ const Testimonials = () => {
             </div>
             <div className="w-px h-6 bg-gray-300" />
             <div className="text-slate-400">
-              Based on 5000+ reviews
+              Based on {testimonials.length > 0 ? `${testimonials.length * 100}+` : '5000+'} reviews
             </div>
           </div>
+          
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setShowTestimonialForm(true)}
+            className="mt-8 bg-gradient-to-r from-red-500 to-red-600 text-white px-8 py-3 rounded-full font-medium hover:shadow-lg transition-all"
+          >
+            Share Your Story
+          </motion.button>
         </motion.div>
+        
+        <TestimonialForm 
+          isOpen={showTestimonialForm} 
+          onClose={() => setShowTestimonialForm(false)} 
+        />
       </div>
     </section>
   );
