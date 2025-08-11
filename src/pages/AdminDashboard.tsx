@@ -484,6 +484,136 @@ const AdminDashboard = () => {
     );
   }
 
+  const renderContactInfo = () => {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-gray-900">Contact Information</h2>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleSaveContactInfo}
+            className="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors"
+          >
+            Save Changes
+          </motion.button>
+        </div>
+
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Phone Numbers */}
+            <div>
+              <label className="block text-gray-600 text-sm font-medium mb-2">Phone Numbers</label>
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  value={contactInfo.phone[0]}
+                  onChange={(e) => setContactInfo({
+                    ...contactInfo,
+                    phone: [e.target.value, contactInfo.phone[1]]
+                  })}
+                  className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none"
+                  placeholder="Primary phone number"
+                />
+                <input
+                  type="text"
+                  value={contactInfo.phone[1]}
+                  onChange={(e) => setContactInfo({
+                    ...contactInfo,
+                    phone: [contactInfo.phone[0], e.target.value]
+                  })}
+                  className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none"
+                  placeholder="Secondary phone number"
+                />
+              </div>
+            </div>
+
+            {/* Email Addresses */}
+            <div>
+              <label className="block text-gray-600 text-sm font-medium mb-2">Email Addresses</label>
+              <div className="space-y-3">
+                <input
+                  type="email"
+                  value={contactInfo.email[0]}
+                  onChange={(e) => setContactInfo({
+                    ...contactInfo,
+                    email: [e.target.value, contactInfo.email[1]]
+                  })}
+                  className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none"
+                  placeholder="Primary email address"
+                />
+                <input
+                  type="email"
+                  value={contactInfo.email[1]}
+                  onChange={(e) => setContactInfo({
+                    ...contactInfo,
+                    email: [contactInfo.email[0], e.target.value]
+                  })}
+                  className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none"
+                  placeholder="Secondary email address"
+                />
+              </div>
+            </div>
+
+            {/* Address */}
+            <div>
+              <label className="block text-gray-600 text-sm font-medium mb-2">Address</label>
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  value={contactInfo.address[0]}
+                  onChange={(e) => setContactInfo({
+                    ...contactInfo,
+                    address: [e.target.value, contactInfo.address[1]]
+                  })}
+                  className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none"
+                  placeholder="Address line 1"
+                />
+                <input
+                  type="text"
+                  value={contactInfo.address[1]}
+                  onChange={(e) => setContactInfo({
+                    ...contactInfo,
+                    address: [contactInfo.address[0], e.target.value]
+                  })}
+                  className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none"
+                  placeholder="Address line 2"
+                />
+              </div>
+            </div>
+
+            {/* Working Hours */}
+            <div>
+              <label className="block text-gray-600 text-sm font-medium mb-2">Working Hours</label>
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  value={contactInfo.workingHours[0]}
+                  onChange={(e) => setContactInfo({
+                    ...contactInfo,
+                    workingHours: [e.target.value, contactInfo.workingHours[1]]
+                  })}
+                  className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none"
+                  placeholder="e.g., Mon - Fri: 9:00 AM - 7:00 PM"
+                />
+                <input
+                  type="text"
+                  value={contactInfo.workingHours[1]}
+                  onChange={(e) => setContactInfo({
+                    ...contactInfo,
+                    workingHours: [contactInfo.workingHours[0], e.target.value]
+                  })}
+                  className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none"
+                  placeholder="e.g., Sat: 10:00 AM - 4:00 PM"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
