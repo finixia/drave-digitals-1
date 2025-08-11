@@ -54,7 +54,7 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json());
-app.use('/uploads', express.static('uploads'));
+app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
 
 console.log("MONGODB_URI:", process.env.MONGODB_URI);
 
