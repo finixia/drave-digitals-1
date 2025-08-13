@@ -124,6 +124,26 @@ export interface PrivacyPolicyData {
   };
   active?: boolean;
 }
+
+export interface TermsOfServiceData {
+  title: string;
+  subtitle: string;
+  introduction: string;
+  sections: Array<{
+    title: string;
+    content: Array<{
+      subtitle?: string;
+      items: string[];
+    }>;
+  }>;
+  contactInfo: {
+    email: string;
+    phone: string;
+    address: string;
+  };
+  active?: boolean;
+}
+
 class ApiService {
   private async request(endpoint: string, options: RequestInit = {}) {
     const url = `${API_BASE_URL}${endpoint}`;
@@ -500,6 +520,25 @@ class ApiService {
   async updatePrivacyPolicy(data: PrivacyPolicyData) {
     console.log('API: Updating privacy policy...', data);
     return this.request('/privacy-policy', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Terms of Service endpoints
+  async getTermsOfService() {
+    try {
+      console.log('API: Fetching terms of service...');
+      return await this.request('/terms-of-service');
+    } catch (error) {
+      console.error('Failed to fetch terms of service:', error);
+      throw error;
+    }
+  }
+
+  async updateTermsOfService(data: TermsOfServiceData) {
+    console.log('API: Updating terms of service...', data);
+    return this.request('/terms-of-service', {
       method: 'PUT',
       body: JSON.stringify(data),
     });

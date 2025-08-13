@@ -255,6 +255,30 @@ const privacyPolicySchema = new mongoose.Schema({
 });
 
 const PrivacyPolicy = mongoose.model('PrivacyPolicy', privacyPolicySchema);
+
+// Terms of Service Schema
+const termsOfServiceSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  subtitle: { type: String, required: true },
+  introduction: { type: String, required: true },
+  sections: [{
+    title: { type: String, required: true },
+    content: [{
+      subtitle: { type: String },
+      items: [{ type: String }]
+    }]
+  }],
+  contactInfo: {
+    email: { type: String, required: true },
+    phone: { type: String, required: true },
+    address: { type: String, required: true }
+  },
+  lastUpdated: { type: Date, default: Date.now },
+  active: { type: Boolean, default: true },
+  createdAt: { type: Date, default: Date.now }
+});
+
+const TermsOfService = mongoose.model('TermsOfService', termsOfServiceSchema);
 // Service Schema
 const serviceSchema = new mongoose.Schema({
   title: { type: String, required: true },
@@ -530,6 +554,178 @@ const createDefaultPrivacyPolicy = async () => {
     }
   } catch (error) {
     console.error('Error creating default privacy policy:', error);
+  }
+};
+
+// Create default terms of service
+const createDefaultTermsOfService = async () => {
+  try {
+    const termsExists = await TermsOfService.findOne({ active: true });
+    if (!termsExists) {
+      const defaultTerms = new TermsOfService({
+        title: 'Terms of Service',
+        subtitle: 'Legal Terms and Conditions',
+        introduction: 'Welcome to Drave Digitals ("Company," "we," "our," or "us"). By accessing or using our website, products, and services — including Job Consultancy, Cybercrime & Digital Forensics Solutions, and App Development — you ("User," "Client," or "You") agree to comply with and be bound by these Terms and Conditions.\n\nIf you do not agree with these Terms, please discontinue use of our services immediately.',
+        sections: [
+          {
+            title: 'Scope of Services',
+            content: [
+              {
+                subtitle: 'Job Consultancy Services',
+                items: [
+                  'We assist candidates in connecting with potential employers.',
+                  'We do not guarantee employment; final hiring decisions are made solely by the employer.',
+                  'Candidates are responsible for providing accurate and truthful information.'
+                ]
+              },
+              {
+                subtitle: 'Cybercrime & Digital Forensics',
+                items: [
+                  'We provide digital investigation, cybercrime consultation, and online fraud prevention services strictly in accordance with Indian Cyber Laws (IT Act 2000 & its amendments).',
+                  'We do not engage in illegal hacking, unauthorized access, or any unlawful cyber activity.',
+                  'All investigations are conducted with proper client consent and in compliance with applicable laws.'
+                ]
+              },
+              {
+                subtitle: 'App Development',
+                items: [
+                  'We design, develop, and maintain mobile and web applications as per client requirements.',
+                  'All source code and intellectual property rights are subject to the terms agreed in the service contract.'
+                ]
+              }
+            ]
+          },
+          {
+            title: 'Eligibility',
+            content: [
+              {
+                subtitle: '',
+                items: [
+                  'You must be at least 18 years old to use our services. By engaging with us, you confirm that you are legally capable of entering into a binding agreement under Indian law.'
+                ]
+              }
+            ]
+          },
+          {
+            title: 'User Responsibilities',
+            content: [
+              {
+                subtitle: '',
+                items: [
+                  'Provide accurate, complete, and updated information when requested.',
+                  'Use our services only for lawful purposes.',
+                  'Avoid engaging in fraud, misrepresentation, harassment, or any activity that violates applicable laws.'
+                ]
+              }
+            ]
+          },
+          {
+            title: 'Payments & Fees',
+            content: [
+              {
+                subtitle: '',
+                items: [
+                  'Service fees are communicated before commencement of work and must be paid as per agreed terms.',
+                  'All payments are non-refundable unless otherwise stated in writing.',
+                  'In the case of job consultancy, fees are charged as per service agreement and do not constitute a placement guarantee.'
+                ]
+              }
+            ]
+          },
+          {
+            title: 'Intellectual Property',
+            content: [
+              {
+                subtitle: '',
+                items: [
+                  'All content on our website — including text, graphics, logos, designs, and software — is the property of Drave Digitals and protected under Indian Copyright Law.',
+                  'Clients may not copy, distribute, or reproduce any part of our services without written consent.'
+                ]
+              }
+            ]
+          },
+          {
+            title: 'Confidentiality',
+            content: [
+              {
+                subtitle: '',
+                items: [
+                  'We maintain the confidentiality of client information unless disclosure is required by law or for legal proceedings.'
+                ]
+              }
+            ]
+          },
+          {
+            title: 'Limitation of Liability',
+            content: [
+              {
+                subtitle: '',
+                items: [
+                  'We are not liable for any loss, damage, or legal consequences arising from misuse of our services.',
+                  'Job placement results, cybercrime resolution timelines, and app performance depend on factors beyond our control.'
+                ]
+              }
+            ]
+          },
+          {
+            title: 'Prohibited Activities',
+            content: [
+              {
+                subtitle: 'You agree NOT to:',
+                items: [
+                  'Use our services for any unlawful or fraudulent activity.',
+                  'Submit false documents or information.',
+                  'Attempt to gain unauthorized access to our systems or client data.'
+                ]
+              }
+            ]
+          },
+          {
+            title: 'Termination',
+            content: [
+              {
+                subtitle: '',
+                items: [
+                  'We reserve the right to suspend or terminate your access to our services without notice for violation of these Terms or applicable laws.'
+                ]
+              }
+            ]
+          },
+          {
+            title: 'Governing Law & Jurisdiction',
+            content: [
+              {
+                subtitle: '',
+                items: [
+                  'These Terms are governed by the laws of India, and any disputes shall be subject to the exclusive jurisdiction of the courts in India.'
+                ]
+              }
+            ]
+          },
+          {
+            title: 'Changes to Terms',
+            content: [
+              {
+                subtitle: '',
+                items: [
+                  'We may update these Terms from time to time. Continued use of our services after changes implies acceptance of the revised Terms.'
+                ]
+              }
+            ]
+          }
+        ],
+        contactInfo: {
+          email: 'legal@dravedigitals.com',
+          phone: '+91 9876543210',
+          address: 'Mumbai, Maharashtra, India'
+        },
+        active: true
+      });
+      await defaultTerms.save();
+      console.log('Default terms of service created');
+    }
+  } catch (error) {
+    console.error('Error creating default terms of service:', error);
   }
 };
 const testimonialSchema = new mongoose.Schema({
@@ -1366,6 +1562,7 @@ app.listen(PORT, () => {
     await createDefaultContactInfo();
     await createDefaultDashboardStats();
     await createDefaultPrivacyPolicy();
+    await createDefaultTermsOfService();
     // await createDefaultContent();
     console.log('Server initialization complete');
   });

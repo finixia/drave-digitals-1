@@ -108,6 +108,7 @@ const AdminDashboard = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [aboutContent, setAboutContent] = useState<AboutContent | null>(null);
   const [loading, setLoading] = useState(true);
+  const [termsOfService, setTermsOfService] = useState<any>({});
   const [error, setError] = useState<string | null>(null);
   const [resumeViewUrl, setResumeViewUrl] = useState<string | null>(null);
   const [showResumeModal, setShowResumeModal] = useState(false);
@@ -2008,6 +2009,8 @@ const AdminDashboard = () => {
               </motion.button>
             </div>
           </motion.div>
+          {activeTab === 'contact-info' && renderContactInfoManagement()}
+          {activeTab === 'privacy-policy' && renderPrivacyPolicyManagement()}
         </div>
       )}
     </div>
