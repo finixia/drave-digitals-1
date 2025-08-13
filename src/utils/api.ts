@@ -144,24 +144,6 @@ export interface TermsOfServiceData {
   active?: boolean;
 }
 
-export interface ContactInfoData {
-  phone: string[];
-  email: string[];
-  address: string[];
-  workingHours: string[];
-}
-
-export interface DashboardStatsData {
-  happyClients: string;
-  successRate: string;
-  fraudCasesResolved: string;
-  growthRate: string;
-  totalContacts?: number;
-  totalJobApplications?: number;
-  totalFraudCases?: number;
-  totalUsers?: number;
-}
-
 class ApiService {
   private async request(endpoint: string, options: RequestInit = {}) {
     const url = `${API_BASE_URL}${endpoint}`;
