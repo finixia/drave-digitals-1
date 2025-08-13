@@ -1691,6 +1691,7 @@ const AdminDashboard = () => {
             </div>
           </motion.div>
         </div>
+        {activeTab === 'privacy-policy' && <PrivacyPolicyTab />}
       )}
     </div>
   );
