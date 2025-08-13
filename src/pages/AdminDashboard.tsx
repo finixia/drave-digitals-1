@@ -34,7 +34,10 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { apiService, TestimonialData, ServiceData, AboutContentData } from '../utils/api';
+  Save,
+  Scale
+import PrivacyPolicyManager from '../components/admin/PrivacyPolicyManager';
+import TermsOfServiceManager from '../components/admin/TermsOfServiceManager';
 
 interface DashboardStats {
   totalContacts: number;
@@ -360,7 +363,9 @@ const AdminDashboard = () => {
     setShowResumeModal(true);
   };
 
-  const handleDownloadResume = (resumePath: string, userName: string) => {
+    { id: 'settings', label: 'Settings', icon: Settings },
+    { id: 'privacy-policy', label: 'Privacy Policy', icon: Shield },
+    { id: 'terms-service', label: 'Terms of Service', icon: Scale }
     const resumeUrl = `${import.meta.env.VITE_API_URL || '/api'}/uploads/${resumePath.split('/').pop()}`;
     const link = document.createElement('a');
     link.href = resumeUrl;
@@ -1122,6 +1127,27 @@ const AdminDashboard = () => {
           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
           className="w-8 h-8 border-4 border-red-400 border-t-transparent rounded-full"
         />
+      </div>
+    );
+  }
+
+  // Handle Privacy Policy and Terms of Service views
+  if (activeTab === 'privacy-policy') {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          <PrivacyPolicyManager onBack={() => setActiveTab('overview')} />
+        </div>
+      </div>
+    );
+  }
+
+  if (activeTab === 'terms-service') {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          <TermsOfServiceManager onBack={() => setActiveTab('overview')} />
+        </div>
       </div>
     );
   }
