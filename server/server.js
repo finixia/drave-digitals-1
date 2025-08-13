@@ -257,6 +257,32 @@ const privacyPolicySchema = new mongoose.Schema({
 const PrivacyPolicy = mongoose.model('PrivacyPolicy', privacyPolicySchema);
 
 // Terms of Service Schema
+// Contact Info Schema
+const contactInfoSchema = new mongoose.Schema({
+  phone: [String],
+  email: [String],
+  address: [String],
+  workingHours: [String],
+  active: { type: Boolean, default: true },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+const ContactInfo = mongoose.model('ContactInfo', contactInfoSchema);
+
+// Dashboard Stats Schema
+const dashboardStatsSchema = new mongoose.Schema({
+  happyClients: { type: String, default: '5000+' },
+  successRate: { type: String, default: '98%' },
+  growthRate: { type: String, default: '150%' },
+  fraudCasesResolved: { type: String, default: '1200+' },
+  active: { type: Boolean, default: true },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+const DashboardStats = mongoose.model('DashboardStats', dashboardStatsSchema);
+
 const termsOfServiceSchema = new mongoose.Schema({
   title: { type: String, required: true },
   subtitle: { type: String, required: true },
