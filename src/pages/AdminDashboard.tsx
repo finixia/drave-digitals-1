@@ -31,7 +31,7 @@ import {
   Edit2,
   CheckCircle,
   Heart,
-  TrendingUp
+  TrendingUp,
   Target
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -180,11 +180,6 @@ const AdminDashboard = () => {
       setServices(servicesData);
       setUsers(usersData);
       setAboutContent(aboutData);
-      
-      // Fetch terms of service
-      const termsData = await apiService.getTermsOfService();
-      setTermsOfService(termsData);
-      
       setError(null);
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
@@ -796,6 +791,324 @@ const AdminDashboard = () => {
     );
   };
 
+  // Terms of Service Tab Component
+  const TermsOfServiceTab = () => {
+    const [termsOfService, setTermsOfService] = useState<any>({
+      title: '',
+      subtitle: '',
+      introduction: '',
+      sections: [],
+      contactInfo: {
+        email: '',
+        phone: '',
+        address: ''
+      }
+    });
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [message, setMessage] = useState('');
+
+    useEffect(() => {
+      fetchTermsOfService();
+    }, []);
+
+    const fetchTermsOfService = async () => {
+      try {
+        setLoading(true);
+        const data = await apiService.getTermsOfService();
+        if (data && Object.keys(data).length > 0) {
+          setTermsOfService(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch terms of service:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const handleSave = async () => {
+      try {
+        setSaving(true);
+        await apiService.updateTermsOfService(termsOfService);
+        setMessage('Terms of service updated successfully!');
+        setTimeout(() => setMessage(''), 3000);
+      } catch (error) {
+        setMessage('Failed to update terms of service');
+        setTimeout(() => setMessage(''), 3000);
+      } finally {
+        setSaving(false);
+      }
+    };
+
+    const addSection = () => {
+      setTermsOfService(prev => ({
+        ...prev,
+        sections: [...prev.sections, { title: '', content: [{ subtitle: '', items: [''] }] }]
+      }));
+    };
+
+    const updateSection = (sectionIndex: number, field: string, value: string) => {
+      setTermsOfService(prev => ({
+        ...prev,
+        sections: prev.sections.map((section, index) => 
+          index === sectionIndex ? { ...section, [field]: value } : section
+        )
+      }));
+    };
+
+    const addContentToSection = (sectionIndex: number) => {
+      setTermsOfService(prev => ({
+        ...prev,
+        sections: prev.sections.map((section, index) => 
+          index === sectionIndex 
+            ? { ...section, content: [...section.content, { subtitle: '', items: [''] }] }
+            : section
+        )
+      }));
+    };
+
+    const updateSectionContent = (sectionIndex: number, contentIndex: number, field: string, value: string) => {
+      setTermsOfService(prev => ({
+        ...prev,
+        sections: prev.sections.map((section, sIndex) => 
+          sIndex === sectionIndex 
+            ? {
+                ...section,
+                content: section.content.map((content, cIndex) =>
+                  cIndex === contentIndex ? { ...content, [field]: value } : content
+                )
+              }
+            : section
+        )
+      }));
+    };
+
+    const addItemToContent = (sectionIndex: number, contentIndex: number) => {
+      setTermsOfService(prev => ({
+        ...prev,
+        sections: prev.sections.map((section, sIndex) => 
+          sIndex === sectionIndex 
+            ? {
+                ...section,
+                content: section.content.map((content, cIndex) =>
+                  cIndex === contentIndex 
+                    ? { ...content, items: [...content.items, ''] }
+                    : content
+                )
+              }
+            : section
+        )
+      }));
+    };
+
+    const updateContentItem = (sectionIndex: number, contentIndex: number, itemIndex: number, value: string) => {
+      setTermsOfService(prev => ({
+        ...prev,
+        sections: prev.sections.map((section, sIndex) => 
+          sIndex === sectionIndex 
+            ? {
+                ...section,
+                content: section.content.map((content, cIndex) =>
+                  cIndex === contentIndex 
+                    ? {
+                        ...content,
+                        items: content.items.map((item, iIndex) =>
+                          iIndex === itemIndex ? value : item
+                        )
+                      }
+                    : content
+                )
+              }
+            : section
+        )
+      }));
+    };
+
+    if (loading) {
+      return (
+        <div className="text-center py-8">
+          <div className="inline-block w-8 h-8 border-4 border-red-400 border-t-transparent rounded-full animate-spin"></div>
+          <p className="mt-4 text-gray-600">Loading terms of service...</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-gray-900">Terms of Service Management</h2>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50"
+          >
+            {saving ? 'Saving...' : 'Save Changes'}
+          </button>
+        </div>
+
+        {message && (
+          <div className={`p-4 rounded-lg ${message.includes('success') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+            {message}
+          </div>
+        )}
+
+        <div className="bg-white rounded-lg shadow p-6 space-y-6">
+          {/* Basic Info */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+              <input
+                type="text"
+                value={termsOfService.title}
+                onChange={(e) => setTermsOfService(prev => ({ ...prev, title: e.target.value }))}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-red-500 focus:border-red-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Subtitle</label>
+              <input
+                type="text"
+                value={termsOfService.subtitle}
+                onChange={(e) => setTermsOfService(prev => ({ ...prev, subtitle: e.target.value }))}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-red-500 focus:border-red-500"
+              />
+            </div>
+          </div>
+
+          {/* Introduction */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Introduction</label>
+            <textarea
+              value={termsOfService.introduction}
+              onChange={(e) => setTermsOfService(prev => ({ ...prev, introduction: e.target.value }))}
+              rows={4}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-red-500 focus:border-red-500"
+            />
+          </div>
+
+          {/* Contact Info */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                <input
+                  type="email"
+                  value={termsOfService.contactInfo?.email || ''}
+                  onChange={(e) => setTermsOfService(prev => ({
+                    ...prev,
+                    contactInfo: { ...prev.contactInfo, email: e.target.value }
+                  }))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-red-500 focus:border-red-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+                <input
+                  type="text"
+                  value={termsOfService.contactInfo?.phone || ''}
+                  onChange={(e) => setTermsOfService(prev => ({
+                    ...prev,
+                    contactInfo: { ...prev.contactInfo, phone: e.target.value }
+                  }))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-red-500 focus:border-red-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
+                <input
+                  type="text"
+                  value={termsOfService.contactInfo?.address || ''}
+                  onChange={(e) => setTermsOfService(prev => ({
+                    ...prev,
+                    contactInfo: { ...prev.contactInfo, address: e.target.value }
+                  }))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-red-500 focus:border-red-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Sections */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Sections</h3>
+              <button
+                onClick={addSection}
+                className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+              >
+                Add Section
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              {termsOfService.sections?.map((section, sectionIndex) => (
+                <div key={sectionIndex} className="border border-gray-200 rounded-lg p-4">
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Section Title</label>
+                    <input
+                      type="text"
+                      value={section.title}
+                      onChange={(e) => updateSection(sectionIndex, 'title', e.target.value)}
+                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-red-500 focus:border-red-500"
+                    />
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-medium text-gray-800">Content</h4>
+                      <button
+                        onClick={() => addContentToSection(sectionIndex)}
+                        className="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600 transition-colors"
+                      >
+                        Add Content
+                      </button>
+                    </div>
+
+                    {section.content?.map((content, contentIndex) => (
+                      <div key={contentIndex} className="bg-gray-50 p-3 rounded">
+                        <div className="mb-3">
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Subtitle (optional)</label>
+                          <input
+                            type="text"
+                            value={content.subtitle || ''}
+                            onChange={(e) => updateSectionContent(sectionIndex, contentIndex, 'subtitle', e.target.value)}
+                            className="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:ring-red-500 focus:border-red-500"
+                          />
+                        </div>
+
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <label className="block text-sm font-medium text-gray-700">Items</label>
+                            <button
+                              onClick={() => addItemToContent(sectionIndex, contentIndex)}
+                              className="bg-yellow-500 text-white px-2 py-1 rounded text-xs hover:bg-yellow-600 transition-colors"
+                            >
+                              Add Item
+                            </button>
+                          </div>
+                          {content.items?.map((item, itemIndex) => (
+                            <textarea
+                              key={itemIndex}
+                              value={item}
+                              onChange={(e) => updateContentItem(sectionIndex, contentIndex, itemIndex, e.target.value)}
+                              className="w-full border border-gray-300 rounded px-2 py-1 text-sm mb-2 focus:ring-red-500 focus:border-red-500"
+                              rows={2}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -976,7 +1289,9 @@ const AdminDashboard = () => {
               { id: 'users', label: 'Users', icon: Users },
               { id: 'testimonials', label: 'Testimonials', icon: Star },
               { id: 'services', label: 'Services', icon: Settings },
-              { id: 'about', label: 'About Us', icon: FileText }
+              { id: 'about', label: 'About Us', icon: FileText },
+              { id: 'privacy-policy', label: 'Privacy Policy', icon: Shield },
+              { id: 'terms-of-service', label: 'Terms of Service', icon: FileText }
             ].map((tab) => (
               <motion.button
                 key={tab.id}
@@ -1444,6 +1759,9 @@ const AdminDashboard = () => {
               )}
             </div>
           )}
+
+          {activeTab === 'privacy-policy' && <PrivacyPolicyTab />}
+          {activeTab === 'terms-of-service' && <TermsOfServiceTab />}
         </main>
       </div>
 
