@@ -20,7 +20,7 @@ import {
   Save,
   X,
   LogOut,
-  BarChart3,
+  TrendingUp,
   MessageSquare,
   FileText,
   Scale
