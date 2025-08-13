@@ -30,12 +30,11 @@ import {
   ExternalLink,
   Edit2,
   Heart,
-  Target
+  Target,
+  Scale
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-  Save,
-  Scale
 import PrivacyPolicyManager from '../components/admin/PrivacyPolicyManager';
 import TermsOfServiceManager from '../components/admin/TermsOfServiceManager';
 
@@ -363,9 +362,7 @@ const AdminDashboard = () => {
     setShowResumeModal(true);
   };
 
-    { id: 'settings', label: 'Settings', icon: Settings },
-    { id: 'privacy-policy', label: 'Privacy Policy', icon: Shield },
-    { id: 'terms-service', label: 'Terms of Service', icon: Scale }
+  const handleDownloadResume = (resumePath: string, userName: string) => {
     const resumeUrl = `${import.meta.env.VITE_API_URL || '/api'}/uploads/${resumePath.split('/').pop()}`;
     const link = document.createElement('a');
     link.href = resumeUrl;
@@ -1320,7 +1317,10 @@ const AdminDashboard = () => {
               { id: 'users', label: 'Users', icon: Users },
               { id: 'testimonials', label: 'Testimonials', icon: Star },
               { id: 'services', label: 'Services', icon: Settings },
-              { id: 'about', label: 'About Us', icon: FileText }
+              { id: 'about', label: 'About Us', icon: FileText },
+              { id: 'settings', label: 'Settings', icon: Settings },
+              { id: 'privacy-policy', label: 'Privacy Policy', icon: Shield },
+              { id: 'terms-service', label: 'Terms of Service', icon: Scale }
             ].map((tab) => (
               <motion.button
                 key={tab.id}
@@ -2358,8 +2358,6 @@ const AdminDashboard = () => {
               </motion.button>
             </div>
           </motion.div>
-          {activeTab === 'contact-info' && renderContactInfoManagement()}
-          {activeTab === 'privacy-policy' && renderPrivacyPolicyManagement()}
         </div>
       )}
     </div>
