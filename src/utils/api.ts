@@ -106,6 +106,24 @@ export interface AboutContentData {
   active?: boolean;
 }
 
+export interface PrivacyPolicyData {
+  title: string;
+  subtitle: string;
+  introduction: string;
+  sections: Array<{
+    title: string;
+    content: Array<{
+      subtitle?: string;
+      items: string[];
+    }>;
+  }>;
+  contactInfo: {
+    email: string;
+    phone: string;
+    address: string;
+  };
+  active?: boolean;
+}
 class ApiService {
   private async request(endpoint: string, options: RequestInit = {}) {
     const url = `${API_BASE_URL}${endpoint}`;
@@ -463,6 +481,25 @@ class ApiService {
   async updateDashboardStats(data: DashboardStatsData) {
     console.log('API: Updating dashboard stats...', data);
     return this.request('/dashboard-stats', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Privacy Policy endpoints
+  async getPrivacyPolicy() {
+    try {
+      console.log('API: Fetching privacy policy...');
+      return await this.request('/privacy-policy');
+    } catch (error) {
+      console.error('Failed to fetch privacy policy:', error);
+      throw error;
+    }
+  }
+
+  async updatePrivacyPolicy(data: PrivacyPolicyData) {
+    console.log('API: Updating privacy policy...', data);
+    return this.request('/privacy-policy', {
       method: 'PUT',
       body: JSON.stringify(data),
     });

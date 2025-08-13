@@ -232,6 +232,29 @@ const aboutContentSchema = new mongoose.Schema({
 
 const AboutContent = mongoose.model('AboutContent', aboutContentSchema, 'aboutcontents');
 
+// Privacy Policy Schema
+const privacyPolicySchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  subtitle: { type: String, required: true },
+  introduction: { type: String, required: true },
+  sections: [{
+    title: { type: String, required: true },
+    content: [{
+      subtitle: { type: String },
+      items: [{ type: String }]
+    }]
+  }],
+  contactInfo: {
+    email: { type: String, required: true },
+    phone: { type: String, required: true },
+    address: { type: String, required: true }
+  },
+  lastUpdated: { type: Date, default: Date.now },
+  active: { type: Boolean, default: true },
+  createdAt: { type: Date, default: Date.now }
+});
+
+const PrivacyPolicy = mongoose.model('PrivacyPolicy', privacyPolicySchema);
 // Service Schema
 const serviceSchema = new mongoose.Schema({
   title: { type: String, required: true },
@@ -368,6 +391,147 @@ const createDefaultDashboardStats = async () => {
   }
 };
 
+// Create default privacy policy
+const createDefaultPrivacyPolicy = async () => {
+  try {
+    const privacyPolicyExists = await PrivacyPolicy.findOne({ active: true });
+    if (!privacyPolicyExists) {
+      const defaultPrivacyPolicy = new PrivacyPolicy({
+        title: 'Privacy Policy',
+        subtitle: 'Your Privacy Matters to Us',
+        introduction: 'Drave Digitals ("Company," "we," "our," or "us") respects your privacy and is committed to protecting your personal information. This Privacy Policy explains how we collect, use, store, and safeguard your data when you use our services — including Job Consultancy, Cybercrime & Digital Forensics, and App Development.\n\nBy using our website and services, you agree to the terms outlined in this Privacy Policy.',
+        sections: [
+          {
+            title: 'Information We Collect',
+            content: [
+              {
+                subtitle: 'Personal Information (for job consultancy & client onboarding)',
+                items: [
+                  'Full Name',
+                  'Contact details (email, phone number, address)',
+                  'Date of Birth, Gender',
+                  'Resume/CV, qualifications, employment history',
+                  'Identification documents (e.g., Aadhaar, PAN, Passport — only when legally required)'
+                ]
+              },
+              {
+                subtitle: 'Cybercrime & Forensics Data',
+                items: [
+                  'Digital evidence provided by clients (e.g., screenshots, logs, emails)',
+                  'Technical information related to incidents',
+                  'Any other data necessary for investigation'
+                ]
+              },
+              {
+                subtitle: 'App Development Information',
+                items: [
+                  'Project requirements and specifications',
+                  'User analytics for apps we develop',
+                  'Client feedback and communication history'
+                ]
+              },
+              {
+                subtitle: 'Automatically Collected Data',
+                items: [
+                  'IP address',
+                  'Browser type & device information',
+                  'Cookies & usage patterns'
+                ]
+              }
+            ]
+          },
+          {
+            title: 'How We Use Your Information',
+            content: [
+              {
+                subtitle: '',
+                items: [
+                  'Job Consultancy: To match candidates with employers, verify credentials, and communicate hiring updates.',
+                  'Cybercrime Services: To conduct legal investigations, gather evidence, and provide reports.',
+                  'App Development: To deliver, maintain, and improve our applications.',
+                  'Legal Compliance: To meet legal obligations under Indian law.',
+                  'Customer Support: To respond to queries, complaints, or requests.'
+                ]
+              }
+            ]
+          },
+          {
+            title: 'Data Sharing & Disclosure',
+            content: [
+              {
+                subtitle: '',
+                items: [
+                  'We do not sell your personal data. We may share your information with:',
+                  'Employers & Recruiters (job consultancy) — only with your consent.',
+                  'Law Enforcement Agencies — in cases involving cybercrime or legal compliance.',
+                  'Service Providers — for hosting, analytics, or technical support.',
+                  'Legal Authorities — if required by court order or government directive.'
+                ]
+              }
+            ]
+          },
+          {
+            title: 'Data Retention',
+            content: [
+              {
+                subtitle: '',
+                items: [
+                  'Job consultancy data is retained for up to 2 years unless you request deletion earlier.',
+                  'Cybercrime case data is retained as per legal requirements and then securely destroyed.',
+                  'App development project data is retained for contract duration + 1 year for support purposes.'
+                ]
+              }
+            ]
+          },
+          {
+            title: 'Security Measures',
+            content: [
+              {
+                subtitle: '',
+                items: [
+                  'We implement reasonable security practices, including:',
+                  'Encrypted data storage',
+                  'Secure communication protocols (HTTPS, SSL)',
+                  'Restricted employee access to sensitive data',
+                  'Regular security audits',
+                  '',
+                  'However, no system is 100% secure, and we cannot guarantee absolute security of your data.'
+                ]
+              }
+            ]
+          },
+          {
+            title: 'Your Rights',
+            content: [
+              {
+                subtitle: '',
+                items: [
+                  'You have the right to:',
+                  'Access and request a copy of your data',
+                  'Correct inaccurate information',
+                  'Request deletion of your personal data (subject to legal obligations)',
+                  'Withdraw consent for data processing (where applicable)',
+                  '',
+                  'To exercise your rights, contact us using the details in Section 9'
+                ]
+              }
+            ]
+          }
+        ],
+        contactInfo: {
+          email: 'privacy@dravedigitals.com',
+          phone: '+91 9876543210',
+          address: 'Mumbai, Maharashtra, India'
+        },
+        active: true
+      });
+      await defaultPrivacyPolicy.save();
+      console.log('Default privacy policy created');
+    }
+  } catch (error) {
+    console.error('Error creating default privacy policy:', error);
+  }
+};
 const testimonialSchema = new mongoose.Schema({
   name: { type: String, required: true },
   role: { type: String, required: true },
@@ -959,6 +1123,50 @@ app.delete('/api/services/:id', async (req, res) => {
   }
 });
 // Dashboard Stats
+// Privacy Policy Routes
+app.get('/api/privacy-policy', async (req, res) => {
+  try {
+    console.log('Fetching privacy policy from database...');
+    // Check MongoDB connection
+    if (mongoose.connection.readyState !== 1) {
+      console.error('MongoDB not connected');
+      return res.status(500).json({ message: 'Database connection error' });
+    }
+    
+    const privacyPolicy = await PrivacyPolicy.findOne({ active: true });
+    console.log('Found privacy policy:', privacyPolicy);
+    res.json(privacyPolicy || {});
+  } catch (error) {
+    console.error('Error fetching privacy policy:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+app.put('/api/privacy-policy', authenticateAdmin, async (req, res) => {
+  try {
+    console.log('Updating privacy policy:', req.body);
+    
+    // Find existing privacy policy or create new
+    let privacyPolicy = await PrivacyPolicy.findOne({ active: true });
+    
+    if (privacyPolicy) {
+      // Update existing
+      Object.assign(privacyPolicy, req.body);
+      privacyPolicy.lastUpdated = new Date();
+      await privacyPolicy.save();
+    } else {
+      // Create new
+      privacyPolicy = new PrivacyPolicy({ ...req.body, active: true });
+      await privacyPolicy.save();
+    }
+    
+    console.log('Privacy policy updated successfully');
+    res.json({ message: 'Privacy policy updated successfully' });
+  } catch (error) {
+    console.error('Error updating privacy policy:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
 // About Content Routes
 app.get('/api/about-content', async (req, res) => {
   try {
@@ -1157,6 +1365,7 @@ app.listen(PORT, () => {
     await createDefaultServices();
     await createDefaultContactInfo();
     await createDefaultDashboardStats();
+    await createDefaultPrivacyPolicy();
     // await createDefaultContent();
     console.log('Server initialization complete');
   });
