@@ -260,7 +260,7 @@ const TermsOfService = () => {
                 day: 'numeric' 
               })}
             </p>
-          </div>
+          </motion.div>
         </div>
       </div>
     </div>
