@@ -30,11 +30,14 @@ import {
   ExternalLink,
   Edit2,
   Heart,
-  Target,
-  Scale
+  Target
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import {
+  Save,
+  Scale
+} from 'lucide-react';
 import PrivacyPolicyManager from '../components/admin/PrivacyPolicyManager';
 import TermsOfServiceManager from '../components/admin/TermsOfServiceManager';
 
@@ -361,6 +364,18 @@ const AdminDashboard = () => {
     setResumeViewUrl(resumeUrl);
     setShowResumeModal(true);
   };
+
+  const tabOptions = [
+    { id: 'overview', label: 'Overview', icon: BarChart3 },
+    { id: 'contacts', label: 'Contacts', icon: MessageSquare },
+    { id: 'users', label: 'Users', icon: Users },
+    { id: 'testimonials', label: 'Testimonials', icon: Star },
+    { id: 'services', label: 'Services', icon: Settings },
+    { id: 'about', label: 'About Us', icon: FileText },
+    { id: 'settings', label: 'Settings', icon: Settings },
+    { id: 'privacy-policy', label: 'Privacy Policy', icon: Shield },
+    { id: 'terms-service', label: 'Terms of Service', icon: Scale }
+  ];
 
   const handleDownloadResume = (resumePath: string, userName: string) => {
     const resumeUrl = `${import.meta.env.VITE_API_URL || '/api'}/uploads/${resumePath.split('/').pop()}`;
@@ -1317,10 +1332,7 @@ const AdminDashboard = () => {
               { id: 'users', label: 'Users', icon: Users },
               { id: 'testimonials', label: 'Testimonials', icon: Star },
               { id: 'services', label: 'Services', icon: Settings },
-              { id: 'about', label: 'About Us', icon: FileText },
-              { id: 'settings', label: 'Settings', icon: Settings },
-              { id: 'privacy-policy', label: 'Privacy Policy', icon: Shield },
-              { id: 'terms-service', label: 'Terms of Service', icon: Scale }
+              { id: 'about', label: 'About Us', icon: FileText }
             ].map((tab) => (
               <motion.button
                 key={tab.id}
