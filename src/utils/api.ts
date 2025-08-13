@@ -144,6 +144,22 @@ export interface TermsOfServiceData {
   active?: boolean;
 }
 
+export interface ContactInfoData {
+  phone: string[];
+  email: string[];
+  address: string[];
+  workingHours: string[];
+}
+
+export interface DashboardStatsData {
+  happyClients: string;
+  successRate: string;
+  growthRate: string;
+  totalProjects: string;
+  activeClients: string;
+  completedProjects: string;
+}
+
 class ApiService {
   private async request(endpoint: string, options: RequestInit = {}) {
     const url = `${API_BASE_URL}${endpoint}`;
