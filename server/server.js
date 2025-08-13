@@ -1389,6 +1389,51 @@ app.put('/api/privacy-policy', authenticateAdmin, async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
+// Terms of Service Routes
+app.get('/api/terms-of-service', async (req, res) => {
+  try {
+    console.log('Fetching terms of service from database...');
+    // Check MongoDB connection
+    if (mongoose.connection.readyState !== 1) {
+      console.error('MongoDB not connected');
+      return res.status(500).json({ message: 'Database connection error' });
+    }
+    
+    const termsOfService = await TermsOfService.findOne({ active: true });
+    console.log('Found terms of service:', termsOfService);
+    res.json(termsOfService || {});
+  } catch (error) {
+    console.error('Error fetching terms of service:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+app.put('/api/terms-of-service', authenticateAdmin, async (req, res) => {
+  try {
+    console.log('Updating terms of service:', req.body);
+    
+    // Find existing terms of service or create new
+    let termsOfService = await TermsOfService.findOne({ active: true });
+    
+    if (termsOfService) {
+      // Update existing
+      Object.assign(termsOfService, req.body);
+      termsOfService.lastUpdated = new Date();
+      await termsOfService.save();
+    } else {
+      // Create new
+      termsOfService = new TermsOfService({ ...req.body, active: true });
+      await termsOfService.save();
+    }
+    
+    console.log('Terms of service updated successfully');
+    res.json({ message: 'Terms of service updated successfully' });
+  } catch (error) {
+    console.error('Error updating terms of service:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
 // About Content Routes
 app.get('/api/about-content', async (req, res) => {
   try {
