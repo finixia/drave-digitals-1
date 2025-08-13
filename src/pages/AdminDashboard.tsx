@@ -22,7 +22,8 @@ import {
   LogOut,
   BarChart3,
   MessageSquare,
-  Settings,
+  FileText,
+  Scale
   Award,
   Code,
   FileText,
