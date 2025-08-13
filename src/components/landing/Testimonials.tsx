@@ -27,36 +27,20 @@ const Testimonials = () => {
       try {
         setLoading(true);
         console.log('Fetching testimonials...');
-        const response = await fetch('http://localhost:5000/api/testimonials');
-        console.log('Response status:', response.status);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
+        const data = await apiService.getTestimonials();
         console.log('Testimonials fetched:', data);
-        setTestimonials(data);
+        // Ensure we have an array of testimonials
+        if (Array.isArray(data)) {
+          setTestimonials(data);
+        } else {
+          console.error('Testimonials data is not an array:', data);
+          setTestimonials([]);
+        }
         setError(null);
       } catch (error) {
         console.error('Failed to fetch testimonials:', error);
         setError('Failed to load testimonials. Using fallback data.');
-        // Fallback to empty array if API fails
-        setTestimonials([
-          {
-            _id: '1',
-            name: 'Sample User',
-            role: 'Software Engineer',
-            company: 'Tech Company',
-            rating: 5,
-            text: 'Great service! Highly recommended.',
-            avatar: '👨‍💻',
-            service: 'Job Consultancy',
-            featured: true,
-            approved: true,
-            createdAt: new Date().toISOString()
-          }
-        ]);
+        setTestimonials([]);
       } finally {
         setLoading(false);
       }
@@ -196,7 +180,7 @@ const Testimonials = () => {
             </div>
             <div className="w-px h-6 bg-gray-300" />
             <div className="text-slate-400">
-              Based on {testimonials.length > 0 ? `${testimonials.length * 100}+` : '5000+'} reviews
+              Based on {testimonials.length > 0 ? `${testimonials.length}+` : '0'} reviews
             </div>
           </div>
         </motion.div>

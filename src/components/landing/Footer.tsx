@@ -86,10 +86,9 @@ const Footer = () => {
 
   return (
     <footer className="bg-white border-t border-gray-200">
-      <div className="max-w-7xl mx-auto px">
+      <div className="max-w-7xl mx-auto px-6 py-16">
         {/* Logo at the Top */}
-        <div className="flex justify-start mb-10">
-
+        <div className="flex justify-center md:justify-start mb-10">
           <motion.div 
             whileHover={{ 
               scale: 1.05,
@@ -106,7 +105,7 @@ const Footer = () => {
         </div>
 
         {/* Footer Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8 mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-8 mb-12">
           {/* Brand Column */}
           <div className="lg:col-span-2">
             <p className="text-gray-600 mb-6 leading-relaxed">
@@ -115,22 +114,22 @@ const Footer = () => {
               cybersecurity awareness.
             </p>
 
-            <div className="space-y-3 mb-6">
+            <div className="space-y-3 mb-6 text-sm">
               <div className="flex items-center space-x-3 text-gray-600">
                 <Mail size={16} />
-                <span className="text-sm">info@careerguard.com</span>
+                <span>info@careerguard.com</span>
               </div>
               <div className="flex items-center space-x-3 text-gray-600">
                 <Phone size={16} />
-                <span className="text-sm">+91 9876543210</span>
+                <span>+91 9876543210</span>
               </div>
               <div className="flex items-center space-x-3 text-gray-600">
                 <MapPin size={16} />
-                <span className="text-sm">Mumbai, Maharashtra</span>
+                <span>Mumbai, Maharashtra</span>
               </div>
             </div>
 
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center justify-center md:justify-start space-x-4">
               {socialLinks.map((social, index) => (
                 <motion.a
                   key={index}
@@ -163,7 +162,7 @@ const Footer = () => {
 
           {/* Footer Links */}
           {Object.entries(footerLinks).map(([category, links]) => (
-            <div key={category}>
+            <div key={category} className="text-center md:text-left">
               <h3 className="text-gray-900 font-semibold mb-4">{category}</h3>
               <ul className="space-y-3">
                 {links.map((link, index) => (
@@ -192,20 +191,20 @@ const Footer = () => {
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="bg-gray-50 border border-gray-200 rounded-2xl p-8 mb-12"
+          className="bg-gray-50 border border-gray-200 rounded-2xl p-6 md:p-8 mb-12"
         >
           <div className="text-center">
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">
+            <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-4">
               Stay Updated with Career Opportunities
             </h3>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 mb-6 text-sm md:text-base">
               Subscribe to our newsletter for the latest job openings,
               fraud alerts, and career tips.
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 max-w-md mx-auto">
+            <div className="max-w-md mx-auto">
               <form
                 onSubmit={handleNewsletterSubmit}
-                className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full"
+                className="flex flex-col sm:flex-row gap-4 w-full"
               >
                 <input
                   type="email"
@@ -223,7 +222,7 @@ const Footer = () => {
                     boxShadow: isSubmitting ? "none" : "0 10px 25px rgba(239, 68, 68, 0.3)"
                   }}
                   whileTap={{ scale: isSubmitting ? 1 : 0.95 }}
-                  className={`bg-gradient-to-r from-red-500 to-red-600 text-white px-8 py-3 rounded-xl font-semibold hover:shadow-lg transition-all whitespace-nowrap relative overflow-hidden ${
+                  className={`bg-gradient-to-r from-red-500 to-red-600 text-white px-6 md:px-8 py-3 rounded-xl font-semibold hover:shadow-lg transition-all whitespace-nowrap relative overflow-hidden w-full sm:w-auto ${
                     isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                 >
@@ -254,7 +253,7 @@ const Footer = () => {
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className={`mt-4 p-4 rounded-xl flex items-center justify-center space-x-3 max-w-md mx-auto ${
+                className={`mt-4 p-3 md:p-4 rounded-xl flex items-center justify-center space-x-3 max-w-md mx-auto text-sm ${
                   submitStatus === 'success'
                     ? 'bg-green-500/10 border border-green-500/20 text-green-400'
                     : 'bg-red-500/10 border border-red-500/20 text-red-400'
@@ -265,7 +264,7 @@ const Footer = () => {
                 ) : (
                   <AlertCircle size={20} />
                 )}
-                <span className="text-sm text-center">{statusMessage}</span>
+                <span className="text-center">{statusMessage}</span>
               </motion.div>
             )}
           </div>
@@ -274,12 +273,12 @@ const Footer = () => {
         {/* Bottom Bar */}
         <div className="border-t border-gray-200 pt-8">
           <div className="flex flex-col md:flex-row items-center justify-between">
-            <div className="text-gray-600 text-sm mb-4 md:mb-0">
+            <div className="text-gray-600 text-sm mb-4 md:mb-0 text-center md:text-left">
               © 2024 Drave Digitals. All rights reserved.
             </div>
-            <div className="flex items-center space-x-6 text-gray-600 text-sm">
+            <div className="flex flex-wrap items-center justify-center gap-4 md:gap-6 text-gray-600 text-sm">
               <motion.a 
-                href="#" 
+                href="/privacy-policy" 
                 whileHover={{ 
                   y: -3,
                   color: "#dc2626",
@@ -290,7 +289,7 @@ const Footer = () => {
                 Privacy Policy
               </motion.a>
               <motion.a 
-                href="#" 
+                href="/terms-of-service" 
                 whileHover={{ 
                   y: -3,
                   color: "#dc2626",

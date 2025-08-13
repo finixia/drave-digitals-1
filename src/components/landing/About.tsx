@@ -1,6 +1,17 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Target, Users, Award, TrendingUp, Shield, Heart } from 'lucide-react';
+import { apiService } from '../../utils/api';
+
+// Icon mapping for dynamic content
+const iconMap: { [key: string]: React.ComponentType<any> } = {
+  Target,
+  Users,
+  Award,
+  TrendingUp,
+  Shield,
+  Heart
+};
 
 const stats = [
   { icon: Users, label: 'Happy Clients', value: '5000+', color: 'text-blue-400' },
@@ -9,25 +20,77 @@ const stats = [
   { icon: TrendingUp, label: 'Growth Rate', value: '150%', color: 'text-purple-400' }
 ];
 
-const values = [
-  {
-    icon: Target,
-    title: 'Mission Driven',
-    description: 'Empowering careers while protecting against digital threats with innovative solutions.'
-  },
-  {
-    icon: Heart,
-    title: 'Client First',
-    description: 'Your success is our priority. We provide personalized solutions for every client.'
-  },
-  {
-    icon: Shield,
-    title: 'Trust & Security',
-    description: 'Building trust through transparency, security, and reliable service delivery.'
-  }
-];
-
 const About = () => {
+  const [aboutContent, setAboutContent] = React.useState<any>({
+    title: 'Your Trusted Career Partner',
+    subtitle: 'About Us',
+    description: 'Drave Digitals is more than just a consultancy. We\'re your comprehensive career protection and growth partner, combining job placement expertise with cybersecurity awareness and cutting-edge technology solutions.',
+    values: [
+      {
+        title: 'Mission Driven',
+        description: 'Empowering careers while protecting against digital threats with innovative solutions.',
+        icon: 'Target'
+      },
+      {
+        title: 'Client First',
+        description: 'Your success is our priority. We provide personalized solutions for every client.',
+        icon: 'Heart'
+      },
+      {
+        title: 'Trust & Security',
+        description: 'Building trust through transparency, security, and reliable service delivery.',
+        icon: 'Shield'
+      }
+    ],
+    commitments: [
+      'Personalized career guidance for every individual',
+      'Comprehensive fraud protection and awareness',
+      'Cutting-edge technology solutions',
+      '24/7 support and consultation',
+      'Transparent pricing with no hidden costs',
+      'Continuous skill development programs'
+    ]
+  });
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const fetchAboutContent = async () => {
+      try {
+        setLoading(true);
+        console.log('Fetching about content...');
+        const data = await apiService.getAboutContent();
+        console.log('About content fetched:', data);
+        if (data && Object.keys(data).length > 0) {
+          setAboutContent(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch about content:', error);
+        // Keep default content on error
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAboutContent();
+  }, []);
+
+  if (loading) {
+    return (
+      <section id="about" className="py-32 bg-white">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              className="inline-block w-8 h-8 border-4 border-red-400 border-t-transparent rounded-full"
+            />
+            <p className="mt-4 text-gray-600">Loading about content...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section id="about" className="py-32 bg-white">
       <div className="max-w-7xl mx-auto px-6">
@@ -44,19 +107,17 @@ const About = () => {
             className="inline-flex items-center space-x-2 bg-gradient-to-r from-red-500/20 to-red-600/20 border border-red-500/30 rounded-full px-4 py-2 text-red-400 text-sm font-medium mb-6"
           >
             <Target size={16} />
-            <span>About Us</span>
+            <span>{aboutContent.subtitle}</span>
           </motion.div>
           
           <h2 className="text-5xl md:text-6xl font-bold text-white mb-6">
-           <span className="text-gray-900">Your Trusted</span>{' '}
+           <span className="text-gray-900">{aboutContent.title.split(' ').slice(0, 2).join(' ')}</span>{' '}
             <span className="bg-gradient-to-r from-red-400 to-red-600 bg-clip-text text-transparent">
-              Career Partner
+              {aboutContent.title.split(' ').slice(2).join(' ')}
             </span>
           </h2>
           <p className="text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
-            Drave Digitals is more than just a consultancy. We're your comprehensive career 
-            protection and growth partner, combining job placement expertise with 
-            cybersecurity awareness and cutting-edge technology solutions.
+            {aboutContent.description}
           </p>
         </motion.div>
 
@@ -122,7 +183,9 @@ const About = () => {
               Why Choose CareerGuard?
             </h3>
             <div className="space-y-8">
-              {values.map((value, index) => (
+              {(aboutContent.values || []).map((value: any, index: number) => {
+                const IconComponent = iconMap[value.icon] || Target;
+                return (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, y: 20 }}
@@ -144,7 +207,7 @@ const About = () => {
                       animate={{ rotate: [0, 5, -5, 0] }}
                       transition={{ duration: 4, repeat: Infinity }}
                     >
-                      <value.icon className="text-white" size={20} />
+                      <IconComponent className="text-white" size={20} />
                     </motion.div>
                   </motion.div>
                   <div>
@@ -156,7 +219,8 @@ const About = () => {
                     </p>
                   </div>
                 </motion.div>
-              ))}
+              );
+              })}
             </div>
           </motion.div>
 
@@ -182,14 +246,7 @@ const About = () => {
                   Our Commitment
                 </h4>
                 <div className="space-y-4">
-                  {[
-                    'Personalized career guidance for every individual',
-                    'Comprehensive fraud protection and awareness',
-                    'Cutting-edge technology solutions',
-                    '24/7 support and consultation',
-                    'Transparent pricing with no hidden costs',
-                    'Continuous skill development programs'
-                  ].map((commitment, index) => (
+                  {(aboutContent.commitments || []).map((commitment: string, index: number) => (
                     <motion.div
                       key={index}
                       initial={{ opacity: 0, x: -20 }}

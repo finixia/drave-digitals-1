@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 export interface ContactFormData {
   name: string;
@@ -70,6 +70,78 @@ export interface DetailedRegistrationData {
   
   // Documents
   resume?: File;
+}
+
+export interface TestimonialData {
+  name: string;
+  role: string;
+  company: string;
+  rating: number;
+  text: string;
+  avatar: string;
+  service: string;
+  featured?: boolean;
+  approved?: boolean;
+}
+
+export interface ServiceData {
+  title: string;
+  description: string;
+  icon: string;
+  color: string;
+  features: string[];
+  active?: boolean;
+  order?: number;
+}
+export interface AboutContentData {
+  title: string;
+  subtitle: string;
+  description: string;
+  values: Array<{
+    title: string;
+    description: string;
+    icon: string;
+  }>;
+  commitments: string[];
+  active?: boolean;
+}
+
+export interface PrivacyPolicyData {
+  title: string;
+  subtitle: string;
+  introduction: string;
+  sections: Array<{
+    title: string;
+    content: Array<{
+      subtitle?: string;
+      items: string[];
+    }>;
+  }>;
+  contactInfo: {
+    email: string;
+    phone: string;
+    address: string;
+  };
+  active?: boolean;
+}
+
+export interface TermsOfServiceData {
+  title: string;
+  subtitle: string;
+  introduction: string;
+  sections: Array<{
+    title: string;
+    content: Array<{
+      subtitle?: string;
+      items: string[];
+    }>;
+  }>;
+  contactInfo: {
+    email: string;
+    phone: string;
+    address: string;
+  };
+  active?: boolean;
 }
 
 class ApiService {
@@ -268,18 +340,33 @@ class ApiService {
   // Testimonial endpoints
   async getTestimonials() {
     try {
+      console.log('API: Fetching testimonials...');
       return await this.request('/testimonials');
     } catch (error) {
       console.error('Failed to fetch testimonials:', error);
-      // Return empty array as fallback
-      return [];
+      throw error;
     }
   }
 
   async getTestimonialsAdmin() {
+    console.log('API: Fetching admin testimonials...');
     return this.request('/testimonials/admin');
   }
 
+  async createTestimonial(data: TestimonialData) {
+    console.log('API: Creating testimonial...', data);
+    return this.request('/testimonials', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateTestimonial(testimonialId: string, data: TestimonialData) {
+    return this.request(`/testimonials/${testimonialId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
   async updateTestimonialStatus(testimonialId: string, approved: boolean, featured?: boolean) {
     return this.request(`/testimonials/${testimonialId}/approve`, {
       method: 'PUT',
@@ -293,6 +380,51 @@ class ApiService {
     });
   }
 
+  async submitTestimonial(data: TestimonialData) {
+    return this.request('/testimonials', {
+      method: 'POST',
+      body: JSON.stringify({ ...data, approved: false }),
+    });
+  }
+
+  // Service endpoints
+  async getServices() {
+    try {
+      console.log('API: Fetching services...');
+      return await this.request('/services');
+    } catch (error) {
+      console.error('Failed to fetch services:', error);
+      throw error;
+    }
+  }
+
+  async getServicesAdmin() {
+    console.log('API: Fetching admin services...');
+    return this.request('/services/admin');
+  }
+
+  async createService(data: ServiceData) {
+    console.log('API: Creating service...', data);
+    const response = await this.request('/services', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    console.log('Service creation response:', response);
+    return response;
+  }
+
+  async updateService(serviceId: string, data: ServiceData) {
+    return this.request(`/services/${serviceId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteService(serviceId: string) {
+    return this.request(`/services/${serviceId}`, {
+      method: 'DELETE',
+    });
+  }
   // Contact status updates
   async updateContactStatus(contactId: string, status: string) {
     return this.request(`/contacts/${contactId}/status`, {
@@ -314,6 +446,101 @@ class ApiService {
     return this.request(`/fraud-cases/${caseId}/status`, {
       method: 'PUT',
       body: JSON.stringify({ status }),
+    });
+  }
+
+  // About Content endpoints
+  async getAboutContent() {
+    try {
+      console.log('API: Fetching about content...');
+      return await this.request('/about-content');
+    } catch (error) {
+      console.error('Failed to fetch about content:', error);
+      throw error;
+    }
+  }
+
+  async updateAboutContent(data: AboutContentData) {
+    console.log('API: Updating about content...', data);
+    return this.request('/about-content', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Contact Info endpoints
+  async getContactInfo() {
+    try {
+      console.log('API: Fetching contact info...');
+      return await this.request('/contact-info');
+    } catch (error) {
+      console.error('Failed to fetch contact info:', error);
+      throw error;
+    }
+  }
+
+  async updateContactInfo(data: ContactInfoData) {
+    console.log('API: Updating contact info...', data);
+    return this.request('/contact-info', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Dashboard Stats endpoints
+  async getDashboardStatsData() {
+    try {
+      console.log('API: Fetching dashboard stats...');
+      return await this.request('/dashboard-stats');
+    } catch (error) {
+      console.error('Failed to fetch dashboard stats:', error);
+      throw error;
+    }
+  }
+
+  async updateDashboardStats(data: DashboardStatsData) {
+    console.log('API: Updating dashboard stats...', data);
+    return this.request('/dashboard-stats', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Privacy Policy endpoints
+  async getPrivacyPolicy() {
+    try {
+      console.log('API: Fetching privacy policy...');
+      return await this.request('/privacy-policy');
+    } catch (error) {
+      console.error('Failed to fetch privacy policy:', error);
+      throw error;
+    }
+  }
+
+  async updatePrivacyPolicy(data: PrivacyPolicyData) {
+    console.log('API: Updating privacy policy...', data);
+    return this.request('/privacy-policy', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Terms of Service endpoints
+  async getTermsOfService() {
+    try {
+      console.log('API: Fetching terms of service...');
+      return await this.request('/terms-of-service');
+    } catch (error) {
+      console.error('Failed to fetch terms of service:', error);
+      throw error;
+    }
+  }
+
+  async updateTermsOfService(data: TermsOfServiceData) {
+    console.log('API: Updating terms of service...', data);
+    return this.request('/terms-of-service', {
+      method: 'PUT',
+      body: JSON.stringify(data),
     });
   }
 }

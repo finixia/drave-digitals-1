@@ -215,7 +215,545 @@ const websiteContentSchema = new mongoose.Schema({
 
 const WebsiteContent = mongoose.model('WebsiteContent', websiteContentSchema);
 
+// About Content Schema
+const aboutContentSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  subtitle: { type: String, required: true },
+  description: { type: String, required: true },
+  values: [{
+    title: { type: String, required: true },
+    description: { type: String, required: true },
+    icon: { type: String, required: true }
+  }],
+  commitments: [{ type: String }],
+  active: { type: Boolean, default: true },
+  createdAt: { type: Date, default: Date.now }
+});
+
+const AboutContent = mongoose.model('AboutContent', aboutContentSchema, 'aboutcontents');
+
+// Privacy Policy Schema
+const privacyPolicySchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  subtitle: { type: String, required: true },
+  introduction: { type: String, required: true },
+  sections: [{
+    title: { type: String, required: true },
+    content: [{
+      subtitle: { type: String },
+      items: [{ type: String }]
+    }]
+  }],
+  contactInfo: {
+    email: { type: String, required: true },
+    phone: { type: String, required: true },
+    address: { type: String, required: true }
+  },
+  lastUpdated: { type: Date, default: Date.now },
+  active: { type: Boolean, default: true },
+  createdAt: { type: Date, default: Date.now }
+});
+
+const PrivacyPolicy = mongoose.model('PrivacyPolicy', privacyPolicySchema);
+
+// Terms of Service Schema
+// Contact Info Schema
+const contactInfoSchema = new mongoose.Schema({
+  phone: [String],
+  email: [String],
+  address: [String],
+  workingHours: [String],
+  active: { type: Boolean, default: true },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+const ContactInfo = mongoose.model('ContactInfo', contactInfoSchema);
+
+// Dashboard Stats Schema
+const dashboardStatsSchema = new mongoose.Schema({
+  happyClients: { type: String, default: '5000+' },
+  successRate: { type: String, default: '98%' },
+  growthRate: { type: String, default: '150%' },
+  fraudCasesResolved: { type: String, default: '1200+' },
+  active: { type: Boolean, default: true },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+const DashboardStats = mongoose.model('DashboardStats', dashboardStatsSchema);
+
+const termsOfServiceSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  subtitle: { type: String, required: true },
+  introduction: { type: String, required: true },
+  sections: [{
+    title: { type: String, required: true },
+    content: [{
+      subtitle: { type: String },
+      items: [{ type: String }]
+    }]
+  }],
+  contactInfo: {
+    email: { type: String, required: true },
+    phone: { type: String, required: true },
+    address: { type: String, required: true }
+  },
+  lastUpdated: { type: Date, default: Date.now },
+  active: { type: Boolean, default: true },
+  createdAt: { type: Date, default: Date.now }
+});
+
+const TermsOfService = mongoose.model('TermsOfService', termsOfServiceSchema);
+// Service Schema
+const serviceSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  description: { type: String, required: true },
+  icon: { type: String, required: true },
+  color: { type: String, required: true },
+  features: [{ type: String }],
+  active: { type: Boolean, default: true },
+  order: { type: Number, default: 0 },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+const Service = mongoose.model('Service', serviceSchema);
+
+// Create default services
+const createDefaultServices = async () => {
+  try {
+    const serviceCount = await Service.countDocuments();
+    if (serviceCount === 0) {
+      const defaultServices = [
+        {
+          title: 'Cyber Crime Fraud Assistance',
+          description: 'Complete protection against cyber fraud with expert guidance and legal support.',
+          icon: 'Shield',
+          color: 'from-red-500 to-pink-600',
+          features: [
+            'Cyber fraud complaint support',
+            'FIR filing guidance',
+            'Online complaint assistance',
+            'Prevention tips & awareness'
+          ],
+          order: 1
+        },
+        {
+          title: 'Job Consultancy Services',
+          description: 'End-to-end job placement services for IT & Non-IT professionals.',
+          icon: 'Briefcase',
+          color: 'from-blue-500 to-cyan-600',
+          features: [
+            'IT & Non-IT placements',
+            'Resume building support',
+            'Interview preparation',
+            'Work from home opportunities'
+          ],
+          order: 2
+        },
+        {
+          title: 'Web & App Development',
+          description: 'Custom digital solutions from websites to mobile applications.',
+          icon: 'Code',
+          color: 'from-green-500 to-emerald-600',
+          features: [
+            'Website development',
+            'E-commerce platforms',
+            'Mobile app development',
+            'UI/UX design services'
+          ],
+          order: 3
+        },
+        {
+          title: 'Digital Marketing',
+          description: 'Comprehensive digital marketing solutions to grow your business online.',
+          icon: 'TrendingUp',
+          color: 'from-purple-500 to-violet-600',
+          features: [
+            'Social media marketing',
+            'SEO optimization',
+            'Google Ads management',
+            'Meta Ads campaigns'
+          ],
+          order: 4
+        },
+        {
+          title: 'Training & Certification',
+          description: 'Professional skill development programs with industry certifications.',
+          icon: 'GraduationCap',
+          color: 'from-orange-500 to-amber-600',
+          features: [
+            'IT training programs',
+            'Digital marketing courses',
+            'Freelancing skills',
+            'Industry certifications'
+          ],
+          order: 5
+        }
+      ];
+      
+      await Service.insertMany(defaultServices);
+      console.log('Default services created');
+    }
+  } catch (error) {
+    console.error('Error creating default services:', error);
+  }
+};
 // Testimonial Schema
+// Create default contact info
+const createDefaultContactInfo = async () => {
+  try {
+    const contactInfoExists = await ContactInfo.findOne({ active: true });
+    if (!contactInfoExists) {
+      const defaultContactInfo = new ContactInfo({
+        phone: ['+91 9876543210', '+91 9876543211'],
+        email: ['info@dravedigitals.com', 'support@dravedigitals.com'],
+        address: ['123 Business District', 'Bangalore, Karnataka 530068'],
+        workingHours: ['Mon - Fri: 9:00 AM - 7:00 PM', 'Sat: 10:00 AM - 4:00 PM'],
+        active: true
+      });
+      await defaultContactInfo.save();
+      console.log('Default contact info created');
+    }
+  } catch (error) {
+    console.error('Error creating default contact info:', error);
+  }
+};
+
+// Create default dashboard stats
+const createDefaultDashboardStats = async () => {
+  try {
+    const dashboardStatsExists = await DashboardStats.findOne({ active: true });
+    if (!dashboardStatsExists) {
+      const defaultStats = new DashboardStats({
+        happyClients: '5000+',
+        successRate: '98%',
+        growthRate: '150%',
+        fraudCasesResolved: '1200+',
+        active: true
+      });
+      await defaultStats.save();
+      console.log('Default dashboard stats created');
+    }
+  } catch (error) {
+    console.error('Error creating default dashboard stats:', error);
+  }
+};
+
+// Create default privacy policy
+const createDefaultPrivacyPolicy = async () => {
+  try {
+    const privacyPolicyExists = await PrivacyPolicy.findOne({ active: true });
+    if (!privacyPolicyExists) {
+      const defaultPrivacyPolicy = new PrivacyPolicy({
+        title: 'Privacy Policy',
+        subtitle: 'Your Privacy Matters to Us',
+        introduction: 'Drave Digitals ("Company," "we," "our," or "us") respects your privacy and is committed to protecting your personal information. This Privacy Policy explains how we collect, use, store, and safeguard your data when you use our services — including Job Consultancy, Cybercrime & Digital Forensics, and App Development.\n\nBy using our website and services, you agree to the terms outlined in this Privacy Policy.',
+        sections: [
+          {
+            title: 'Information We Collect',
+            content: [
+              {
+                subtitle: 'Personal Information (for job consultancy & client onboarding)',
+                items: [
+                  'Full Name',
+                  'Contact details (email, phone number, address)',
+                  'Date of Birth, Gender',
+                  'Resume/CV, qualifications, employment history',
+                  'Identification documents (e.g., Aadhaar, PAN, Passport — only when legally required)'
+                ]
+              },
+              {
+                subtitle: 'Cybercrime & Forensics Data',
+                items: [
+                  'Digital evidence provided by clients (e.g., screenshots, logs, emails)',
+                  'Technical information related to incidents',
+                  'Any other data necessary for investigation'
+                ]
+              },
+              {
+                subtitle: 'App Development Information',
+                items: [
+                  'Project requirements and specifications',
+                  'User analytics for apps we develop',
+                  'Client feedback and communication history'
+                ]
+              },
+              {
+                subtitle: 'Automatically Collected Data',
+                items: [
+                  'IP address',
+                  'Browser type & device information',
+                  'Cookies & usage patterns'
+                ]
+              }
+            ]
+          },
+          {
+            title: 'How We Use Your Information',
+            content: [
+              {
+                subtitle: '',
+                items: [
+                  'Job Consultancy: To match candidates with employers, verify credentials, and communicate hiring updates.',
+                  'Cybercrime Services: To conduct legal investigations, gather evidence, and provide reports.',
+                  'App Development: To deliver, maintain, and improve our applications.',
+                  'Legal Compliance: To meet legal obligations under Indian law.',
+                  'Customer Support: To respond to queries, complaints, or requests.'
+                ]
+              }
+            ]
+          },
+          {
+            title: 'Data Sharing & Disclosure',
+            content: [
+              {
+                subtitle: '',
+                items: [
+                  'We do not sell your personal data. We may share your information with:',
+                  'Employers & Recruiters (job consultancy) — only with your consent.',
+                  'Law Enforcement Agencies — in cases involving cybercrime or legal compliance.',
+                  'Service Providers — for hosting, analytics, or technical support.',
+                  'Legal Authorities — if required by court order or government directive.'
+                ]
+              }
+            ]
+          },
+          {
+            title: 'Data Retention',
+            content: [
+              {
+                subtitle: '',
+                items: [
+                  'Job consultancy data is retained for up to 2 years unless you request deletion earlier.',
+                  'Cybercrime case data is retained as per legal requirements and then securely destroyed.',
+                  'App development project data is retained for contract duration + 1 year for support purposes.'
+                ]
+              }
+            ]
+          },
+          {
+            title: 'Security Measures',
+            content: [
+              {
+                subtitle: '',
+                items: [
+                  'We implement reasonable security practices, including:',
+                  'Encrypted data storage',
+                  'Secure communication protocols (HTTPS, SSL)',
+                  'Restricted employee access to sensitive data',
+                  'Regular security audits',
+                  '',
+                  'However, no system is 100% secure, and we cannot guarantee absolute security of your data.'
+                ]
+              }
+            ]
+          },
+          {
+            title: 'Your Rights',
+            content: [
+              {
+                subtitle: '',
+                items: [
+                  'You have the right to:',
+                  'Access and request a copy of your data',
+                  'Correct inaccurate information',
+                  'Request deletion of your personal data (subject to legal obligations)',
+                  'Withdraw consent for data processing (where applicable)',
+                  '',
+                  'To exercise your rights, contact us using the details in Section 9'
+                ]
+              }
+            ]
+          }
+        ],
+        contactInfo: {
+          email: 'privacy@dravedigitals.com',
+          phone: '+91 9876543210',
+          address: 'Mumbai, Maharashtra, India'
+        },
+        active: true
+      });
+      await defaultPrivacyPolicy.save();
+      console.log('Default privacy policy created');
+    }
+  } catch (error) {
+    console.error('Error creating default privacy policy:', error);
+  }
+};
+
+// Create default terms of service
+const createDefaultTermsOfService = async () => {
+  try {
+    const termsExists = await TermsOfService.findOne({ active: true });
+    if (!termsExists) {
+      const defaultTerms = new TermsOfService({
+        title: 'Terms of Service',
+        subtitle: 'Legal Terms and Conditions',
+        introduction: 'Welcome to Drave Digitals ("Company," "we," "our," or "us"). By accessing or using our website, products, and services — including Job Consultancy, Cybercrime & Digital Forensics Solutions, and App Development — you ("User," "Client," or "You") agree to comply with and be bound by these Terms and Conditions.\n\nIf you do not agree with these Terms, please discontinue use of our services immediately.',
+        sections: [
+          {
+            title: 'Scope of Services',
+            content: [
+              {
+                subtitle: 'Job Consultancy Services',
+                items: [
+                  'We assist candidates in connecting with potential employers.',
+                  'We do not guarantee employment; final hiring decisions are made solely by the employer.',
+                  'Candidates are responsible for providing accurate and truthful information.'
+                ]
+              },
+              {
+                subtitle: 'Cybercrime & Digital Forensics',
+                items: [
+                  'We provide digital investigation, cybercrime consultation, and online fraud prevention services strictly in accordance with Indian Cyber Laws (IT Act 2000 & its amendments).',
+                  'We do not engage in illegal hacking, unauthorized access, or any unlawful cyber activity.',
+                  'All investigations are conducted with proper client consent and in compliance with applicable laws.'
+                ]
+              },
+              {
+                subtitle: 'App Development',
+                items: [
+                  'We design, develop, and maintain mobile and web applications as per client requirements.',
+                  'All source code and intellectual property rights are subject to the terms agreed in the service contract.'
+                ]
+              }
+            ]
+          },
+          {
+            title: 'Eligibility',
+            content: [
+              {
+                subtitle: '',
+                items: [
+                  'You must be at least 18 years old to use our services. By engaging with us, you confirm that you are legally capable of entering into a binding agreement under Indian law.'
+                ]
+              }
+            ]
+          },
+          {
+            title: 'User Responsibilities',
+            content: [
+              {
+                subtitle: '',
+                items: [
+                  'Provide accurate, complete, and updated information when requested.',
+                  'Use our services only for lawful purposes.',
+                  'Avoid engaging in fraud, misrepresentation, harassment, or any activity that violates applicable laws.'
+                ]
+              }
+            ]
+          },
+          {
+            title: 'Payments & Fees',
+            content: [
+              {
+                subtitle: '',
+                items: [
+                  'Service fees are communicated before commencement of work and must be paid as per agreed terms.',
+                  'All payments are non-refundable unless otherwise stated in writing.',
+                  'In the case of job consultancy, fees are charged as per service agreement and do not constitute a placement guarantee.'
+                ]
+              }
+            ]
+          },
+          {
+            title: 'Intellectual Property',
+            content: [
+              {
+                subtitle: '',
+                items: [
+                  'All content on our website — including text, graphics, logos, designs, and software — is the property of Drave Digitals and protected under Indian Copyright Law.',
+                  'Clients may not copy, distribute, or reproduce any part of our services without written consent.'
+                ]
+              }
+            ]
+          },
+          {
+            title: 'Confidentiality',
+            content: [
+              {
+                subtitle: '',
+                items: [
+                  'We maintain the confidentiality of client information unless disclosure is required by law or for legal proceedings.'
+                ]
+              }
+            ]
+          },
+          {
+            title: 'Limitation of Liability',
+            content: [
+              {
+                subtitle: '',
+                items: [
+                  'We are not liable for any loss, damage, or legal consequences arising from misuse of our services.',
+                  'Job placement results, cybercrime resolution timelines, and app performance depend on factors beyond our control.'
+                ]
+              }
+            ]
+          },
+          {
+            title: 'Prohibited Activities',
+            content: [
+              {
+                subtitle: 'You agree NOT to:',
+                items: [
+                  'Use our services for any unlawful or fraudulent activity.',
+                  'Submit false documents or information.',
+                  'Attempt to gain unauthorized access to our systems or client data.'
+                ]
+              }
+            ]
+          },
+          {
+            title: 'Termination',
+            content: [
+              {
+                subtitle: '',
+                items: [
+                  'We reserve the right to suspend or terminate your access to our services without notice for violation of these Terms or applicable laws.'
+                ]
+              }
+            ]
+          },
+          {
+            title: 'Governing Law & Jurisdiction',
+            content: [
+              {
+                subtitle: '',
+                items: [
+                  'These Terms are governed by the laws of India, and any disputes shall be subject to the exclusive jurisdiction of the courts in India.'
+                ]
+              }
+            ]
+          },
+          {
+            title: 'Changes to Terms',
+            content: [
+              {
+                subtitle: '',
+                items: [
+                  'We may update these Terms from time to time. Continued use of our services after changes implies acceptance of the revised Terms.'
+                ]
+              }
+            ]
+          }
+        ],
+        contactInfo: {
+          email: 'legal@dravedigitals.com',
+          phone: '+91 9876543210',
+          address: 'Mumbai, Maharashtra, India'
+        },
+        active: true
+      });
+      await defaultTerms.save();
+      console.log('Default terms of service created');
+    }
+  } catch (error) {
+    console.error('Error creating default terms of service:', error);
+  }
+};
 const testimonialSchema = new mongoose.Schema({
   name: { type: String, required: true },
   role: { type: String, required: true },
@@ -635,9 +1173,15 @@ app.post('/api/newsletter', async (req, res) => {
 app.get('/api/testimonials', async (req, res) => {
   try {
     console.log('Fetching testimonials from database...');
-    // Get all approved testimonials from the database
+    // Check MongoDB connection
+    if (mongoose.connection.readyState !== 1) {
+      console.error('MongoDB not connected');
+      return res.status(500).json({ message: 'Database connection error' });
+    }
+    
     const testimonials = await Testimonial.find({ approved: true }).sort({ createdAt: -1 });
     console.log('Found testimonials:', testimonials.length);
+    console.log('Sample testimonial:', testimonials[0]);
     res.json(testimonials);
   } catch (error) {
     console.error('Error fetching testimonials:', error);
@@ -647,7 +1191,9 @@ app.get('/api/testimonials', async (req, res) => {
 
 app.get('/api/testimonials/admin', authenticateAdmin, async (req, res) => {
   try {
+    console.log('Fetching admin testimonials from database...');
     const testimonials = await Testimonial.find().sort({ createdAt: -1 });
+    console.log('Found admin testimonials:', testimonials.length);
     res.json(testimonials);
   } catch (error) {
     console.error('Error fetching admin testimonials:', error);
@@ -655,13 +1201,21 @@ app.get('/api/testimonials/admin', authenticateAdmin, async (req, res) => {
   }
 });
 
-app.post('/api/testimonials', authenticateAdmin, async (req, res) => {
+app.post('/api/testimonials', async (req, res) => {
   try {
+    // Check MongoDB connection
+    if (mongoose.connection.readyState !== 1) {
+      console.error('MongoDB not connected');
+      return res.status(500).json({ message: 'Database connection error' });
+    }
+    
+    console.log('Creating testimonial:', req.body);
     const testimonial = new Testimonial({
       ...req.body,
-      approved: true // Admin-created testimonials are automatically approved
+      approved: true // Auto-approve for now
     });
     await testimonial.save();
+    console.log('Testimonial created successfully');
     res.status(201).json({ message: 'Testimonial created successfully' });
   } catch (error) {
     console.error('Error creating testimonial:', error);
@@ -685,17 +1239,200 @@ app.put('/api/testimonials/:id/approve', authenticateAdmin, async (req, res) => 
   }
 });
 
+app.put('/api/testimonials/:id', authenticateAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log('Updating testimonial:', id, req.body);
+    const updateData = { ...req.body, updatedAt: new Date() };
+    
+    await Testimonial.findByIdAndUpdate(id, updateData);
+    console.log('Testimonial updated successfully');
+    res.json({ message: 'Testimonial updated successfully' });
+  } catch (error) {
+    console.error('Error updating testimonial:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
 app.delete('/api/testimonials/:id', authenticateAdmin, async (req, res) => {
   try {
     const { id } = req.params;
+    console.log('Deleting testimonial:', id);
     await Testimonial.findByIdAndDelete(id);
+    console.log('Testimonial deleted successfully');
     res.json({ message: 'Testimonial deleted successfully' });
   } catch (error) {
+    console.error('Error deleting testimonial:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
+// Service Routes
+app.get('/api/services', async (req, res) => {
+  try {
+    console.log('Fetching services from database...');
+    // Check MongoDB connection
+    if (mongoose.connection.readyState !== 1) {
+      console.error('MongoDB not connected');
+      return res.status(500).json({ message: 'Database connection error' });
+    }
+    
+    const services = await Service.find({ active: true }).sort({ order: 1 });
+    console.log('Found services:', services.length);
+    console.log('Sample service:', services[0]);
+    res.json(services);
+  } catch (error) {
+    console.error('Error fetching services:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+app.get('/api/services/admin', authenticateAdmin, async (req, res) => {
+  try {
+    console.log('Fetching admin services from database...');
+    const services = await Service.find().sort({ order: 1 });
+    console.log('Found admin services:', services.length);
+    res.json(services);
+  } catch (error) {
+    console.error('Error fetching admin services:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+app.post('/api/services', async (req, res) => {
+  try {
+    // Check MongoDB connection
+    if (mongoose.connection.readyState !== 1) {
+      console.error('MongoDB not connected');
+      return res.status(500).json({ message: 'Database connection error' });
+    }
+    
+    console.log('Creating service:', req.body);
+    const service = new Service(req.body);
+    await service.save();
+    console.log('Service created successfully');
+    res.status(201).json({ message: 'Service created successfully' });
+  } catch (error) {
+    console.error('Error creating service:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+app.put('/api/services/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log('Updating service:', id, req.body);
+    const updateData = { ...req.body, updatedAt: new Date() };
+    
+    await Service.findByIdAndUpdate(id, updateData);
+    console.log('Service updated successfully');
+    res.json({ message: 'Service updated successfully' });
+  } catch (error) {
+    console.error('Error updating service:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+app.delete('/api/services/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    console.log('Deleting service:', id);
+    await Service.findByIdAndDelete(id);
+    console.log('Service deleted successfully');
+    res.json({ message: 'Service deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting service:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
 // Dashboard Stats
+// Privacy Policy Routes
+app.get('/api/privacy-policy', async (req, res) => {
+  try {
+    console.log('Fetching privacy policy from database...');
+    // Check MongoDB connection
+    if (mongoose.connection.readyState !== 1) {
+      console.error('MongoDB not connected');
+      return res.status(500).json({ message: 'Database connection error' });
+    }
+    
+    const privacyPolicy = await PrivacyPolicy.findOne({ active: true });
+    console.log('Found privacy policy:', privacyPolicy);
+    res.json(privacyPolicy || {});
+  } catch (error) {
+    console.error('Error fetching privacy policy:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+app.put('/api/privacy-policy', authenticateAdmin, async (req, res) => {
+  try {
+    console.log('Updating privacy policy:', req.body);
+    
+    // Find existing privacy policy or create new
+    let privacyPolicy = await PrivacyPolicy.findOne({ active: true });
+    
+    if (privacyPolicy) {
+      // Update existing
+      Object.assign(privacyPolicy, req.body);
+      privacyPolicy.lastUpdated = new Date();
+      await privacyPolicy.save();
+    } else {
+      // Create new
+      privacyPolicy = new PrivacyPolicy({ ...req.body, active: true });
+      await privacyPolicy.save();
+    }
+    
+    console.log('Privacy policy updated successfully');
+    res.json({ message: 'Privacy policy updated successfully' });
+  } catch (error) {
+    console.error('Error updating privacy policy:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+// About Content Routes
+app.get('/api/about-content', async (req, res) => {
+  try {
+    console.log('Fetching about content from database...');
+    // Check MongoDB connection
+    if (mongoose.connection.readyState !== 1) {
+      console.error('MongoDB not connected');
+      return res.status(500).json({ message: 'Database connection error' });
+    }
+    
+    const aboutContent = await AboutContent.findOne({ active: true });
+    console.log('Found about content:', aboutContent);
+    res.json(aboutContent || {});
+  } catch (error) {
+    console.error('Error fetching about content:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+app.put('/api/about-content', authenticateAdmin, async (req, res) => {
+  try {
+    console.log('Updating about content:', req.body);
+    
+    // Find existing content or create new
+    let aboutContent = await AboutContent.findOne({ active: true });
+    
+    if (aboutContent) {
+      // Update existing
+      Object.assign(aboutContent, req.body);
+      await aboutContent.save();
+    } else {
+      // Create new
+      aboutContent = new AboutContent({ ...req.body, active: true });
+      await aboutContent.save();
+    }
+    
+    console.log('About content updated successfully');
+    res.json({ message: 'About content updated successfully' });
+  } catch (error) {
+    console.error('Error updating about content:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
 app.get('/api/dashboard/stats', authenticateAdmin, async (req, res) => {
   try {
     const totalContacts = await Contact.countDocuments();
@@ -847,6 +1584,11 @@ app.listen(PORT, () => {
     console.log('MongoDB connection established');
     await createDefaultAdmin();
     await createDefaultTestimonials();
+    await createDefaultServices();
+    await createDefaultContactInfo();
+    await createDefaultDashboardStats();
+    await createDefaultPrivacyPolicy();
+    await createDefaultTermsOfService();
     // await createDefaultContent();
     console.log('Server initialization complete');
   });
