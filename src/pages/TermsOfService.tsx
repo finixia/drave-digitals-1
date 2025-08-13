@@ -13,15 +13,12 @@ const TermsOfService = () => {
     const fetchTermsContent = async () => {
       try {
         setLoading(true);
-        console.log('Terms of Service: Fetching content...');
         console.log('Fetching terms of service...');
         const data = await apiService.getTermsOfService();
-        console.log('Terms of Service: Content received:', data);
         console.log('Terms of service fetched:', data);
         if (data && Object.keys(data).length > 0) {
           setTermsContent(data);
         } else {
-          console.log('Terms of Service: No content found, using defaults');
           // Fallback to default content
           setTermsContent({
             title: 'Terms of Service',
