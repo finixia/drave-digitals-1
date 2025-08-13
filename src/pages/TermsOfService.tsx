@@ -4,16 +4,6 @@ import { ArrowLeft, FileText, Scale, Shield, Users, AlertTriangle, Lock } from '
 import { useNavigate } from 'react-router-dom';
 import { apiService } from '../utils/api';
 
-// Icon mapping for dynamic content
-const iconMap: { [key: string]: React.ComponentType<any> } = {
-  FileText,
-  Scale,
-  Shield,
-  Users,
-  AlertTriangle,
-  Lock
-};
-
 const TermsOfService = () => {
   const navigate = useNavigate();
   const [termsData, setTermsData] = useState<any>(null);
@@ -35,7 +25,7 @@ const TermsOfService = () => {
         setTermsData({
           title: 'Terms of Service',
           subtitle: 'Legal Terms and Conditions',
-          introduction: 'Welcome to Drave Digitals ("Company," "we," "our," or "us"). By accessing or using our website, products, and services — including Job Consultancy, Cybercrime & Digital Forensics Solutions, and App Development — you ("User," "Client," or "You") agree to comply with and be bound by these Terms and Conditions.\n\nIf you do not agree with these Terms, please discontinue use of our services immediately.',
+          introduction: 'Welcome to Drave Digitals. By accessing or using our website, products, and services, you agree to comply with and be bound by these Terms and Conditions.',
           sections: [
             {
               title: "Scope of Services",
@@ -51,27 +41,9 @@ const TermsOfService = () => {
                 {
                   subtitle: "Cybercrime & Digital Forensics",
                   items: [
-                    "We provide digital investigation, cybercrime consultation, and online fraud prevention services strictly in accordance with Indian Cyber Laws (IT Act 2000 & its amendments).",
-                    "We do not engage in illegal hacking, unauthorized access, or any unlawful cyber activity.",
-                    "All investigations are conducted with proper client consent and in compliance with applicable laws."
-                  ]
-                },
-                {
-                  subtitle: "App Development",
-                  items: [
-                    "We design, develop, and maintain mobile and web applications as per client requirements.",
-                    "All source code and intellectual property rights are subject to the terms agreed in the service contract."
-                  ]
-                }
-              ]
-            },
-            {
-              title: "Eligibility",
-              content: [
-                {
-                  subtitle: "",
-                  items: [
-                    "You must be at least 18 years old to use our services. By engaging with us, you confirm that you are legally capable of entering into a binding agreement under Indian law."
+                    "We provide digital investigation and cybercrime consultation services.",
+                    "All investigations are conducted with proper client consent and in compliance with applicable laws.",
+                    "We do not engage in illegal hacking or unauthorized access."
                   ]
                 }
               ]
@@ -84,7 +56,7 @@ const TermsOfService = () => {
                   items: [
                     "Provide accurate, complete, and updated information when requested.",
                     "Use our services only for lawful purposes.",
-                    "Avoid engaging in fraud, misrepresentation, harassment, or any activity that violates applicable laws."
+                    "Avoid engaging in fraud, misrepresentation, or harassment."
                   ]
                 }
               ]
@@ -95,90 +67,9 @@ const TermsOfService = () => {
                 {
                   subtitle: "",
                   items: [
-                    "Service fees are communicated before commencement of work and must be paid as per agreed terms.",
+                    "Service fees are communicated before commencement of work.",
                     "All payments are non-refundable unless otherwise stated in writing.",
-                    "In the case of job consultancy, fees are charged as per service agreement and do not constitute a placement guarantee."
-                  ]
-                }
-              ]
-            },
-            {
-              title: "Intellectual Property",
-              content: [
-                {
-                  subtitle: "",
-                  items: [
-                    "All content on our website — including text, graphics, logos, designs, and software — is the property of Drave Digitals and protected under Indian Copyright Law.",
-                    "Clients may not copy, distribute, or reproduce any part of our services without written consent."
-                  ]
-                }
-              ]
-            },
-            {
-              title: "Confidentiality",
-              content: [
-                {
-                  subtitle: "",
-                  items: [
-                    "We maintain the confidentiality of client information unless disclosure is required by law or for legal proceedings."
-                  ]
-                }
-              ]
-            },
-            {
-              title: "Limitation of Liability",
-              content: [
-                {
-                  subtitle: "",
-                  items: [
-                    "We are not liable for any loss, damage, or legal consequences arising from misuse of our services.",
-                    "Job placement results, cybercrime resolution timelines, and app performance depend on factors beyond our control."
-                  ]
-                }
-              ]
-            },
-            {
-              title: "Prohibited Activities",
-              content: [
-                {
-                  subtitle: "You agree NOT to:",
-                  items: [
-                    "Use our services for any unlawful or fraudulent activity.",
-                    "Submit false documents or information.",
-                    "Attempt to gain unauthorized access to our systems or client data."
-                  ]
-                }
-              ]
-            },
-            {
-              title: "Termination",
-              content: [
-                {
-                  subtitle: "",
-                  items: [
-                    "We reserve the right to suspend or terminate your access to our services without notice for violation of these Terms or applicable laws."
-                  ]
-                }
-              ]
-            },
-            {
-              title: "Governing Law & Jurisdiction",
-              content: [
-                {
-                  subtitle: "",
-                  items: [
-                    "These Terms are governed by the laws of India, and any disputes shall be subject to the exclusive jurisdiction of the courts in India."
-                  ]
-                }
-              ]
-            },
-            {
-              title: "Changes to Terms",
-              content: [
-                {
-                  subtitle: "",
-                  items: [
-                    "We may update these Terms from time to time. Continued use of our services after changes implies acceptance of the revised Terms."
+                    "Fees do not constitute a placement guarantee."
                   ]
                 }
               ]
@@ -245,6 +136,8 @@ const TermsOfService = () => {
     );
   }
 
+  const sectionIcons = [FileText, Users, Shield, Scale, Lock, Shield, AlertTriangle, AlertTriangle, Scale, Scale, FileText];
+
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
@@ -284,8 +177,6 @@ const TermsOfService = () => {
       <div className="max-w-4xl mx-auto px-6 py-16">
         <div className="space-y-12">
           {termsData.sections.map((section: any, index: number) => {
-            // Use different icons for different sections
-            const sectionIcons = [FileText, Users, Shield, Scale, Lock, Shield, AlertTriangle, AlertTriangle, Scale, Scale, FileText];
             const IconComponent = sectionIcons[index % sectionIcons.length];
             
             return (
@@ -340,7 +231,7 @@ const TermsOfService = () => {
             transition={{ duration: 0.6, delay: 0.9 }}
             className="bg-gradient-to-r from-red-50 to-red-100 rounded-2xl p-8 border border-red-200"
           >
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">12. Contact Us</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Contact Us</h2>
             <p className="text-gray-700 leading-relaxed mb-4">
               For any queries, complaints, or clarifications regarding these Terms, contact:
             </p>
@@ -369,7 +260,7 @@ const TermsOfService = () => {
                 day: 'numeric' 
               })}
             </p>
-          </motion.div>
+          </div>
         </div>
       </div>
     </div>
