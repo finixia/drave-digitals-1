@@ -152,9 +152,10 @@ const PrivacyPolicy = () => {
             transition={{ duration: 0.8 }}
           >
             <h1 className="text-4xl md:text-5xl font-bold mb-4">Privacy Policy</h1>
-            <p className="text-xl text-white/90 leading-relaxed">
-              Drave Digitals ("Company," "we," "our," or "us") respects your privacy and is committed to protecting your personal information. This Privacy Policy explains how we collect, use, store, and safeguard your data when you use our services — including Job Consultancy, Cybercrime & Digital Forensics, and App Development.
-            </p>
+            <h2 className="text-2xl text-white/90 mb-4">{privacyPolicy.subtitle}</h2>
+            <div className="text-xl text-white/90 leading-relaxed whitespace-pre-line">
+              {privacyPolicy.introduction}
+            </div>
             <div className="mt-6 p-4 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
               <p className="text-white/90">
                 By using our website and services, you agree to the terms outlined in this Privacy Policy.
@@ -167,7 +168,7 @@ const PrivacyPolicy = () => {
       {/* Content */}
       <div className="max-w-4xl mx-auto px-6 py-16">
         <div className="space-y-12">
-          {sections.map((section, index) => (
+          {privacyPolicy.sections?.map((section, index) => (
             <motion.div
               key={index}
               initial={{ opacity: 0, y: 30 }}
@@ -176,8 +177,8 @@ const PrivacyPolicy = () => {
               className="bg-gray-50 rounded-2xl p-8 border border-gray-200"
             >
               <div className="flex items-center space-x-4 mb-6">
-                <div className="w-12 h-12 bg-gradient-to-r from-red-500 to-red-600 rounded-xl flex items-center justify-center">
-                  <section.icon className="text-white" size={24} />
+                <div className="w-12 h-12 bg-gradient-to-r from-red-500 to-red-600 rounded-xl flex items-center justify-center text-white font-bold text-lg">
+                  {index + 1}
                 </div>
                 <h2 className="text-2xl font-bold text-gray-900">
                   {index + 1}. {section.title}
@@ -185,7 +186,7 @@ const PrivacyPolicy = () => {
               </div>
 
               <div className="space-y-6">
-                {section.content.map((subsection, subIndex) => (
+                {section.content?.map((subsection, subIndex) => (
                   <div key={subIndex}>
                     {subsection.subtitle && (
                       <h3 className="text-lg font-semibold text-gray-800 mb-3">
@@ -193,7 +194,7 @@ const PrivacyPolicy = () => {
                       </h3>
                     )}
                     <ul className="space-y-2">
-                      {subsection.items.map((item, itemIndex) => (
+                      {subsection.items?.map((item, itemIndex) => (
                         <li key={itemIndex} className="flex items-start space-x-3">
                           {item.trim() && (
                             <>
@@ -211,40 +212,6 @@ const PrivacyPolicy = () => {
             </motion.div>
           ))}
 
-          {/* Additional Sections */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.7 }}
-            className="bg-gray-50 rounded-2xl p-8 border border-gray-200"
-          >
-            <div className="flex items-center space-x-4 mb-6">
-              <div className="w-12 h-12 bg-gradient-to-r from-red-500 to-red-600 rounded-xl flex items-center justify-center">
-                <Eye className="text-white" size={24} />
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900">7. Cookies & Tracking</h2>
-            </div>
-            <p className="text-gray-700 leading-relaxed">
-              We use cookies to enhance user experience, track site usage, and improve services. You may disable cookies in your browser, but this may affect functionality.
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.8 }}
-            className="bg-gray-50 rounded-2xl p-8 border border-gray-200"
-          >
-            <div className="flex items-center space-x-4 mb-6">
-              <div className="w-12 h-12 bg-gradient-to-r from-red-500 to-red-600 rounded-xl flex items-center justify-center">
-                <FileText className="text-white" size={24} />
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900">8. Third-Party Links</h2>
-            </div>
-            <p className="text-gray-700 leading-relaxed">
-              Our website or apps may contain links to third-party sites. We are not responsible for their privacy practices, and you should review their policies separately.
-            </p>
-          </motion.div>
 
           {/* Contact Section */}
           <motion.div
@@ -253,14 +220,14 @@ const PrivacyPolicy = () => {
             transition={{ duration: 0.6, delay: 0.9 }}
             className="bg-gradient-to-r from-red-50 to-red-100 rounded-2xl p-8 border border-red-200"
           >
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">9. Contact Us</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Contact Us</h2>
             <p className="text-gray-700 leading-relaxed mb-4">
               If you have any questions about this Privacy Policy or wish to exercise your rights, please contact us:
             </p>
             <div className="space-y-2 text-gray-700">
-              <p><strong>Email:</strong> privacy@dravedigitals.com</p>
-              <p><strong>Phone:</strong> +91 9876543210</p>
-              <p><strong>Address:</strong> Mumbai, Maharashtra, India</p>
+              <p><strong>Email:</strong> {privacyPolicy.contactInfo?.email}</p>
+              <p><strong>Phone:</strong> {privacyPolicy.contactInfo?.phone}</p>
+              <p><strong>Address:</strong> {privacyPolicy.contactInfo?.address}</p>
             </div>
           </motion.div>
 
@@ -272,7 +239,7 @@ const PrivacyPolicy = () => {
             className="text-center py-8"
           >
             <p className="text-gray-500 text-sm">
-              Last updated: {new Date().toLocaleDateString('en-US', { 
+              Last updated: {new Date(privacyPolicy.lastUpdated || privacyPolicy.createdAt).toLocaleDateString('en-US', { 
                 year: 'numeric', 
                 month: 'long', 
                 day: 'numeric' 
