@@ -278,7 +278,7 @@ const Footer = () => {
             </div>
             <div className="flex flex-wrap items-center justify-center gap-4 md:gap-6 text-gray-600 text-sm">
               <motion.a 
-                href="#" 
+                href="/privacy-policy" 
                 whileHover={{ 
                   y: -3,
                   color: "#dc2626",
