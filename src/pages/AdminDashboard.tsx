@@ -4,15 +4,13 @@ import {
   BarChart3, 
   Users, 
   MessageSquare, 
-  Briefcase, 
-  Shield, 
   Star,
   Settings,
   LogOut,
   FileText,
   Scale,
-  Info,
-  Phone
+  Shield,
+  Info
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
