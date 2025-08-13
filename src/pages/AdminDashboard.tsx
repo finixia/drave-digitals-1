@@ -180,6 +180,11 @@ const AdminDashboard = () => {
       setServices(servicesData);
       setUsers(usersData);
       setAboutContent(aboutData);
+      
+      // Fetch terms of service
+      const termsData = await apiService.getTermsOfService();
+      setTermsOfService(termsData);
+      
       setError(null);
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
