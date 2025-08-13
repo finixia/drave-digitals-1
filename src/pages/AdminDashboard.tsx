@@ -29,9 +29,7 @@ import {
   Download,
   ExternalLink,
   Edit2,
-  CheckCircle,
   Heart,
-  TrendingUp
   Target
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
