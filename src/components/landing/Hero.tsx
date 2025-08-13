@@ -16,7 +16,9 @@ const Hero = () => {
   React.useEffect(() => {
     const fetchContent = async () => {
       try {
+        console.log('Hero: Fetching dashboard stats...');
         const statsData = await apiService.getDashboardStatsData();
+        console.log('Hero: Dashboard stats received:', statsData);
         if (statsData && Object.keys(statsData).length > 0) {
           setDashboardStats(statsData);
           // Update hero stats with dynamic data
@@ -29,6 +31,7 @@ const Hero = () => {
             ]
           }));
         } else {
+          console.log('Hero: No dashboard stats found, using defaults');
           // Fallback to default stats
           setHeroContent(prev => ({
             ...prev,

@@ -14,10 +14,10 @@ const iconMap: { [key: string]: React.ComponentType<any> } = {
 };
 
 const stats = [
-  { icon: Users, label: 'Happy Clients', value: '5000+', color: 'text-blue-400' },
-  { icon: Award, label: 'Success Rate', value: '98%', color: 'text-green-400' },
-  { icon: Shield, label: 'Fraud Cases Resolved', value: '1200+', color: 'text-red-400' },
-  { icon: TrendingUp, label: 'Growth Rate', value: '150%', color: 'text-purple-400' }
+  { icon: Users, label: 'Happy Clients', value: '', color: 'text-blue-400', key: 'happyClients' },
+  { icon: Award, label: 'Success Rate', value: '', color: 'text-green-400', key: 'successRate' },
+  { icon: Shield, label: 'Fraud Cases Resolved', value: '', color: 'text-red-400', key: 'fraudCasesResolved' },
+  { icon: TrendingUp, label: 'Growth Rate', value: '', color: 'text-purple-400', key: 'growthRate' }
 ];
 
 const About = () => {
@@ -52,16 +52,27 @@ const About = () => {
     ]
   });
   const [loading, setLoading] = React.useState(true);
+  const [dashboardStats, setDashboardStats] = React.useState({});
 
   React.useEffect(() => {
     const fetchAboutContent = async () => {
       try {
         setLoading(true);
         console.log('Fetching about content...');
-        const data = await apiService.getAboutContent();
-        console.log('About content fetched:', data);
-        if (data && Object.keys(data).length > 0) {
-          setAboutContent(data);
+        const [aboutData, statsData] = await Promise.all([
+          apiService.getAboutContent(),
+          apiService.getDashboardStatsData()
+        ]);
+        
+        console.log('About content fetched:', aboutData);
+        console.log('Dashboard stats fetched:', statsData);
+        
+        if (aboutData && Object.keys(aboutData).length > 0) {
+          setAboutContent(aboutData);
+        }
+        
+        if (statsData && Object.keys(statsData).length > 0) {
+          setDashboardStats(statsData);
         }
       } catch (error) {
         console.error('Failed to fetch about content:', error);
@@ -73,6 +84,17 @@ const About = () => {
 
     fetchAboutContent();
   }, []);
+
+  // Update stats with dynamic values
+  const dynamicStats = stats.map(stat => ({
+    ...stat,
+    value: dashboardStats[stat.key] || (
+      stat.key === 'happyClients' ? '5000+' :
+      stat.key === 'successRate' ? '98%' :
+      stat.key === 'fraudCasesResolved' ? '1200+' :
+      stat.key === 'growthRate' ? '150%' : stat.value
+    )
+  }));
 
   if (loading) {
     return (
@@ -128,7 +150,7 @@ const About = () => {
           transition={{ duration: 0.8, delay: 0.2 }}
           className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-20"
         >
-          {stats.map((stat, index) => (
+          {dynamicStats.map((stat, index) => (
             <motion.div
               key={index}
               initial={{ opacity: 0, scale: 0.8 }}
