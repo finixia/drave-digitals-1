@@ -289,7 +289,7 @@ const Footer = () => {
                 Privacy Policy
               </motion.a>
               <motion.a 
-                href="#" 
+                href="/terms-of-service" 
                 whileHover={{ 
                   y: -3,
                   color: "#dc2626",

@@ -31,7 +31,7 @@ import {
   Edit2,
   CheckCircle,
   Heart,
-  TrendingUp,
+  TrendingUp
   Target
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -791,319 +791,326 @@ const AdminDashboard = () => {
     );
   };
 
-  // Terms of Service Tab Component
-  const TermsOfServiceTab = () => {
-    const [termsOfService, setTermsOfService] = useState<any>({
-      title: '',
-      subtitle: '',
-      introduction: '',
-      sections: [],
-      contactInfo: {
-        email: '',
-        phone: '',
-        address: ''
-      }
-    });
-    const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(false);
-    const [message, setMessage] = useState('');
-
-    useEffect(() => {
-      fetchTermsOfService();
-    }, []);
-
-    const fetchTermsOfService = async () => {
-      try {
-        setLoading(true);
-        const data = await apiService.getTermsOfService();
-        if (data && Object.keys(data).length > 0) {
-          setTermsOfService(data);
-        }
-      } catch (error) {
-        console.error('Failed to fetch terms of service:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const TermsOfServiceManagement = () => {
+    const [isEditing, setIsEditing] = useState(false);
+    const [editedTerms, setEditedTerms] = useState(termsOfService);
+    const [isSaving, setIsSaving] = useState(false);
 
     const handleSave = async () => {
+      setIsSaving(true);
       try {
-        setSaving(true);
-        await apiService.updateTermsOfService(termsOfService);
-        setMessage('Terms of service updated successfully!');
-        setTimeout(() => setMessage(''), 3000);
+        await apiService.updateTermsOfService(editedTerms);
+        setTermsOfService(editedTerms);
+        setIsEditing(false);
+        alert('Terms of service updated successfully!');
       } catch (error) {
-        setMessage('Failed to update terms of service');
-        setTimeout(() => setMessage(''), 3000);
+        console.error('Error updating terms of service:', error);
+        alert('Failed to update terms of service');
       } finally {
-        setSaving(false);
+        setIsSaving(false);
       }
     };
 
     const addSection = () => {
-      setTermsOfService(prev => ({
-        ...prev,
-        sections: [...prev.sections, { title: '', content: [{ subtitle: '', items: [''] }] }]
-      }));
+      setEditedTerms({
+        ...editedTerms,
+        sections: [
+          ...(editedTerms.sections || []),
+          {
+            title: 'New Section',
+            content: [{ subtitle: '', items: ['New item'] }]
+          }
+        ]
+      });
+    };
+
+    const removeSection = (sectionIndex: number) => {
+      const newSections = editedTerms.sections.filter((_, index) => index !== sectionIndex);
+      setEditedTerms({ ...editedTerms, sections: newSections });
     };
 
     const updateSection = (sectionIndex: number, field: string, value: string) => {
-      setTermsOfService(prev => ({
-        ...prev,
-        sections: prev.sections.map((section, index) => 
-          index === sectionIndex ? { ...section, [field]: value } : section
-        )
-      }));
+      const newSections = [...editedTerms.sections];
+      newSections[sectionIndex] = { ...newSections[sectionIndex], [field]: value };
+      setEditedTerms({ ...editedTerms, sections: newSections });
     };
 
-    const addContentToSection = (sectionIndex: number) => {
-      setTermsOfService(prev => ({
-        ...prev,
-        sections: prev.sections.map((section, index) => 
-          index === sectionIndex 
-            ? { ...section, content: [...section.content, { subtitle: '', items: [''] }] }
-            : section
-        )
-      }));
+    const addContent = (sectionIndex: number) => {
+      const newSections = [...editedTerms.sections];
+      newSections[sectionIndex].content.push({ subtitle: '', items: ['New item'] });
+      setEditedTerms({ ...editedTerms, sections: newSections });
     };
 
-    const updateSectionContent = (sectionIndex: number, contentIndex: number, field: string, value: string) => {
-      setTermsOfService(prev => ({
-        ...prev,
-        sections: prev.sections.map((section, sIndex) => 
-          sIndex === sectionIndex 
-            ? {
-                ...section,
-                content: section.content.map((content, cIndex) =>
-                  cIndex === contentIndex ? { ...content, [field]: value } : content
-                )
-              }
-            : section
-        )
-      }));
+    const removeContent = (sectionIndex: number, contentIndex: number) => {
+      const newSections = [...editedTerms.sections];
+      newSections[sectionIndex].content = newSections[sectionIndex].content.filter((_, index) => index !== contentIndex);
+      setEditedTerms({ ...editedTerms, sections: newSections });
     };
 
-    const addItemToContent = (sectionIndex: number, contentIndex: number) => {
-      setTermsOfService(prev => ({
-        ...prev,
-        sections: prev.sections.map((section, sIndex) => 
-          sIndex === sectionIndex 
-            ? {
-                ...section,
-                content: section.content.map((content, cIndex) =>
-                  cIndex === contentIndex 
-                    ? { ...content, items: [...content.items, ''] }
-                    : content
-                )
-              }
-            : section
-        )
-      }));
+    const updateContent = (sectionIndex: number, contentIndex: number, field: string, value: string) => {
+      const newSections = [...editedTerms.sections];
+      newSections[sectionIndex].content[contentIndex] = {
+        ...newSections[sectionIndex].content[contentIndex],
+        [field]: value
+      };
+      setEditedTerms({ ...editedTerms, sections: newSections });
     };
 
-    const updateContentItem = (sectionIndex: number, contentIndex: number, itemIndex: number, value: string) => {
-      setTermsOfService(prev => ({
-        ...prev,
-        sections: prev.sections.map((section, sIndex) => 
-          sIndex === sectionIndex 
-            ? {
-                ...section,
-                content: section.content.map((content, cIndex) =>
-                  cIndex === contentIndex 
-                    ? {
-                        ...content,
-                        items: content.items.map((item, iIndex) =>
-                          iIndex === itemIndex ? value : item
-                        )
-                      }
-                    : content
-                )
-              }
-            : section
-        )
-      }));
+    const addItem = (sectionIndex: number, contentIndex: number) => {
+      const newSections = [...editedTerms.sections];
+      newSections[sectionIndex].content[contentIndex].items.push('New item');
+      setEditedTerms({ ...editedTerms, sections: newSections });
     };
 
-    if (loading) {
-      return (
-        <div className="text-center py-8">
-          <div className="inline-block w-8 h-8 border-4 border-red-400 border-t-transparent rounded-full animate-spin"></div>
-          <p className="mt-4 text-gray-600">Loading terms of service...</p>
-        </div>
-      );
-    }
+    const removeItem = (sectionIndex: number, contentIndex: number, itemIndex: number) => {
+      const newSections = [...editedTerms.sections];
+      newSections[sectionIndex].content[contentIndex].items = 
+        newSections[sectionIndex].content[contentIndex].items.filter((_, index) => index !== itemIndex);
+      setEditedTerms({ ...editedTerms, sections: newSections });
+    };
+
+    const updateItem = (sectionIndex: number, contentIndex: number, itemIndex: number, value: string) => {
+      const newSections = [...editedTerms.sections];
+      newSections[sectionIndex].content[contentIndex].items[itemIndex] = value;
+      setEditedTerms({ ...editedTerms, sections: newSections });
+    };
 
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-900">Terms of Service Management</h2>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50"
-          >
-            {saving ? 'Saving...' : 'Save Changes'}
-          </button>
+          <h2 className="text-3xl font-bold text-gray-900">Terms of Service Management</h2>
+          <div className="flex items-center space-x-4">
+            {isEditing ? (
+              <>
+                <button
+                  onClick={() => setIsEditing(false)}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50"
+                >
+                  {isSaving ? 'Saving...' : 'Save Changes'}
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => {
+                  setIsEditing(true);
+                  setEditedTerms(termsOfService);
+                }}
+                className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors inline-flex items-center space-x-2"
+              >
+                <Edit size={20} />
+                <span>Edit Terms</span>
+              </button>
+            )}
+          </div>
         </div>
 
-        {message && (
-          <div className={`p-4 rounded-lg ${message.includes('success') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-            {message}
-          </div>
-        )}
-
-        <div className="bg-white rounded-lg shadow p-6 space-y-6">
-          {/* Basic Info */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
-              <input
-                type="text"
-                value={termsOfService.title}
-                onChange={(e) => setTermsOfService(prev => ({ ...prev, title: e.target.value }))}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-red-500 focus:border-red-500"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Subtitle</label>
-              <input
-                type="text"
-                value={termsOfService.subtitle}
-                onChange={(e) => setTermsOfService(prev => ({ ...prev, subtitle: e.target.value }))}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-red-500 focus:border-red-500"
-              />
-            </div>
-          </div>
-
-          {/* Introduction */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Introduction</label>
-            <textarea
-              value={termsOfService.introduction}
-              onChange={(e) => setTermsOfService(prev => ({ ...prev, introduction: e.target.value }))}
-              rows={4}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-red-500 focus:border-red-500"
-            />
-          </div>
-
-          {/* Contact Info */}
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                <input
-                  type="email"
-                  value={termsOfService.contactInfo?.email || ''}
-                  onChange={(e) => setTermsOfService(prev => ({
-                    ...prev,
-                    contactInfo: { ...prev.contactInfo, email: e.target.value }
-                  }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-red-500 focus:border-red-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
-                <input
-                  type="text"
-                  value={termsOfService.contactInfo?.phone || ''}
-                  onChange={(e) => setTermsOfService(prev => ({
-                    ...prev,
-                    contactInfo: { ...prev.contactInfo, phone: e.target.value }
-                  }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-red-500 focus:border-red-500"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
-                <input
-                  type="text"
-                  value={termsOfService.contactInfo?.address || ''}
-                  onChange={(e) => setTermsOfService(prev => ({
-                    ...prev,
-                    contactInfo: { ...prev.contactInfo, address: e.target.value }
-                  }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-red-500 focus:border-red-500"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Sections */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Sections</h3>
-              <button
-                onClick={addSection}
-                className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
-              >
-                Add Section
-              </button>
-            </div>
-
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          {isEditing ? (
             <div className="space-y-6">
-              {termsOfService.sections?.map((section, sectionIndex) => (
-                <div key={sectionIndex} className="border border-gray-200 rounded-lg p-4">
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Section Title</label>
+              {/* Basic Info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+                  <input
+                    type="text"
+                    value={editedTerms.title || ''}
+                    onChange={(e) => setEditedTerms({ ...editedTerms, title: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Subtitle</label>
+                  <input
+                    type="text"
+                    value={editedTerms.subtitle || ''}
+                    onChange={(e) => setEditedTerms({ ...editedTerms, subtitle: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Introduction</label>
+                <textarea
+                  value={editedTerms.introduction || ''}
+                  onChange={(e) => setEditedTerms({ ...editedTerms, introduction: e.target.value })}
+                  rows={4}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                />
+              </div>
+
+              {/* Contact Info */}
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
                     <input
-                      type="text"
-                      value={section.title}
-                      onChange={(e) => updateSection(sectionIndex, 'title', e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-red-500 focus:border-red-500"
+                      type="email"
+                      value={editedTerms.contactInfo?.email || ''}
+                      onChange={(e) => setEditedTerms({
+                        ...editedTerms,
+                        contactInfo: { ...editedTerms.contactInfo, email: e.target.value }
+                      })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
                     />
                   </div>
-
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-medium text-gray-800">Content</h4>
-                      <button
-                        onClick={() => addContentToSection(sectionIndex)}
-                        className="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600 transition-colors"
-                      >
-                        Add Content
-                      </button>
-                    </div>
-
-                    {section.content?.map((content, contentIndex) => (
-                      <div key={contentIndex} className="bg-gray-50 p-3 rounded">
-                        <div className="mb-3">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Subtitle (optional)</label>
-                          <input
-                            type="text"
-                            value={content.subtitle || ''}
-                            onChange={(e) => updateSectionContent(sectionIndex, contentIndex, 'subtitle', e.target.value)}
-                            className="w-full border border-gray-300 rounded px-2 py-1 text-sm focus:ring-red-500 focus:border-red-500"
-                          />
-                        </div>
-
-                        <div>
-                          <div className="flex items-center justify-between mb-2">
-                            <label className="block text-sm font-medium text-gray-700">Items</label>
-                            <button
-                              onClick={() => addItemToContent(sectionIndex, contentIndex)}
-                              className="bg-yellow-500 text-white px-2 py-1 rounded text-xs hover:bg-yellow-600 transition-colors"
-                            >
-                              Add Item
-                            </button>
-                          </div>
-                          {content.items?.map((item, itemIndex) => (
-                            <textarea
-                              key={itemIndex}
-                              value={item}
-                              onChange={(e) => updateContentItem(sectionIndex, contentIndex, itemIndex, e.target.value)}
-                              className="w-full border border-gray-300 rounded px-2 py-1 text-sm mb-2 focus:ring-red-500 focus:border-red-500"
-                              rows={2}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    ))}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+                    <input
+                      type="text"
+                      value={editedTerms.contactInfo?.phone || ''}
+                      onChange={(e) => setEditedTerms({
+                        ...editedTerms,
+                        contactInfo: { ...editedTerms.contactInfo, phone: e.target.value }
+                      })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
+                    <input
+                      type="text"
+                      value={editedTerms.contactInfo?.address || ''}
+                      onChange={(e) => setEditedTerms({
+                        ...editedTerms,
+                        contactInfo: { ...editedTerms.contactInfo, address: e.target.value }
+                      })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    />
                   </div>
                 </div>
-              ))}
+              </div>
+
+              {/* Sections */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Sections</h3>
+                  <button
+                    onClick={addSection}
+                    className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors inline-flex items-center space-x-2"
+                  >
+                    <Plus size={16} />
+                    <span>Add Section</span>
+                  </button>
+                </div>
+
+                <div className="space-y-6">
+                  {(editedTerms.sections || []).map((section: any, sectionIndex: number) => (
+                    <div key={sectionIndex} className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-4">
+                        <input
+                          type="text"
+                          value={section.title}
+                          onChange={(e) => updateSection(sectionIndex, 'title', e.target.value)}
+                          className="text-lg font-semibold bg-transparent border-b border-gray-300 focus:border-red-500 outline-none"
+                        />
+                        <button
+                          onClick={() => removeSection(sectionIndex)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+
+                      <div className="space-y-4">
+                        {section.content.map((content: any, contentIndex: number) => (
+                          <div key={contentIndex} className="bg-gray-50 rounded-lg p-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <input
+                                type="text"
+                                value={content.subtitle}
+                                onChange={(e) => updateContent(sectionIndex, contentIndex, 'subtitle', e.target.value)}
+                                placeholder="Subtitle (optional)"
+                                className="bg-transparent border-b border-gray-300 focus:border-red-500 outline-none text-sm"
+                              />
+                              <button
+                                onClick={() => removeContent(sectionIndex, contentIndex)}
+                                className="text-red-500 hover:text-red-700"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </div>
+
+                            <div className="space-y-2">
+                              {content.items.map((item: string, itemIndex: number) => (
+                                <div key={itemIndex} className="flex items-center space-x-2">
+                                  <input
+                                    type="text"
+                                    value={item}
+                                    onChange={(e) => updateItem(sectionIndex, contentIndex, itemIndex, e.target.value)}
+                                    className="flex-1 px-2 py-1 border border-gray-300 rounded focus:ring-1 focus:ring-red-500 focus:border-red-500 text-sm"
+                                  />
+                                  <button
+                                    onClick={() => removeItem(sectionIndex, contentIndex, itemIndex)}
+                                    className="text-red-500 hover:text-red-700"
+                                  >
+                                    <Trash2 size={12} />
+                                  </button>
+                                </div>
+                              ))}
+                              <button
+                                onClick={() => addItem(sectionIndex, contentIndex)}
+                                className="text-green-500 hover:text-green-700 text-sm inline-flex items-center space-x-1"
+                              >
+                                <Plus size={12} />
+                                <span>Add Item</span>
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                        <button
+                          onClick={() => addContent(sectionIndex)}
+                          className="text-blue-500 hover:text-blue-700 text-sm inline-flex items-center space-x-1"
+                        >
+                          <Plus size={12} />
+                          <span>Add Content</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">{termsOfService.title}</h3>
+                <p className="text-gray-600 mb-4">{termsOfService.subtitle}</p>
+                <p className="text-gray-700 whitespace-pre-line">{termsOfService.introduction}</p>
+              </div>
+
+              <div>
+                <h4 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
+                  <div><strong>Email:</strong> {termsOfService.contactInfo?.email}</div>
+                  <div><strong>Phone:</strong> {termsOfService.contactInfo?.phone}</div>
+                  <div><strong>Address:</strong> {termsOfService.contactInfo?.address}</div>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="text-lg font-semibold text-gray-900 mb-4">Sections ({(termsOfService.sections || []).length})</h4>
+                <div className="space-y-4">
+                  {(termsOfService.sections || []).map((section: any, index: number) => (
+                    <div key={index} className="border border-gray-200 rounded-lg p-4">
+                      <h5 className="font-semibold text-gray-900 mb-2">{index + 1}. {section.title}</h5>
+                      <div className="text-sm text-gray-600">
+                        {section.content.length} content block(s)
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -1289,9 +1296,7 @@ const AdminDashboard = () => {
               { id: 'users', label: 'Users', icon: Users },
               { id: 'testimonials', label: 'Testimonials', icon: Star },
               { id: 'services', label: 'Services', icon: Settings },
-              { id: 'about', label: 'About Us', icon: FileText },
-              { id: 'privacy-policy', label: 'Privacy Policy', icon: Shield },
-              { id: 'terms-of-service', label: 'Terms of Service', icon: FileText }
+              { id: 'about', label: 'About Us', icon: FileText }
             ].map((tab) => (
               <motion.button
                 key={tab.id}
@@ -1759,9 +1764,6 @@ const AdminDashboard = () => {
               )}
             </div>
           )}
-
-          {activeTab === 'privacy-policy' && <PrivacyPolicyTab />}
-          {activeTab === 'terms-of-service' && <TermsOfServiceTab />}
         </main>
       </div>
 
