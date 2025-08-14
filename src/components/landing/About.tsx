@@ -13,13 +13,6 @@ const iconMap: { [key: string]: React.ComponentType<any> } = {
   Heart
 };
 
-const stats = [
-  { icon: Users, label: 'Happy Clients', value: '5000+', color: 'text-blue-400' },
-  { icon: Award, label: 'Success Rate', value: '98%', color: 'text-green-400' },
-  { icon: Shield, label: 'Fraud Cases Resolved', value: '1200+', color: 'text-red-400' },
-  { icon: TrendingUp, label: 'Growth Rate', value: '150%', color: 'text-purple-400' }
-];
-
 const About = () => {
   const [aboutContent, setAboutContent] = React.useState<any>({
     title: 'Your Trusted Career Partner',
@@ -51,7 +44,14 @@ const About = () => {
       'Continuous skill development programs'
     ]
   });
+  const [stats, setStats] = React.useState([
+    { icon: Users, label: 'Happy Clients', value: '5000+', color: 'text-blue-400' },
+    { icon: Award, label: 'Success Rate', value: '98%', color: 'text-green-400' },
+    { icon: Shield, label: 'Fraud Cases Resolved', value: '1200+', color: 'text-red-400' },
+    { icon: TrendingUp, label: 'Growth Rate', value: '150%', color: 'text-purple-400' }
+  ]);
   const [loading, setLoading] = React.useState(true);
+  const [statsLoading, setStatsLoading] = React.useState(true);
 
   React.useEffect(() => {
     const fetchAboutContent = async () => {
@@ -71,7 +71,29 @@ const About = () => {
       }
     };
 
+    const fetchStats = async () => {
+      try {
+        setStatsLoading(true);
+        console.log('Fetching dashboard stats for about section...');
+        const statsData = await apiService.getDashboardStats();
+        console.log('Dashboard stats fetched:', statsData);
+        if (statsData && Object.keys(statsData).length > 0) {
+          setStats([
+            { icon: Users, label: 'Happy Clients', value: statsData.happyClients || '5000+', color: 'text-blue-400' },
+            { icon: Award, label: 'Success Rate', value: statsData.successRate || '98%', color: 'text-green-400' },
+            { icon: Shield, label: 'Fraud Cases Resolved', value: statsData.fraudCasesResolved || '1200+', color: 'text-red-400' },
+            { icon: TrendingUp, label: 'Growth Rate', value: statsData.growthRate || '150%', color: 'text-purple-400' }
+          ]);
+        }
+      } catch (error) {
+        console.error('Failed to fetch dashboard stats:', error);
+        // Keep default stats on error
+      } finally {
+        setStatsLoading(false);
+      }
+    };
     fetchAboutContent();
+    fetchStats();
   }, []);
 
   if (loading) {
@@ -165,9 +187,24 @@ const About = () => {
                   delay: index * 0.3
                 }}
               >
+                {statsLoading ? (
+                  <div className="animate-pulse">
+                    <div className="h-8 bg-gray-300 rounded mb-2"></div>
+                  </div>
+                ) : (
+                  stat.value
+                )}
                 {stat.value}
               </motion.div>
-              <div className="text-gray-600 text-sm">{stat.label}</div>
+              <div className="text-gray-600 text-sm">
+                {statsLoading ? (
+                  <div className="animate-pulse">
+                    <div className="h-4 bg-gray-300 rounded w-2/3 mx-auto"></div>
+                  </div>
+                ) : (
+                  stat.label
+                )}
+              </div>
             </motion.div>
           ))}
         </motion.div>
