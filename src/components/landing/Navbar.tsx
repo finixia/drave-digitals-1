@@ -98,6 +98,17 @@ const Navbar = () => {
             <motion.button
               whileHover={{ 
                 scale: 1.05,
+                color: "#dc2626"
+              }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => navigate('/login')}
+              className="text-gray-700 hover:text-red-600 transition-colors text-sm font-medium"
+            >
+              Sign In
+            </motion.button>
+            <motion.button
+              whileHover={{ 
+                scale: 1.05,
                 boxShadow: "0 10px 25px rgba(239, 68, 68, 0.3)"
               }}
               whileTap={{ scale: 0.95 }}
@@ -154,6 +165,17 @@ const Navbar = () => {
               className="w-full mt-2 text-gray-700 hover:text-red-600 py-2 text-left"
             >
               Register
+            </motion.button>
+            <motion.button
+              whileHover={{ x: 10, color: "#dc2626" }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                setIsOpen(false);
+                navigate('/login');
+              }}
+              className="w-full mt-2 text-gray-700 hover:text-red-600 py-2 text-left"
+            >
+              Sign In
             </motion.button>
             <motion.button
               whileHover={{ scale: 1.02 }}

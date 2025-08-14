@@ -1,0 +1,473 @@
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { 
+  User, 
+  FileText, 
+  Edit, 
+  Download, 
+  Upload, 
+  Save, 
+  ArrowLeft,
+  Mail,
+  Phone,
+  MapPin,
+  Briefcase,
+  GraduationCap,
+  Calendar,
+  DollarSign,
+  CheckCircle,
+  AlertCircle
+} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { apiService } from '../utils/api';
+
+const UserDashboard = () => {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [formData, setFormData] = useState<any>({});
+  const [newResume, setNewResume] = useState<File | null>(null);
+  const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [statusMessage, setStatusMessage] = useState('');
+
+  useEffect(() => {
+    if (user) {
+      fetchUserProfile();
+    }
+  }, [user]);
+
+  const fetchUserProfile = async () => {
+    try {
+      setIsLoading(true);
+      // For now, we'll use the user data from auth context
+      // In a real app, you'd fetch full profile data from API
+      setUserProfile(user);
+      setFormData({
+        name: user?.name || '',
+        email: user?.email || '',
+        phone: user?.phone || '',
+        city: user?.city || '',
+        state: user?.state || '',
+        currentPosition: user?.currentPosition || '',
+        experience: user?.experience || '',
+        skills: user?.skills || '',
+        education: user?.education || '',
+        expectedSalary: user?.expectedSalary || '',
+        preferredLocation: user?.preferredLocation || ''
+      });
+    } catch (error) {
+      console.error('Failed to fetch user profile:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev: any) => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) { // 10MB limit
+        setStatus('error');
+        setStatusMessage('File size should be less than 10MB');
+        return;
+      }
+      
+      const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+      if (!allowedTypes.includes(file.type)) {
+        setStatus('error');
+        setStatusMessage('Please upload a PDF or Word document');
+        return;
+      }
+      
+      setNewResume(file);
+      setStatus('idle');
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      setIsLoading(true);
+      setStatus('idle');
+      
+      const updateData = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+        if (value) {
+          updateData.append(key, value.toString());
+        }
+      });
+      
+      if (newResume) {
+        updateData.append('resume', newResume);
+      }
+
+      // In a real app, you'd call an API to update the user profile
+      // await apiService.updateUserProfile(user.id, updateData);
+      
+      setStatus('success');
+      setStatusMessage('Profile updated successfully!');
+      setIsEditing(false);
+      setNewResume(null);
+    } catch (error) {
+      setStatus('error');
+      setStatusMessage(error instanceof Error ? error.message : 'Failed to update profile');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDownloadResume = () => {
+    if (userProfile?.resume) {
+      const resumeUrl = `${import.meta.env.VITE_API_URL || '/api'}/uploads/${userProfile.resume.split('/').pop()}`;
+      const link = document.createElement('a');
+      link.href = resumeUrl;
+      link.download = `${userProfile.name.replace(/\s+/g, '_')}_Resume.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
+  if (isLoading && !userProfile) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          className="w-8 h-8 border-4 border-red-400 border-t-transparent rounded-full"
+        />
+        <p className="ml-4 text-gray-600">Loading your profile...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <motion.button
+                onClick={() => navigate('/')}
+                whileHover={{ scale: 1.05, x: -5 }}
+                whileTap={{ scale: 0.95 }}
+                className="inline-flex items-center space-x-2 text-gray-600 hover:text-red-600 transition-colors"
+              >
+                <ArrowLeft size={20} />
+                <span>Back to Home</span>
+              </motion.button>
+              <div className="flex items-center space-x-3">
+                <img 
+                  src="/company logo.png" 
+                  alt="Drave Capitals Logo" 
+                  className="w-10 h-10 object-contain"
+                />
+                <div>
+                  <h1 className="text-xl font-bold text-gray-900">My Dashboard</h1>
+                  <p className="text-sm text-gray-600">Drave Digitals</p>
+                </div>
+              </div>
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleLogout}
+              className="bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-2 rounded-xl font-medium hover:shadow-lg transition-all"
+            >
+              Logout
+            </motion.button>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Profile Card */}
+          <div className="lg:col-span-1">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm"
+            >
+              <div className="text-center mb-6">
+                <div className="w-20 h-20 bg-gradient-to-r from-red-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-white font-bold text-2xl">
+                    {userProfile?.name?.charAt(0) || 'U'}
+                  </span>
+                </div>
+                <h2 className="text-xl font-bold text-gray-900">{userProfile?.name}</h2>
+                <p className="text-gray-600">{userProfile?.email}</p>
+                <div className="mt-4 inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  <CheckCircle size={12} className="mr-1" />
+                  Active Member
+                </div>
+              </div>
+
+              {/* Resume Section */}
+              <div className="border-t border-gray-200 pt-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Resume</h3>
+                {userProfile?.resume ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                      <FileText className="text-red-400" size={20} />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-900">Current Resume</p>
+                        <p className="text-xs text-gray-600">PDF Document</p>
+                      </div>
+                    </div>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleDownloadResume}
+                      className="w-full bg-blue-500 text-white py-2 rounded-lg font-medium hover:bg-blue-600 transition-colors inline-flex items-center justify-center space-x-2"
+                    >
+                      <Download size={16} />
+                      <span>Download Resume</span>
+                    </motion.button>
+                  </div>
+                ) : (
+                  <div className="text-center py-6">
+                    <FileText className="mx-auto text-gray-400 mb-2" size={32} />
+                    <p className="text-gray-600 text-sm">No resume uploaded</p>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Profile Details */}
+          <div className="lg:col-span-2">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Profile Information</h2>
+                {!isEditing ? (
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setIsEditing(true)}
+                    className="bg-red-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-600 transition-colors inline-flex items-center space-x-2"
+                  >
+                    <Edit size={16} />
+                    <span>Edit Profile</span>
+                  </motion.button>
+                ) : (
+                  <div className="flex items-center space-x-3">
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => {
+                        setIsEditing(false);
+                        setNewResume(null);
+                        setStatus('idle');
+                      }}
+                      className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors"
+                    >
+                      Cancel
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={handleSave}
+                      disabled={isLoading}
+                      className="bg-green-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-600 transition-colors inline-flex items-center space-x-2 disabled:opacity-50"
+                    >
+                      <Save size={16} />
+                      <span>{isLoading ? 'Saving...' : 'Save Changes'}</span>
+                    </motion.button>
+                  </div>
+                )}
+              </div>
+
+              {/* Status Message */}
+              {status !== 'idle' && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`mb-6 p-4 rounded-xl flex items-center space-x-3 ${
+                    status === 'success' 
+                      ? 'bg-green-500/10 border border-green-500/20 text-green-400' 
+                      : 'bg-red-500/10 border border-red-500/20 text-red-400'
+                  }`}
+                >
+                  {status === 'success' ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
+                  <span>{statusMessage}</span>
+                </motion.div>
+              )}
+
+              {/* Form Fields */}
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-gray-600 text-sm font-medium mb-2">Full Name</label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                      <input
+                        type="text"
+                        name="name"
+                        value={formData.name || ''}
+                        onChange={handleInputChange}
+                        disabled={!isEditing}
+                        className="w-full bg-gray-50 border border-gray-300 rounded-xl pl-12 pr-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors disabled:bg-gray-100"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-gray-600 text-sm font-medium mb-2">Email</label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                      <input
+                        type="email"
+                        name="email"
+                        value={formData.email || ''}
+                        onChange={handleInputChange}
+                        disabled={!isEditing}
+                        className="w-full bg-gray-50 border border-gray-300 rounded-xl pl-12 pr-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors disabled:bg-gray-100"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-gray-600 text-sm font-medium mb-2">Phone</label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                      <input
+                        type="tel"
+                        name="phone"
+                        value={formData.phone || ''}
+                        onChange={handleInputChange}
+                        disabled={!isEditing}
+                        className="w-full bg-gray-50 border border-gray-300 rounded-xl pl-12 pr-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors disabled:bg-gray-100"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-gray-600 text-sm font-medium mb-2">Current Position</label>
+                    <div className="relative">
+                      <Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                      <input
+                        type="text"
+                        name="currentPosition"
+                        value={formData.currentPosition || ''}
+                        onChange={handleInputChange}
+                        disabled={!isEditing}
+                        className="w-full bg-gray-50 border border-gray-300 rounded-xl pl-12 pr-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors disabled:bg-gray-100"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-gray-600 text-sm font-medium mb-2">Experience</label>
+                    <select
+                      name="experience"
+                      value={formData.experience || ''}
+                      onChange={handleInputChange}
+                      disabled={!isEditing}
+                      className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors disabled:bg-gray-100"
+                    >
+                      <option value="">Select Experience</option>
+                      <option value="fresher">Fresher (0 years)</option>
+                      <option value="1-2">1-2 years</option>
+                      <option value="3-5">3-5 years</option>
+                      <option value="6-10">6-10 years</option>
+                      <option value="10+">10+ years</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-gray-600 text-sm font-medium mb-2">Education</label>
+                    <div className="relative">
+                      <GraduationCap className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                      <input
+                        type="text"
+                        name="education"
+                        value={formData.education || ''}
+                        onChange={handleInputChange}
+                        disabled={!isEditing}
+                        className="w-full bg-gray-50 border border-gray-300 rounded-xl pl-12 pr-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors disabled:bg-gray-100"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-gray-600 text-sm font-medium mb-2">Skills</label>
+                  <textarea
+                    name="skills"
+                    value={formData.skills || ''}
+                    onChange={handleInputChange}
+                    disabled={!isEditing}
+                    rows={3}
+                    className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors resize-none disabled:bg-gray-100"
+                  />
+                </div>
+
+                {isEditing && (
+                  <div>
+                    <label className="block text-gray-600 text-sm font-medium mb-2">Update Resume</label>
+                    <div className="relative">
+                      <input
+                        type="file"
+                        onChange={handleFileChange}
+                        accept=".pdf,.doc,.docx"
+                        className="hidden"
+                        id="resume-update"
+                      />
+                      <label
+                        htmlFor="resume-update"
+                        className="w-full bg-gray-50 border-2 border-dashed border-gray-300 rounded-xl p-6 text-center cursor-pointer hover:border-red-400 transition-colors"
+                      >
+                        <Upload className="mx-auto mb-2 text-gray-400" size={32} />
+                        <div className="text-gray-600">
+                          {newResume ? (
+                            <div className="flex items-center justify-center space-x-2">
+                              <FileText className="text-red-400" size={20} />
+                              <span className="text-red-600 font-medium">{newResume.name}</span>
+                            </div>
+                          ) : (
+                            <>
+                              <div className="font-medium">Click to upload new resume</div>
+                              <div className="text-sm text-gray-500">PDF, DOC, DOCX (Max 10MB)</div>
+                            </>
+                          )}
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default UserDashboard;

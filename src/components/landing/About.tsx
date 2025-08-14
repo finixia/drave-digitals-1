@@ -81,7 +81,7 @@ const About = () => {
           setStats([
             { icon: Users, label: 'Happy Clients', value: statsData.happyClients || '5000+', color: 'text-blue-400' },
             { icon: Award, label: 'Success Rate', value: statsData.successRate || '98%', color: 'text-green-400' },
-            { icon: Shield, label: 'Fraud Cases Resolved', value: statsData.fraudCasesResolved || '1200+', color: 'text-red-400' },
+            { icon: Shield, label: 'Fraud Cases Resolved', value: statsData.totalFraudCases || '1200+', color: 'text-red-400' },
             { icon: TrendingUp, label: 'Growth Rate', value: statsData.growthRate || '150%', color: 'text-purple-400' }
           ]);
         }
@@ -92,6 +92,7 @@ const About = () => {
         setStatsLoading(false);
       }
     };
+    
     fetchAboutContent();
     fetchStats();
   }, []);
@@ -194,7 +195,6 @@ const About = () => {
                 ) : (
                   stat.value
                 )}
-                {stat.value}
               </motion.div>
               <div className="text-gray-600 text-sm">
                 {statsLoading ? (
