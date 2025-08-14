@@ -1663,6 +1663,96 @@ app.delete('/api/users/:id', authenticateAdmin, async (req, res) => {
   }
 });
 
+// Contact Info Routes
+app.get('/api/contact-info', async (req, res) => {
+  try {
+    console.log('Fetching contact info from database...');
+    // Check MongoDB connection
+    if (mongoose.connection.readyState !== 1) {
+      console.error('MongoDB not connected');
+      return res.status(500).json({ message: 'Database connection error' });
+    }
+    
+    const contactInfo = await ContactInfo.findOne({ active: true });
+    console.log('Found contact info:', contactInfo);
+    res.json(contactInfo || {});
+  } catch (error) {
+    console.error('Error fetching contact info:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+app.put('/api/contact-info', authenticateAdmin, async (req, res) => {
+  try {
+    console.log('Updating contact info:', req.body);
+    
+    // Find existing contact info or create new
+    let contactInfo = await ContactInfo.findOne({ active: true });
+    
+    if (contactInfo) {
+      // Update existing
+      Object.assign(contactInfo, req.body);
+      contactInfo.updatedAt = new Date();
+      await contactInfo.save();
+    } else {
+      // Create new
+      contactInfo = new ContactInfo({ ...req.body, active: true });
+      await contactInfo.save();
+    }
+    
+    console.log('Contact info updated successfully');
+    res.json({ message: 'Contact info updated successfully' });
+  } catch (error) {
+    console.error('Error updating contact info:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Dashboard Stats Routes
+app.get('/api/dashboard-stats', async (req, res) => {
+  try {
+    console.log('Fetching dashboard stats from database...');
+    // Check MongoDB connection
+    if (mongoose.connection.readyState !== 1) {
+      console.error('MongoDB not connected');
+      return res.status(500).json({ message: 'Database connection error' });
+    }
+    
+    const dashboardStats = await DashboardStats.findOne({ active: true });
+    console.log('Found dashboard stats:', dashboardStats);
+    res.json(dashboardStats || {});
+  } catch (error) {
+    console.error('Error fetching dashboard stats:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+app.put('/api/dashboard-stats', authenticateAdmin, async (req, res) => {
+  try {
+    console.log('Updating dashboard stats:', req.body);
+    
+    // Find existing stats or create new
+    let dashboardStats = await DashboardStats.findOne({ active: true });
+    
+    if (dashboardStats) {
+      // Update existing
+      Object.assign(dashboardStats, req.body);
+      dashboardStats.updatedAt = new Date();
+      await dashboardStats.save();
+    } else {
+      // Create new
+      dashboardStats = new DashboardStats({ ...req.body, active: true });
+      await dashboardStats.save();
+    }
+    
+    console.log('Dashboard stats updated successfully');
+    res.json({ message: 'Dashboard stats updated successfully' });
+  } catch (error) {
+    console.error('Error updating dashboard stats:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
