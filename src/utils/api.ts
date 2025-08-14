@@ -504,7 +504,7 @@ class ApiService {
   }
 
   // Dashboard Stats endpoints
-  async getDashboardStatsData() {
+  async getDashboardStats() {
     try {
       console.log('API: Fetching dashboard stats...');
       return await this.request('/dashboard-stats');
@@ -512,6 +512,11 @@ class ApiService {
       console.error('Failed to fetch dashboard stats:', error);
       throw error;
     }
+  }
+
+  async getDashboardStatsData() {
+    // Alias for backward compatibility
+    return this.getDashboardStats();
   }
 
   async updateDashboardStats(data: DashboardStatsData) {

@@ -9,7 +9,11 @@ const Hero = () => {
   const [heroContent, setHeroContent] = React.useState({
     title: 'Your Professional Success Partner',
     subtitle: 'From landing your dream job to protecting against cyber fraud, we provide comprehensive career solutions and digital security services that empower your professional journey.',
-    stats: []
+    stats: [
+      { label: 'Happy Clients', value: '5000+' },
+      { label: 'Success Rate', value: '98%' },
+      { label: 'Growth Rate', value: '150%' }
+    ]
   });
   const [loading, setLoading] = React.useState(true);
 
@@ -17,9 +21,8 @@ const Hero = () => {
     const fetchContent = async () => {
       try {
         setLoading(true);
-        const statsData = await apiService.getDashboardStatsData();
+        const statsData = await apiService.getDashboardStats();
         if (statsData && Object.keys(statsData).length > 0) {
-          // Update hero stats with dynamic data
           setHeroContent(prev => ({
             ...prev,
             stats: [
@@ -28,28 +31,10 @@ const Hero = () => {
               { label: 'Growth Rate', value: statsData.growthRate || '150%' }
             ]
           }));
-        } else {
-          // Fallback to default stats
-          setHeroContent(prev => ({
-            ...prev,
-            stats: [
-              { label: 'Happy Clients', value: '5000+' },
-              { label: 'Success Rate', value: '98%' },
-              { label: 'Growth Rate', value: '150%' }
-            ]
-          }));
         }
       } catch (error) {
         console.error('Failed to fetch dashboard stats:', error);
-        // Use default stats on error
-        setHeroContent(prev => ({
-          ...prev,
-          stats: [
-            { label: 'Happy Clients', value: '5000+' },
-            { label: 'Success Rate', value: '98%' },
-            { label: 'Growth Rate', value: '150%' }
-          ]
-        }));
+        // Keep default stats on error (already set in initial state)
       } finally {
         setLoading(false);
       }
@@ -247,18 +232,7 @@ const Hero = () => {
           transition={{ delay: 0.8 }}
           className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto"
         >
-          {loading ? (
-            // Loading skeleton
-            [...Array(3)].map((_, index) => (
-              <div key={index} className="bg-white/80 backdrop-blur-xl border border-gray-200 rounded-2xl p-6 shadow-lg">
-                <div className="animate-pulse">
-                  <div className="h-8 bg-gray-300 rounded mb-2"></div>
-                  <div className="h-4 bg-gray-300 rounded w-2/3"></div>
-                </div>
-              </div>
-            ))
-          ) : (
-            heroContent.stats.map((stat, index) => (
+          {heroContent.stats.map((stat, index) => (
             <motion.div 
               key={index} 
               initial={{ opacity: 0, y: 30, scale: 0.8 }}
@@ -270,24 +244,32 @@ const Hero = () => {
               }}
               className="bg-white/80 backdrop-blur-xl border border-gray-200 rounded-2xl p-6 shadow-lg"
             >
-              <motion.div 
-                className="text-3xl font-bold text-red-400 mb-2"
-                animate={{ 
-                  scale: [1, 1.1, 1],
-                  color: ["#f87171", "#dc2626", "#f87171"]
-                }}
-                transition={{ 
-                  duration: 2, 
-                  repeat: Infinity,
-                  delay: index * 0.5
-                }}
-              >
-                {stat.value}
-              </motion.div>
-              <div className="text-gray-600">{stat.label}</div>
+              {loading ? (
+                <div className="animate-pulse">
+                  <div className="h-8 bg-gray-300 rounded mb-2"></div>
+                  <div className="h-4 bg-gray-300 rounded w-2/3"></div>
+                </div>
+              ) : (
+                <>
+                  <motion.div 
+                    className="text-3xl font-bold text-red-400 mb-2"
+                    animate={{ 
+                      scale: [1, 1.1, 1],
+                      color: ["#f87171", "#dc2626", "#f87171"]
+                    }}
+                    transition={{ 
+                      duration: 2, 
+                      repeat: Infinity,
+                      delay: index * 0.5
+                    }}
+                  >
+                    {stat.value}
+                  </motion.div>
+                  <div className="text-gray-600">{stat.label}</div>
+                </>
+              )}
             </motion.div>
-            ))
-          )}
+          ))}
         </motion.div>
       </div>
 
