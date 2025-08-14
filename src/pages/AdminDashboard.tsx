@@ -24,6 +24,7 @@ import ServicesTab from '../components/admin/ServicesTab';
 import AboutUsTab from '../components/admin/AboutUsTab';
 import PrivacyPolicyManager from '../components/admin/PrivacyPolicyManager';
 import TermsOfServiceManager from '../components/admin/TermsOfServiceManager';
+import ContactInfoTab from '../components/admin/ContactInfoTab';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -42,6 +43,7 @@ const AdminDashboard = () => {
     { id: 'testimonials', label: 'Testimonials', icon: Star },
     { id: 'services', label: 'Services', icon: Settings },
     { id: 'about', label: 'About Us', icon: Info },
+    { id: 'contact-info', label: 'Contact Info', icon: MessageSquare },
     { id: 'privacy', label: 'Privacy Policy', icon: Shield },
     { id: 'terms', label: 'Terms of Service', icon: Scale },
   ];
@@ -60,6 +62,8 @@ const AdminDashboard = () => {
         return <ServicesTab />;
       case 'about':
         return <AboutUsTab />;
+      case 'contact-info':
+        return <ContactInfoTab />;
       case 'privacy':
         return <PrivacyPolicyManager />;
       case 'terms':
