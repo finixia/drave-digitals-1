@@ -21,7 +21,6 @@ const Contact = () => {
     address: ['123 Business District', 'Bangalore, Karnataka 530068'],
     workingHours: ['Mon - Fri: 9:00 AM - 7:00 PM', 'Sat: 10:00 AM - 4:00 PM']
   });
-  const [contactInfoLoading, setContactInfoLoading] = React.useState(true);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -37,7 +36,6 @@ const Contact = () => {
   React.useEffect(() => {
     const fetchContactInfo = async () => {
       try {
-        setContactInfoLoading(true);
         console.log('Fetching contact info...');
         const data = await apiService.getContactInfo();
         console.log('Contact info fetched:', data);
@@ -47,8 +45,6 @@ const Contact = () => {
       } catch (error) {
         console.error('Failed to fetch contact info:', error);
         // Keep default contact info on error
-      } finally {
-        setContactInfoLoading(false);
       }
     };
 
@@ -346,18 +342,11 @@ const Contact = () => {
                     </motion.div>
                     <div>
                       <h4 className="text-gray-900 font-semibold mb-2">{info.title}</h4>
-                      {contactInfoLoading ? (
-                        <div className="space-y-2">
-                          <div className="h-4 bg-gray-300 rounded animate-pulse"></div>
-                          <div className="h-4 bg-gray-300 rounded w-3/4 animate-pulse"></div>
-                        </div>
-                      ) : (
-                        info.details.map((detail, detailIndex) => (
-                          <p key={detailIndex} className="text-gray-600 text-sm">
-                            {detail}
-                          </p>
-                        ))
-                      )}
+                      {info.details.map((detail, detailIndex) => (
+                        <p key={detailIndex} className="text-gray-600 text-sm">
+                          {detail}
+                        </p>
+                      ))}
                     </div>
                   </motion.div>
                 ))}
