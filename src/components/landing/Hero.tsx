@@ -11,14 +11,14 @@ const Hero = () => {
     subtitle: 'From landing your dream job to protecting against cyber fraud, we provide comprehensive career solutions and digital security services that empower your professional journey.',
     stats: []
   });
-  const [dashboardStats, setDashboardStats] = React.useState<any>({});
+  const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
     const fetchContent = async () => {
       try {
+        setLoading(true);
         const statsData = await apiService.getDashboardStatsData();
         if (statsData && Object.keys(statsData).length > 0) {
-          setDashboardStats(statsData);
           // Update hero stats with dynamic data
           setHeroContent(prev => ({
             ...prev,
@@ -50,6 +50,8 @@ const Hero = () => {
             { label: 'Growth Rate', value: '150%' }
           ]
         }));
+      } finally {
+        setLoading(false);
       }
     };
     fetchContent();
@@ -245,7 +247,18 @@ const Hero = () => {
           transition={{ delay: 0.8 }}
           className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto"
         >
-          {heroContent.stats.map((stat, index) => (
+          {loading ? (
+            // Loading skeleton
+            [...Array(3)].map((_, index) => (
+              <div key={index} className="bg-white/80 backdrop-blur-xl border border-gray-200 rounded-2xl p-6 shadow-lg">
+                <div className="animate-pulse">
+                  <div className="h-8 bg-gray-300 rounded mb-2"></div>
+                  <div className="h-4 bg-gray-300 rounded w-2/3"></div>
+                </div>
+              </div>
+            ))
+          ) : (
+            heroContent.stats.map((stat, index) => (
             <motion.div 
               key={index} 
               initial={{ opacity: 0, y: 30, scale: 0.8 }}
@@ -273,7 +286,8 @@ const Hero = () => {
               </motion.div>
               <div className="text-gray-600">{stat.label}</div>
             </motion.div>
-          ))}
+            ))
+          )}
         </motion.div>
       </div>
 

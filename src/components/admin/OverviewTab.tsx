@@ -48,14 +48,23 @@ interface DashboardStats {
   growthRate: string;
 }
 
+interface EditableStats {
+  happyClients: string;
+  successRate: string;
+  growthRate: string;
+}
+
 const OverviewTab = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [editableStats, setEditableStats] = useState<EditableStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [editingStats, setEditingStats] = useState<{[key: string]: boolean}>({});
   const [tempStats, setTempStats] = useState<{[key: string]: string}>({});
+  const [savingStats, setSavingStats] = useState(false);
 
   useEffect(() => {
     fetchStats();
+    fetchEditableStats();
   }, []);
 
   const fetchStats = async () => {
@@ -70,22 +79,57 @@ const OverviewTab = () => {
     }
   };
 
+  const fetchEditableStats = async () => {
+    try {
+      const statsData = await apiService.getDashboardStatsData();
+      if (statsData && Object.keys(statsData).length > 0) {
+        setEditableStats({
+          happyClients: statsData.happyClients || '5000+',
+          successRate: statsData.successRate || '98%',
+          growthRate: statsData.growthRate || '150%'
+        });
+      }
+    } catch (error) {
+      console.error('Failed to fetch editable stats:', error);
+      // Set default values
+      setEditableStats({
+        happyClients: '5000+',
+        successRate: '98%',
+        growthRate: '150%'
+      });
+    }
+  };
+
   const handleEditStat = (key: string) => {
     setEditingStats(prev => ({ ...prev, [key]: true }));
-    if (stats) {
-      setTempStats(prev => ({ ...prev, [key]: String(stats[key as keyof DashboardStats]) }));
+    if (editableStats) {
+      setTempStats(prev => ({ ...prev, [key]: editableStats[key as keyof EditableStats] }));
     }
   };
 
   const handleSaveStat = async (key: string) => {
     try {
-      // Here you would call an API to update the stat
-      // await apiService.updateStat(key, tempStats[key]);
+      setSavingStats(true);
+      const updatedStats = {
+        ...editableStats,
+        [key]: tempStats[key]
+      };
+      
+      await apiService.updateDashboardStats(updatedStats);
+      setEditableStats(updatedStats);
       setEditingStats(prev => ({ ...prev, [key]: false }));
-      // Refresh stats
-      await fetchStats();
+      
+      // Clear temp stats
+      setTempStats(prev => {
+        const newStats = { ...prev };
+        delete newStats[key];
+        return newStats;
+      });
     } catch (error) {
       console.error('Failed to update stat:', error);
+      alert('Failed to update statistic. Please try again.');
+    } finally {
+      setSavingStats(false);
     }
   };
 
@@ -129,9 +173,9 @@ const OverviewTab = () => {
           { label: 'Job Applications', value: stats.totalApplications, icon: Briefcase, color: 'text-green-400', key: 'totalApplications', editable: false },
           { label: 'Fraud Cases', value: stats.totalFraudCases, icon: Shield, color: 'text-red-400', key: 'totalFraudCases', editable: false },
           { label: 'Total Users', value: stats.totalUsers, icon: Users, color: 'text-blue-400', key: 'totalUsers', editable: false },
-          { label: 'Happy Clients', value: stats.happyClients, icon: Heart, color: 'text-green-400', key: 'happyClients', editable: true },
-          { label: 'Success Rate', value: stats.successRate + '%', icon: TrendingUp, color: 'text-purple-400', key: 'successRate', editable: true },
-          { label: 'Growth Rate', value: stats.growthRate, icon: Award, color: 'text-orange-400', key: 'growthRate', editable: true }
+          { label: 'Happy Clients', value: editableStats?.happyClients || '5000+', icon: Heart, color: 'text-green-400', key: 'happyClients', editable: true },
+          { label: 'Success Rate', value: editableStats?.successRate || '98%', icon: TrendingUp, color: 'text-purple-400', key: 'successRate', editable: true },
+          { label: 'Growth Rate', value: editableStats?.growthRate || '150%', icon: Award, color: 'text-orange-400', key: 'growthRate', editable: true }
         ].map((stat, index) => (
           <motion.div
             key={index}
