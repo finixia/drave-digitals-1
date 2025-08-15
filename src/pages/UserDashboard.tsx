@@ -86,34 +86,28 @@ const UserDashboard = () => {
         interestedServices: profileData?.interestedServices || []
       });
     } catch (error) {
-      console.error('Failed to fetch user profile:', error);
-      // If API fails, use the user data from auth context as fallback
-      setUserProfile(user);
+      // Fetch complete user profile from API
+      const profileData = await apiService.getUserProfile(user.id);
+      setUserProfile(profileData);
       setFormData({
-        name: user?.name || '',
-        email: user?.email || '',
-        phone: user?.phone || '',
-        dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : '',
-        gender: user?.gender || '',
-        address: user?.address || '',
-        city: user?.city || '',
-        state: user?.state || '',
-        pincode: user?.pincode || '',
-        currentPosition: user?.currentPosition || '',
-        experience: user?.experience || '',
-        skills: user?.skills || '',
-        education: user?.education || '',
-        expectedSalary: user?.expectedSalary || '',
-        preferredLocation: user?.preferredLocation || '',
-        jobType: user?.jobType || '',
-        workMode: user?.workMode || '',
-        interestedServices: user?.interestedServices || []
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+        name: profileData?.name || '',
+        email: profileData?.email || '',
+        phone: profileData?.phone || '',
+        dateOfBirth: profileData?.dateOfBirth ? new Date(profileData.dateOfBirth).toISOString().split('T')[0] : '',
+        gender: profileData?.gender || '',
+        address: profileData?.address || '',
+        city: profileData?.city || '',
+        state: profileData?.state || '',
+        pincode: profileData?.pincode || '',
+        currentPosition: profileData?.currentPosition || '',
+        experience: profileData?.experience || '',
+        skills: profileData?.skills || '',
+        education: profileData?.education || '',
+        expectedSalary: profileData?.expectedSalary || '',
+        preferredLocation: profileData?.preferredLocation || '',
+        jobType: profileData?.jobType || '',
+        workMode: profileData?.workMode || '',
+        interestedServices: profileData?.interestedServices || []
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev: any) => ({
@@ -152,31 +146,8 @@ const UserDashboard = () => {
       Object.entries(formData).forEach(([key, value]) => {
         if (value) {
           if (key === 'interestedServices' && Array.isArray(value)) {
-            updateData.append(key, JSON.stringify(value));
           } else {
             updateData.append(key, value.toString());
-          }
-        }
-      });
-      
-      if (newResume) {
-        updateData.append('resume', newResume);
-      }
-
-      // Call API to update the user profile
-      const updatedProfile = await apiService.updateUserProfile(user?.id || user?._id, updateData);
-      setUserProfile(updatedProfile);
-      
-      setStatus('success');
-      setStatusMessage('Profile updated successfully!');
-      setIsEditing(false);
-      setNewResume(null);
-      
-      // Refresh the profile data
-      await fetchUserProfile();
-    } catch (error) {
-      setStatus('error');
-      setStatusMessage(error instanceof Error ? error.message : 'Failed to update profile');
     } finally {
       setIsLoading(false);
     }
