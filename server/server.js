@@ -1,1779 +1,865 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const nodemailer = require('nodemailer');
-const multer = require('multer');
-const path = require('path');
-require('dotenv').config();
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { 
+  User, 
+  FileText, 
+  Edit, 
+  Download, 
+  Upload, 
+  Save, 
+  ArrowLeft,
+  Mail,
+  Phone,
+  MapPin,
+  Briefcase,
+  GraduationCap,
+  Calendar,
+  DollarSign,
+  CheckCircle,
+  AlertCircle,
+  Clock,
+  Building,
+  Target,
+  Award,
+  Heart
+} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { apiService } from '../utils/api';
 
-const app = express();
-const PORT = process.env.PORT || 5000;
+const UserDashboard = () => {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [formData, setFormData] = useState<any>({});
+  const [newResume, setNewResume] = useState<File | null>(null);
+  const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [statusMessage, setStatusMessage] = useState('');
 
-// Create uploads directory if it doesn't exist
-const fs = require('fs');
-const uploadsDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
+  useEffect(() => {
+    if (user) {
+      fetchUserProfile();
+    }
+  }, [user]);
 
-// Multer configuration for file uploads
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/');
-  },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  const fetchUserProfile = async () => {
+    try {
+      setIsLoading(true);
+      // Fetch complete user profile from API
+      const profileData = await apiService.getUserProfile(user.id);
+      setUserProfile(profileData);
+      setFormData({
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
-const upload = multer({ 
-  storage: storage,
-  limits: {
-    fileSize: 10 * 1024 * 1024 // 10MB limit
-  },
-  fileFilter: function (req, file, cb) {
-    // Allow specific file types
-    const allowedTypes = /jpeg|jpg|png|gif|pdf|doc|docx/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype);
+// Update user profile
+app.put('/api/users/:userId', authenticateToken, upload.single('resume'), async (req, res) => {
+  try {
+    const { userId } = req.params;
     
-    if (mimetype && extname) {
-      return cb(null, true);
-    } else {
-      cb(new Error('Invalid file type'));
+    // Users can only update their own profile, admins can update any profile
+    if (req.user.role !== 'admin' && req.user.id !== userId) {
+      return res.status(403).json({ message: 'Access denied' });
     }
-  }
-});
 
-// Middleware
-app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:3000', 'http://127.0.0.1:5173', 'https://dravedigitals.in'],
-  credentials: true
-}));
-app.use(express.json());
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-console.log("MONGODB_URI:", process.env.MONGODB_URI);
-
-// MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/careerguard')
-  .then(() => {
-    console.log('Connected to MongoDB successfully');
-  })
-  .catch((error) => {
-    console.error('MongoDB connection error:', error);
-    process.exit(1);
-  });
-
-// MongoDB connection event handlers
-mongoose.connection.on('connected', () => {
-  console.log('Mongoose connected to MongoDB');
-});
-
-mongoose.connection.on('error', (err) => {
-  console.error('Mongoose connection error:', err);
-});
-
-mongoose.connection.on('disconnected', () => {
-  console.log('Mongoose disconnected from MongoDB');
-});
-
-// Graceful shutdown
-process.on('SIGINT', async () => {
-  await mongoose.connection.close();
-  console.log('MongoDB connection closed through app termination');
-  process.exit(0);
-});
-
-// User Schema
-const userSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  role: { type: String, enum: ['admin', 'user'], default: 'user' },
-  
-  // Personal Details
-  phone: { type: String },
-  dateOfBirth: { type: Date },
-  gender: { type: String, enum: ['male', 'female', 'other', 'prefer-not-to-say'] },
-  address: { type: String },
-  city: { type: String },
-  state: { type: String },
-  pincode: { type: String },
-  
-  // Professional Details
-  currentPosition: { type: String },
-  experience: { type: String },
-  skills: { type: String },
-  education: { type: String },
-  expectedSalary: { type: String },
-  preferredLocation: { type: String },
-  
-  // Preferences
-  jobType: { type: String },
-  workMode: { type: String },
-  interestedServices: [{ type: String }],
-  
-  // Documents
-  resume: { type: String }, // File path
-  
-  // Profile completion
-  profileCompleted: { type: Boolean, default: false },
-  
-  createdAt: { type: Date, default: Date.now }
-});
-
-const User = mongoose.model('User', userSchema);
-
-// Create default admin user if it doesn't exist
-const createDefaultAdmin = async () => {
-  try {
-    const adminExists = await User.findOne({ email: 'admin@careerguard.com' });
-    if (!adminExists) {
-      const hashedPassword = await bcrypt.hash('admin123', 10);
-      const admin = new User({
-        name: 'Admin',
-        email: 'admin@careerguard.com',
-        password: hashedPassword,
-        role: 'admin'
-      });
-      await admin.save();
-      console.log('Default admin user created');
-    }
-  } catch (error) {
-    console.error('Error creating default admin:', error);
-  }
-};
-
-// Contact Schema
-const contactSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true },
-  phone: { type: String, required: true },
-  service: { type: String, required: true },
-  message: { type: String, required: true },
-  priority: { type: String, enum: ['low', 'medium', 'high'], default: 'medium' },
-  status: { type: String, enum: ['pending', 'contacted', 'resolved'], default: 'pending' },
-  createdAt: { type: Date, default: Date.now }
-});
-
-const Contact = mongoose.model('Contact', contactSchema);
-
-// Job Application Schema
-const jobApplicationSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true },
-  phone: { type: String, required: true },
-  position: { type: String, required: true },
-  experience: { type: String, required: true },
-  skills: { type: String, required: true },
-  expectedSalary: { type: String },
-  location: { type: String },
-  resume: { type: String }, // File path
-  status: { type: String, enum: ['applied', 'screening', 'interview', 'placed', 'rejected'], default: 'applied' },
-  createdAt: { type: Date, default: Date.now }
-});
-
-const JobApplication = mongoose.model('JobApplication', jobApplicationSchema);
-
-// Fraud Case Schema
-const fraudCaseSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true },
-  phone: { type: String, required: true },
-  fraudType: { type: String, required: true },
-  description: { type: String, required: true },
-  amount: { type: Number },
-  dateOfIncident: { type: Date },
-  policeComplaint: { type: Boolean, default: false },
-  evidence: [{ type: String }], // File paths
-  status: { type: String, enum: ['reported', 'investigating', 'resolved', 'closed'], default: 'reported' },
-  createdAt: { type: Date, default: Date.now }
-});
-
-const FraudCase = mongoose.model('FraudCase', fraudCaseSchema);
-
-// Newsletter Schema
-const newsletterSchema = new mongoose.Schema({
-  email: { type: String, required: true, unique: true },
-  subscribed: { type: Boolean, default: true },
-  createdAt: { type: Date, default: Date.now }
-});
-
-const Newsletter = mongoose.model('Newsletter', newsletterSchema);
-
-// Website Content Schema
-const websiteContentSchema = new mongoose.Schema({
-  section: { type: String, required: true, unique: true },
-  content: { type: mongoose.Schema.Types.Mixed, required: true },
-  lastUpdated: { type: Date, default: Date.now },
-  updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
-});
-
-const WebsiteContent = mongoose.model('WebsiteContent', websiteContentSchema);
-
-// About Content Schema
-const aboutContentSchema = new mongoose.Schema({
-  title: { type: String, required: true },
-  subtitle: { type: String, required: true },
-  description: { type: String, required: true },
-  values: [{
-    title: { type: String, required: true },
-    description: { type: String, required: true },
-    icon: { type: String, required: true }
-  }],
-  commitments: [{ type: String }],
-  active: { type: Boolean, default: true },
-  createdAt: { type: Date, default: Date.now }
-});
-
-const AboutContent = mongoose.model('AboutContent', aboutContentSchema, 'aboutcontents');
-
-// Privacy Policy Schema
-const privacyPolicySchema = new mongoose.Schema({
-  title: { type: String, required: true },
-  subtitle: { type: String, required: true },
-  introduction: { type: String, required: true },
-  sections: [{
-    title: { type: String, required: true },
-    content: [{
-      subtitle: { type: String },
-      items: [{ type: String }]
-    }]
-  }],
-  contactInfo: {
-    email: { type: String, required: true },
-    phone: { type: String, required: true },
-    address: { type: String, required: true }
-  },
-  lastUpdated: { type: Date, default: Date.now },
-  active: { type: Boolean, default: true },
-  createdAt: { type: Date, default: Date.now }
-});
-
-const PrivacyPolicy = mongoose.model('PrivacyPolicy', privacyPolicySchema);
-
-// Terms of Service Schema
-// Contact Info Schema
-const contactInfoSchema = new mongoose.Schema({
-  phone: [String],
-  email: [String],
-  address: [String],
-  workingHours: [String],
-  active: { type: Boolean, default: true },
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
-});
-
-const ContactInfo = mongoose.model('ContactInfo', contactInfoSchema);
-
-// Dashboard Stats Schema
-const dashboardStatsSchema = new mongoose.Schema({
-  happyClients: { type: String, default: '5000+' },
-  successRate: { type: String, default: '98%' },
-  growthRate: { type: String, default: '150%' },
-  fraudCasesResolved: { type: String, default: '1200+' },
-  active: { type: Boolean, default: true },
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
-});
-
-const DashboardStats = mongoose.model('DashboardStats', dashboardStatsSchema);
-
-const termsOfServiceSchema = new mongoose.Schema({
-  title: { type: String, required: true },
-  subtitle: { type: String, required: true },
-  introduction: { type: String, required: true },
-  sections: [{
-    title: { type: String, required: true },
-    content: [{
-      subtitle: { type: String },
-      items: [{ type: String }]
-    }]
-  }],
-  contactInfo: {
-    email: { type: String, required: true },
-    phone: { type: String, required: true },
-    address: { type: String, required: true }
-  },
-  lastUpdated: { type: Date, default: Date.now },
-  active: { type: Boolean, default: true },
-  createdAt: { type: Date, default: Date.now }
-});
-
-const TermsOfService = mongoose.model('TermsOfService', termsOfServiceSchema);
-// Service Schema
-const serviceSchema = new mongoose.Schema({
-  title: { type: String, required: true },
-  description: { type: String, required: true },
-  icon: { type: String, required: true },
-  color: { type: String, required: true },
-  features: [{ type: String }],
-  active: { type: Boolean, default: true },
-  order: { type: Number, default: 0 },
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
-});
-
-const Service = mongoose.model('Service', serviceSchema);
-
-// Create default services
-const createDefaultServices = async () => {
-  try {
-    const serviceCount = await Service.countDocuments();
-    if (serviceCount === 0) {
-      const defaultServices = [
-        {
-          title: 'Cyber Crime Fraud Assistance',
-          description: 'Complete protection against cyber fraud with expert guidance and legal support.',
-          icon: 'Shield',
-          color: 'from-red-500 to-pink-600',
-          features: [
-            'Cyber fraud complaint support',
-            'FIR filing guidance',
-            'Online complaint assistance',
-            'Prevention tips & awareness'
-          ],
-          order: 1
-        },
-        {
-          title: 'Job Consultancy Services',
-          description: 'End-to-end job placement services for IT & Non-IT professionals.',
-          icon: 'Briefcase',
-          color: 'from-blue-500 to-cyan-600',
-          features: [
-            'IT & Non-IT placements',
-            'Resume building support',
-            'Interview preparation',
-            'Work from home opportunities'
-          ],
-          order: 2
-        },
-        {
-          title: 'Web & App Development',
-          description: 'Custom digital solutions from websites to mobile applications.',
-          icon: 'Code',
-          color: 'from-green-500 to-emerald-600',
-          features: [
-            'Website development',
-            'E-commerce platforms',
-            'Mobile app development',
-            'UI/UX design services'
-          ],
-          order: 3
-        },
-        {
-          title: 'Digital Marketing',
-          description: 'Comprehensive digital marketing solutions to grow your business online.',
-          icon: 'TrendingUp',
-          color: 'from-purple-500 to-violet-600',
-          features: [
-            'Social media marketing',
-            'SEO optimization',
-            'Google Ads management',
-            'Meta Ads campaigns'
-          ],
-          order: 4
-        },
-        {
-          title: 'Training & Certification',
-          description: 'Professional skill development programs with industry certifications.',
-          icon: 'GraduationCap',
-          color: 'from-orange-500 to-amber-600',
-          features: [
-            'IT training programs',
-            'Digital marketing courses',
-            'Freelancing skills',
-            'Industry certifications'
-          ],
-          order: 5
-        }
-      ];
-      
-      await Service.insertMany(defaultServices);
-      console.log('Default services created');
-    }
-  } catch (error) {
-    console.error('Error creating default services:', error);
-  }
-};
-// Testimonial Schema
-// Create default contact info
-const createDefaultContactInfo = async () => {
-  try {
-    const contactInfoExists = await ContactInfo.findOne({ active: true });
-    if (!contactInfoExists) {
-      const defaultContactInfo = new ContactInfo({
-        phone: ['+91 9876543210', '+91 9876543211'],
-        email: ['info@dravedigitals.com', 'support@dravedigitals.com'],
-        address: ['123 Business District', 'Bangalore, Karnataka 530068'],
-        workingHours: ['Mon - Fri: 9:00 AM - 7:00 PM', 'Sat: 10:00 AM - 4:00 PM'],
-        active: true
-      });
-      await defaultContactInfo.save();
-      console.log('Default contact info created');
-    }
-  } catch (error) {
-    console.error('Error creating default contact info:', error);
-  }
-};
-
-// Create default dashboard stats
-const createDefaultDashboardStats = async () => {
-  try {
-    const dashboardStatsExists = await DashboardStats.findOne({ active: true });
-    if (!dashboardStatsExists) {
-      const defaultStats = new DashboardStats({
-        happyClients: '5000+',
-        successRate: '98%',
-        growthRate: '150%',
-        fraudCasesResolved: '1200+',
-        active: true
-      });
-      await defaultStats.save();
-      console.log('Default dashboard stats created');
-    }
-  } catch (error) {
-    console.error('Error creating default dashboard stats:', error);
-  }
-};
-
-// Create default privacy policy
-const createDefaultPrivacyPolicy = async () => {
-  try {
-    const privacyPolicyExists = await PrivacyPolicy.findOne({ active: true });
-    if (!privacyPolicyExists) {
-      const defaultPrivacyPolicy = new PrivacyPolicy({
-        title: 'Privacy Policy',
-        subtitle: 'Your Privacy Matters to Us',
-        introduction: 'Drave Digitals ("Company," "we," "our," or "us") respects your privacy and is committed to protecting your personal information. This Privacy Policy explains how we collect, use, store, and safeguard your data when you use our services — including Job Consultancy, Cybercrime & Digital Forensics, and App Development.\n\nBy using our website and services, you agree to the terms outlined in this Privacy Policy.',
-        sections: [
-          {
-            title: 'Information We Collect',
-            content: [
-              {
-                subtitle: 'Personal Information (for job consultancy & client onboarding)',
-                items: [
-                  'Full Name',
-                  'Contact details (email, phone number, address)',
-                  'Date of Birth, Gender',
-                  'Resume/CV, qualifications, employment history',
-                  'Identification documents (e.g., Aadhaar, PAN, Passport — only when legally required)'
-                ]
-              },
-              {
-                subtitle: 'Cybercrime & Forensics Data',
-                items: [
-                  'Digital evidence provided by clients (e.g., screenshots, logs, emails)',
-                  'Technical information related to incidents',
-                  'Any other data necessary for investigation'
-                ]
-              },
-              {
-                subtitle: 'App Development Information',
-                items: [
-                  'Project requirements and specifications',
-                  'User analytics for apps we develop',
-                  'Client feedback and communication history'
-                ]
-              },
-              {
-                subtitle: 'Automatically Collected Data',
-                items: [
-                  'IP address',
-                  'Browser type & device information',
-                  'Cookies & usage patterns'
-                ]
-              }
-            ]
-          },
-          {
-            title: 'How We Use Your Information',
-            content: [
-              {
-                subtitle: '',
-                items: [
-                  'Job Consultancy: To match candidates with employers, verify credentials, and communicate hiring updates.',
-                  'Cybercrime Services: To conduct legal investigations, gather evidence, and provide reports.',
-                  'App Development: To deliver, maintain, and improve our applications.',
-                  'Legal Compliance: To meet legal obligations under Indian law.',
-                  'Customer Support: To respond to queries, complaints, or requests.'
-                ]
-              }
-            ]
-          },
-          {
-            title: 'Data Sharing & Disclosure',
-            content: [
-              {
-                subtitle: '',
-                items: [
-                  'We do not sell your personal data. We may share your information with:',
-                  'Employers & Recruiters (job consultancy) — only with your consent.',
-                  'Law Enforcement Agencies — in cases involving cybercrime or legal compliance.',
-                  'Service Providers — for hosting, analytics, or technical support.',
-                  'Legal Authorities — if required by court order or government directive.'
-                ]
-              }
-            ]
-          },
-          {
-            title: 'Data Retention',
-            content: [
-              {
-                subtitle: '',
-                items: [
-                  'Job consultancy data is retained for up to 2 years unless you request deletion earlier.',
-                  'Cybercrime case data is retained as per legal requirements and then securely destroyed.',
-                  'App development project data is retained for contract duration + 1 year for support purposes.'
-                ]
-              }
-            ]
-          },
-          {
-            title: 'Security Measures',
-            content: [
-              {
-                subtitle: '',
-                items: [
-                  'We implement reasonable security practices, including:',
-                  'Encrypted data storage',
-                  'Secure communication protocols (HTTPS, SSL)',
-                  'Restricted employee access to sensitive data',
-                  'Regular security audits',
-                  '',
-                  'However, no system is 100% secure, and we cannot guarantee absolute security of your data.'
-                ]
-              }
-            ]
-          },
-          {
-            title: 'Your Rights',
-            content: [
-              {
-                subtitle: '',
-                items: [
-                  'You have the right to:',
-                  'Access and request a copy of your data',
-                  'Correct inaccurate information',
-                  'Request deletion of your personal data (subject to legal obligations)',
-                  'Withdraw consent for data processing (where applicable)',
-                  '',
-                  'To exercise your rights, contact us using the details in Section 9'
-                ]
-              }
-            ]
-          }
-        ],
-        contactInfo: {
-          email: 'privacy@dravedigitals.com',
-          phone: '+91 9876543210',
-          address: 'Mumbai, Maharashtra, India'
-        },
-        active: true
-      });
-      await defaultPrivacyPolicy.save();
-      console.log('Default privacy policy created');
-    }
-  } catch (error) {
-    console.error('Error creating default privacy policy:', error);
-  }
-};
-
-// Create default terms of service
-const createDefaultTermsOfService = async () => {
-  try {
-    const termsExists = await TermsOfService.findOne({ active: true });
-    if (!termsExists) {
-      const defaultTerms = new TermsOfService({
-        title: 'Terms of Service',
-        subtitle: 'Legal Terms and Conditions',
-        introduction: 'Welcome to Drave Digitals ("Company," "we," "our," or "us"). By accessing or using our website, products, and services — including Job Consultancy, Cybercrime & Digital Forensics Solutions, and App Development — you ("User," "Client," or "You") agree to comply with and be bound by these Terms and Conditions.\n\nIf you do not agree with these Terms, please discontinue use of our services immediately.',
-        sections: [
-          {
-            title: 'Scope of Services',
-            content: [
-              {
-                subtitle: 'Job Consultancy Services',
-                items: [
-                  'We assist candidates in connecting with potential employers.',
-                  'We do not guarantee employment; final hiring decisions are made solely by the employer.',
-                  'Candidates are responsible for providing accurate and truthful information.'
-                ]
-              },
-              {
-                subtitle: 'Cybercrime & Digital Forensics',
-                items: [
-                  'We provide digital investigation, cybercrime consultation, and online fraud prevention services strictly in accordance with Indian Cyber Laws (IT Act 2000 & its amendments).',
-                  'We do not engage in illegal hacking, unauthorized access, or any unlawful cyber activity.',
-                  'All investigations are conducted with proper client consent and in compliance with applicable laws.'
-                ]
-              },
-              {
-                subtitle: 'App Development',
-                items: [
-                  'We design, develop, and maintain mobile and web applications as per client requirements.',
-                  'All source code and intellectual property rights are subject to the terms agreed in the service contract.'
-                ]
-              }
-            ]
-          },
-          {
-            title: 'Eligibility',
-            content: [
-              {
-                subtitle: '',
-                items: [
-                  'You must be at least 18 years old to use our services. By engaging with us, you confirm that you are legally capable of entering into a binding agreement under Indian law.'
-                ]
-              }
-            ]
-          },
-          {
-            title: 'User Responsibilities',
-            content: [
-              {
-                subtitle: '',
-                items: [
-                  'Provide accurate, complete, and updated information when requested.',
-                  'Use our services only for lawful purposes.',
-                  'Avoid engaging in fraud, misrepresentation, harassment, or any activity that violates applicable laws.'
-                ]
-              }
-            ]
-          },
-          {
-            title: 'Payments & Fees',
-            content: [
-              {
-                subtitle: '',
-                items: [
-                  'Service fees are communicated before commencement of work and must be paid as per agreed terms.',
-                  'All payments are non-refundable unless otherwise stated in writing.',
-                  'In the case of job consultancy, fees are charged as per service agreement and do not constitute a placement guarantee.'
-                ]
-              }
-            ]
-          },
-          {
-            title: 'Intellectual Property',
-            content: [
-              {
-                subtitle: '',
-                items: [
-                  'All content on our website — including text, graphics, logos, designs, and software — is the property of Drave Digitals and protected under Indian Copyright Law.',
-                  'Clients may not copy, distribute, or reproduce any part of our services without written consent.'
-                ]
-              }
-            ]
-          },
-          {
-            title: 'Confidentiality',
-            content: [
-              {
-                subtitle: '',
-                items: [
-                  'We maintain the confidentiality of client information unless disclosure is required by law or for legal proceedings.'
-                ]
-              }
-            ]
-          },
-          {
-            title: 'Limitation of Liability',
-            content: [
-              {
-                subtitle: '',
-                items: [
-                  'We are not liable for any loss, damage, or legal consequences arising from misuse of our services.',
-                  'Job placement results, cybercrime resolution timelines, and app performance depend on factors beyond our control.'
-                ]
-              }
-            ]
-          },
-          {
-            title: 'Prohibited Activities',
-            content: [
-              {
-                subtitle: 'You agree NOT to:',
-                items: [
-                  'Use our services for any unlawful or fraudulent activity.',
-                  'Submit false documents or information.',
-                  'Attempt to gain unauthorized access to our systems or client data.'
-                ]
-              }
-            ]
-          },
-          {
-            title: 'Termination',
-            content: [
-              {
-                subtitle: '',
-                items: [
-                  'We reserve the right to suspend or terminate your access to our services without notice for violation of these Terms or applicable laws.'
-                ]
-              }
-            ]
-          },
-          {
-            title: 'Governing Law & Jurisdiction',
-            content: [
-              {
-                subtitle: '',
-                items: [
-                  'These Terms are governed by the laws of India, and any disputes shall be subject to the exclusive jurisdiction of the courts in India.'
-                ]
-              }
-            ]
-          },
-          {
-            title: 'Changes to Terms',
-            content: [
-              {
-                subtitle: '',
-                items: [
-                  'We may update these Terms from time to time. Continued use of our services after changes implies acceptance of the revised Terms.'
-                ]
-              }
-            ]
-          }
-        ],
-        contactInfo: {
-          email: 'legal@dravedigitals.com',
-          phone: '+91 9876543210',
-          address: 'Mumbai, Maharashtra, India'
-        },
-        active: true
-      });
-      await defaultTerms.save();
-      console.log('Default terms of service created');
-    }
-  } catch (error) {
-    console.error('Error creating default terms of service:', error);
-  }
-};
-const testimonialSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  role: { type: String, required: true },
-  company: { type: String, required: true },
-  rating: { type: Number, required: true, min: 1, max: 5 },
-  text: { type: String, required: true },
-  avatar: { type: String, default: '👤' },
-  service: { type: String, required: true },
-  featured: { type: Boolean, default: false },
-  approved: { type: Boolean, default: false },
-  createdAt: { type: Date, default: Date.now }
-});
-
-const Testimonial = mongoose.model('Testimonial', testimonialSchema);
-
-// Create default testimonials
-const createDefaultTestimonials = async () => {
-  try {
-    const testimonialCount = await Testimonial.countDocuments();
-    if (testimonialCount === 0) {
-      const defaultTestimonials = [
-        {
-          name: 'Priya Sharma',
-          role: 'Software Engineer',
-          company: 'Tech Solutions Inc.',
-          rating: 5,
-          text: 'CareerGuard helped me land my dream job in just 2 weeks! Their resume building and interview preparation services are exceptional.',
-          avatar: '👩‍💻',
-          service: 'Job Consultancy',
-          featured: true,
-          approved: true
-        },
-        {
-          name: 'Rajesh Kumar',
-          role: 'Business Owner',
-          company: 'Kumar Enterprises',
-          rating: 5,
-          text: 'When I faced cyber fraud, CareerGuard guided me through the entire process. They helped me file the FIR and recover my money.',
-          avatar: '👨‍💼',
-          service: 'Fraud Assistance',
-          featured: true,
-          approved: true
-        },
-        {
-          name: 'Anita Patel',
-          role: 'Digital Marketer',
-          company: 'Creative Agency',
-          rating: 5,
-          text: 'The digital marketing training program transformed my career. Now I run successful campaigns for multiple clients.',
-          avatar: '👩‍🎨',
-          service: 'Training',
-          featured: true,
-          approved: true
-        },
-        {
-          name: 'Vikram Singh',
-          role: 'Startup Founder',
-          company: 'InnovateTech',
-          rating: 5,
-          text: 'Their web development team created an amazing e-commerce platform for my business. Professional and timely delivery!',
-          avatar: '👨‍💻',
-          service: 'Development',
-          featured: true,
-          approved: true
-        },
-        {
-          name: 'Meera Joshi',
-          role: 'HR Manager',
-          company: 'Global Corp',
-          rating: 5,
-          text: 'CareerGuard provided excellent candidates for our IT positions. Their screening process is thorough and reliable.',
-          avatar: '👩‍💼',
-          service: 'Recruitment',
-          featured: true,
-          approved: true
-        },
-        {
-          name: 'Arjun Reddy',
-          role: 'Freelancer',
-          company: 'Independent',
-          rating: 5,
-          text: 'The freelancing skills program helped me build a successful remote career. Earning 6 figures now working from home!',
-          avatar: '👨‍🎯',
-          service: 'Training',
-          featured: true,
-          approved: true
-        }
-      ];
-      
-      await Testimonial.insertMany(defaultTestimonials);
-      console.log('Default testimonials created');
-    }
-  } catch (error) {
-    console.error('Error creating default testimonials:', error);
-  }
-};
-
-// Middleware for authentication
-const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-
-  if (!token) {
-    return res.sendStatus(401);
-  }
-
-  jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key', (err, user) => {
-    if (err) return res.sendStatus(403);
-    req.user = user;
-    next();
-  });
-};
-
-// Middleware for admin authentication
-const authenticateAdmin = (req, res, next) => {
-  authenticateToken(req, res, (err) => {
-    if (err) return next(err);
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Admin access required' });
-    }
-    next();
-  });
-};
-
-// Routes
-
-// File serving route
-app.get('/api/uploads/:filename', (req, res) => {
-  const filename = req.params.filename;
-  const filePath = path.join(__dirname, 'uploads', filename);
-  
-  // Check if file exists
-  if (!fs.existsSync(filePath)) {
-    return res.status(404).json({ message: 'File not found' });
-  }
-  
-  // Set appropriate headers
-  const ext = path.extname(filename).toLowerCase();
-  const mimeTypes = {
-    '.pdf': 'application/pdf',
-    '.doc': 'application/msword',
-    '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    '.jpg': 'image/jpeg',
-    '.jpeg': 'image/jpeg',
-    '.png': 'image/png',
-    '.gif': 'image/gif'
-  };
-  
-  const mimeType = mimeTypes[ext] || 'application/octet-stream';
-  res.setHeader('Content-Type', mimeType);
-  res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
-  
-  // Send file
-  res.sendFile(filePath);
-});
-
-// Auth Routes
-app.post('/api/auth/register', async (req, res) => {
-  try {
-    const { name, email, password, role } = req.body;
+    const updateData = { ...req.body };
     
-    // Check if user exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: 'User already exists' });
-    }
-
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Create user
-    const user = new User({
-      name,
-      email,
-      password: hashedPassword,
-      role: role || 'user'
-    });
-
-    await user.save();
-
-    // Generate token
-    const token = jwt.sign(
-      { userId: user._id, email: user.email, role: user.role },
-      process.env.JWT_SECRET || 'your-secret-key',
-      { expiresIn: '24h' }
-    );
-
-    res.status(201).json({
-      message: 'User created successfully',
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role
-      }
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-
-app.post('/api/auth/register-detailed', upload.single('resume'), async (req, res) => {
-  try {
-    const {
-      name, email, password, phone, dateOfBirth, gender, address, city, state, pincode,
-      currentPosition, experience, skills, education, expectedSalary, preferredLocation,
-      jobType, workMode, interestedServices
-    } = req.body;
-    
-    // Check if user exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: 'User already exists' });
-    }
-
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Parse interested services if it's a string
-    let parsedServices = [];
-    if (interestedServices) {
+    // Handle interested services JSON parsing
+    if (updateData.interestedServices && typeof updateData.interestedServices === 'string') {
       try {
-        parsedServices = typeof interestedServices === 'string' 
-          ? JSON.parse(interestedServices) 
-          : interestedServices;
-      } catch (error) {
-        parsedServices = [];
+        updateData.interestedServices = JSON.parse(updateData.interestedServices);
+      } catch (e) {
+        updateData.interestedServices = [updateData.interestedServices];
       }
     }
 
-    // Create user with detailed information
-    const userData = {
-      name,
-      email,
-      password: hashedPassword,
-      phone,
-      dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
-      gender,
-      address,
-      city,
-      state,
-      pincode,
-      currentPosition,
-      experience,
-      skills,
-      education,
-      expectedSalary,
-      preferredLocation,
-      jobType,
-      workMode,
-      interestedServices: parsedServices,
-      profileCompleted: true
+    // Handle resume upload
+    if (req.file) {
+      updateData.resume = req.file.path;
+    }
+
+    // Convert date string to Date object if provided
+    if (updateData.dateOfBirth) {
+      updateData.dateOfBirth = new Date(updateData.dateOfBirth);
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      updateData,
+      { new: true, runValidators: true }
+    ).select('-password');
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json(updatedUser);
+  } catch (error) {
+    console.error('Error updating user profile:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+        name: user?.name || '',
+        email: user?.email || '',
+        phone: user?.phone || '',
+        dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : '',
+        gender: user?.gender || '',
+        address: user?.address || '',
+        city: user?.city || '',
+        state: user?.state || '',
+        pincode: user?.pincode || '',
+        currentPosition: user?.currentPosition || '',
+        experience: user?.experience || '',
+        skills: user?.skills || '',
+        education: user?.education || '',
+        expectedSalary: user?.expectedSalary || '',
+        preferredLocation: user?.preferredLocation || '',
+        jobType: user?.jobType || '',
+        workMode: user?.workMode || '',
+        interestedServices: user?.interestedServices || []
+      });
+    } catch (error) {
+      console.error('Failed to fetch user profile:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev: any) => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) { // 10MB limit
+        setStatus('error');
+        setStatusMessage('File size should be less than 10MB');
+        return;
+      }
+      
+      const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+      if (!allowedTypes.includes(file.type)) {
+        setStatus('error');
+        setStatusMessage('Please upload a PDF or Word document');
+        return;
+      }
+      
+      setNewResume(file);
+      setStatus('idle');
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      setIsLoading(true);
+      setStatus('idle');
+      
+      const updateData = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+        if (value) {
+          if (key === 'interestedServices' && Array.isArray(value)) {
+            updateData.append(key, JSON.stringify(value));
+          } else {
+            updateData.append(key, value.toString());
+          }
+        }
+      });
+      
+      if (newResume) {
+        updateData.append('resume', newResume);
+      }
+
+      // In a real app, you'd call an API to update the user profile
+      // await apiService.updateUserProfile(user.id, updateData);
+      
+      setStatus('success');
+      setStatusMessage('Profile updated successfully!');
+      setIsEditing(false);
+      setNewResume(null);
+    } catch (error) {
+      setStatus('error');
+      setStatusMessage(error instanceof Error ? error.message : 'Failed to update profile');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDownloadResume = () => {
+    if (userProfile?.resume) {
+      const resumeUrl = `${import.meta.env.VITE_API_URL || '/api'}/uploads/${userProfile.resume.split('/').pop()}`;
+      const link = document.createElement('a');
+      link.href = resumeUrl;
+      link.download = `${userProfile.name.replace(/\s+/g, '_')}_Resume.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return 'Not provided';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const getExperienceLabel = (exp: string) => {
+    const expMap: { [key: string]: string } = {
+      'fresher': 'Fresher (0 years)',
+      '1-2': '1-2 years',
+      '3-5': '3-5 years',
+      '6-10': '6-10 years',
+      '10+': '10+ years'
     };
+    return expMap[exp] || exp;
+  };
 
-    // Add resume path if uploaded
-    if (req.file) {
-      userData.resume = req.file.path;
-    }
+  const getEducationLabel = (edu: string) => {
+    const eduMap: { [key: string]: string } = {
+      'high-school': 'High School',
+      'diploma': 'Diploma',
+      'bachelors': "Bachelor's Degree",
+      'masters': "Master's Degree",
+      'phd': 'PhD'
+    };
+    return eduMap[edu] || edu;
+  };
 
-    const user = new User(userData);
-    await user.save();
-
-    // Generate token
-    const token = jwt.sign(
-      { userId: user._id, email: user.email, role: user.role },
-      process.env.JWT_SECRET || 'your-secret-key',
-      { expiresIn: '24h' }
+  if (isLoading && !userProfile) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          className="w-8 h-8 border-4 border-red-400 border-t-transparent rounded-full"
+        />
+        <p className="ml-4 text-gray-600">Loading your profile...</p>
+      </div>
     );
-
-    res.status(201).json({
-      message: 'User registered successfully',
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        profileCompleted: user.profileCompleted
-      }
-    });
-  } catch (error) {
-    console.error('Detailed registration error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
   }
-});
 
-app.post('/api/auth/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <motion.button
+                onClick={() => navigate('/')}
+                whileHover={{ scale: 1.05, x: -5 }}
+                whileTap={{ scale: 0.95 }}
+                className="inline-flex items-center space-x-2 text-gray-600 hover:text-red-600 transition-colors"
+              >
+                <ArrowLeft size={20} />
+                <span>Back to Home</span>
+              </motion.button>
+              <div className="flex items-center space-x-3">
+                <img 
+                  src="/company logo.png" 
+                  alt="Drave Capitals Logo" 
+                  className="w-10 h-10 object-contain"
+                />
+                <div>
+                  <h1 className="text-xl font-bold text-gray-900">My Dashboard</h1>
+                  <p className="text-sm text-gray-600">Drave Digitals</p>
+                </div>
+              </div>
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleLogout}
+              className="bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-2 rounded-xl font-medium hover:shadow-lg transition-all"
+            >
+              Logout
+            </motion.button>
+          </div>
+        </div>
+      </div>
 
-    // Find user
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(400).json({ message: 'Invalid credentials' });
-    }
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Profile Card */}
+          <div className="lg:col-span-1">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm"
+            >
+              <div className="text-center mb-6">
+                <div className="w-20 h-20 bg-gradient-to-r from-red-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-white font-bold text-2xl">
+                    {userProfile?.name?.charAt(0) || 'U'}
+                  </span>
+                </div>
+                <h2 className="text-xl font-bold text-gray-900">{userProfile?.name}</h2>
+                <p className="text-gray-600">{userProfile?.email}</p>
+                <div className="mt-4 inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  <CheckCircle size={12} className="mr-1" />
+                  Active Member
+                </div>
+              </div>
 
-    // Check password
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid credentials' });
-    }
+              {/* Quick Stats */}
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="text-center p-3 bg-blue-50 rounded-lg">
+                  <Calendar className="text-blue-400 mx-auto mb-1" size={20} />
+                  <div className="text-xs text-gray-600">Member Since</div>
+                  <div className="text-sm font-semibold text-gray-900">
+                    {userProfile?.createdAt ? new Date(userProfile.createdAt).getFullYear() : '2024'}
+                  </div>
+                </div>
+                <div className="text-center p-3 bg-green-50 rounded-lg">
+                  <Award className="text-green-400 mx-auto mb-1" size={20} />
+                  <div className="text-xs text-gray-600">Profile</div>
+                  <div className="text-sm font-semibold text-gray-900">
+                    {userProfile?.profileCompleted ? 'Complete' : 'Incomplete'}
+                  </div>
+                </div>
+              </div>
 
-    // Generate token
-    const token = jwt.sign(
-      { userId: user._id, email: user.email, role: user.role },
-      process.env.JWT_SECRET || 'your-secret-key',
-      { expiresIn: '24h' }
-    );
+              {/* Resume Section */}
+              <div className="border-t border-gray-200 pt-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Resume</h3>
+                {userProfile?.resume ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                      <FileText className="text-red-400" size={20} />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-900">Current Resume</p>
+                        <p className="text-xs text-gray-600">PDF Document</p>
+                      </div>
+                    </div>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleDownloadResume}
+                      className="w-full bg-blue-500 text-white py-2 rounded-lg font-medium hover:bg-blue-600 transition-colors inline-flex items-center justify-center space-x-2"
+                    >
+                      <Download size={16} />
+                      <span>Download Resume</span>
+                    </motion.button>
+                  </div>
+                ) : (
+                  <div className="text-center py-6">
+                    <FileText className="mx-auto text-gray-400 mb-2" size={32} />
+                    <p className="text-gray-600 text-sm">No resume uploaded</p>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
 
-    res.json({
-      message: 'Login successful',
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role
-      }
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
+          {/* Profile Details */}
+          <div className="lg:col-span-2">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Profile Information</h2>
+                {!isEditing ? (
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setIsEditing(true)}
+                    className="bg-red-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-600 transition-colors inline-flex items-center space-x-2"
+                  >
+                    <Edit size={16} />
+                    <span>Edit Profile</span>
+                  </motion.button>
+                ) : (
+                  <div className="flex items-center space-x-3">
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => {
+                        setIsEditing(false);
+                        setNewResume(null);
+                        setStatus('idle');
+                      }}
+                      className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors"
+                    >
+                      Cancel
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={handleSave}
+                      disabled={isLoading}
+                      className="bg-green-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-600 transition-colors inline-flex items-center space-x-2 disabled:opacity-50"
+                    >
+                      <Save size={16} />
+                      <span>{isLoading ? 'Saving...' : 'Save Changes'}</span>
+                    </motion.button>
+                  </div>
+                )}
+              </div>
 
-// Contact Routes
-app.post('/api/contact', async (req, res) => {
-  try {
-    const contact = new Contact(req.body);
-    await contact.save();
-    
-    // Send email notification (configure nodemailer)
-    // ... email sending logic
-    
-    res.status(201).json({ message: 'Contact form submitted successfully' });
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
+              {/* Status Message */}
+              {status !== 'idle' && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`mb-6 p-4 rounded-xl flex items-center space-x-3 ${
+                    status === 'success' 
+                      ? 'bg-green-500/10 border border-green-500/20 text-green-400' 
+                      : 'bg-red-500/10 border border-red-500/20 text-red-400'
+                  }`}
+                >
+                  {status === 'success' ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
+                  <span>{statusMessage}</span>
+                </motion.div>
+              )}
 
-app.get('/api/contacts', authenticateAdmin, async (req, res) => {
-  try {
-    const contacts = await Contact.find().sort({ createdAt: -1 });
-    res.json(contacts);
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
+              {/* Personal Information Section */}
+              <div className="space-y-8">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
+                    <User className="text-red-400" size={20} />
+                    <span>Personal Information</span>
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Full Name</label>
+                      {isEditing ? (
+                        <div className="relative">
+                          <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                          <input
+                            type="text"
+                            name="name"
+                            value={formData.name || ''}
+                            onChange={handleInputChange}
+                            className="w-full bg-gray-50 border border-gray-300 rounded-xl pl-12 pr-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                          />
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {userProfile?.name || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
 
-// Job Application Routes
-app.post('/api/job-applications', upload.single('resume'), async (req, res) => {
-  try {
-    const applicationData = { ...req.body };
-    if (req.file) {
-      applicationData.resume = req.file.path;
-    }
-    const application = new JobApplication(applicationData);
-    await application.save();
-    res.status(201).json({ message: 'Job application submitted successfully' });
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Email</label>
+                      {isEditing ? (
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                          <input
+                            type="email"
+                            name="email"
+                            value={formData.email || ''}
+                            onChange={handleInputChange}
+                            className="w-full bg-gray-50 border border-gray-300 rounded-xl pl-12 pr-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                          />
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {userProfile?.email || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
 
-app.get('/api/job-applications', authenticateAdmin, async (req, res) => {
-  try {
-    const applications = await JobApplication.find().sort({ createdAt: -1 });
-    res.json(applications);
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Phone</label>
+                      {isEditing ? (
+                        <div className="relative">
+                          <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                          <input
+                            type="tel"
+                            name="phone"
+                            value={formData.phone || ''}
+                            onChange={handleInputChange}
+                            className="w-full bg-gray-50 border border-gray-300 rounded-xl pl-12 pr-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                          />
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {userProfile?.phone || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
 
-// Fraud Case Routes
-app.post('/api/fraud-cases', upload.array('evidence', 5), async (req, res) => {
-  try {
-    const fraudData = { ...req.body };
-    if (req.files && req.files.length > 0) {
-      fraudData.evidence = req.files.map(file => file.path);
-    }
-    const fraudCase = new FraudCase(fraudData);
-    await fraudCase.save();
-    res.status(201).json({ message: 'Fraud case reported successfully' });
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Date of Birth</label>
+                      {isEditing ? (
+                        <div className="relative">
+                          <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                          <input
+                            type="date"
+                            name="dateOfBirth"
+                            value={formData.dateOfBirth || ''}
+                            onChange={handleInputChange}
+                            className="w-full bg-gray-50 border border-gray-300 rounded-xl pl-12 pr-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                          />
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {formatDate(userProfile?.dateOfBirth)}
+                        </div>
+                      )}
+                    </div>
 
-app.get('/api/fraud-cases', authenticateAdmin, async (req, res) => {
-  try {
-    const cases = await FraudCase.find().sort({ createdAt: -1 });
-    res.json(cases);
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Gender</label>
+                      {isEditing ? (
+                        <select
+                          name="gender"
+                          value={formData.gender || ''}
+                          onChange={handleInputChange}
+                          className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                        >
+                          <option value="">Select Gender</option>
+                          <option value="male">Male</option>
+                          <option value="female">Female</option>
+                          <option value="other">Other</option>
+                          <option value="prefer-not-to-say">Prefer not to say</option>
+                        </select>
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900 capitalize">
+                          {userProfile?.gender || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
 
-// Newsletter Routes
-app.post('/api/newsletter', async (req, res) => {
-  try {
-    const { email } = req.body;
-    const existingSubscription = await Newsletter.findOne({ email });
-    
-    if (existingSubscription) {
-      return res.status(400).json({ message: 'Email already subscribed' });
-    }
-    
-    const newsletter = new Newsletter({ email });
-    await newsletter.save();
-    res.status(201).json({ message: 'Successfully subscribed to newsletter' });
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">PIN Code</label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          name="pincode"
+                          value={formData.pincode || ''}
+                          onChange={handleInputChange}
+                          className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                        />
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {userProfile?.pincode || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
+                  </div>
 
-// Testimonial Routes
-app.get('/api/testimonials', async (req, res) => {
-  try {
-    console.log('Fetching testimonials from database...');
-    // Check MongoDB connection
-    if (mongoose.connection.readyState !== 1) {
-      console.error('MongoDB not connected');
-      return res.status(500).json({ message: 'Database connection error' });
-    }
-    
-    const testimonials = await Testimonial.find({ approved: true }).sort({ createdAt: -1 });
-    console.log('Found testimonials:', testimonials.length);
-    console.log('Sample testimonial:', testimonials[0]);
-    res.json(testimonials);
-  } catch (error) {
-    console.error('Error fetching testimonials:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
+                  <div className="mt-6">
+                    <label className="block text-gray-600 text-sm font-medium mb-2">Address</label>
+                    {isEditing ? (
+                      <div className="relative">
+                        <MapPin className="absolute left-3 top-3 text-gray-400" size={20} />
+                        <textarea
+                          name="address"
+                          value={formData.address || ''}
+                          onChange={handleInputChange}
+                          rows={3}
+                          className="w-full bg-gray-50 border border-gray-300 rounded-xl pl-12 pr-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors resize-none"
+                        />
+                      </div>
+                    ) : (
+                      <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                        {userProfile?.address || 'Not provided'}
+                      </div>
+                    )}
+                  </div>
 
-app.get('/api/testimonials/admin', authenticateAdmin, async (req, res) => {
-  try {
-    console.log('Fetching admin testimonials from database...');
-    const testimonials = await Testimonial.find().sort({ createdAt: -1 });
-    console.log('Found admin testimonials:', testimonials.length);
-    res.json(testimonials);
-  } catch (error) {
-    console.error('Error fetching admin testimonials:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">City</label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          name="city"
+                          value={formData.city || ''}
+                          onChange={handleInputChange}
+                          className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                        />
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {userProfile?.city || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
 
-app.post('/api/testimonials', async (req, res) => {
-  try {
-    // Check MongoDB connection
-    if (mongoose.connection.readyState !== 1) {
-      console.error('MongoDB not connected');
-      return res.status(500).json({ message: 'Database connection error' });
-    }
-    
-    console.log('Creating testimonial:', req.body);
-    const testimonial = new Testimonial({
-      ...req.body,
-      approved: true // Auto-approve for now
-    });
-    await testimonial.save();
-    console.log('Testimonial created successfully');
-    res.status(201).json({ message: 'Testimonial created successfully' });
-  } catch (error) {
-    console.error('Error creating testimonial:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">State</label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          name="state"
+                          value={formData.state || ''}
+                          onChange={handleInputChange}
+                          className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                        />
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {userProfile?.state || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
 
-app.put('/api/testimonials/:id/approve', authenticateAdmin, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { approved, featured } = req.body;
-    
-    const updateData = {};
-    if (typeof approved === 'boolean') updateData.approved = approved;
-    if (typeof featured === 'boolean') updateData.featured = featured;
-    
-    await Testimonial.findByIdAndUpdate(id, updateData);
-    res.json({ message: 'Testimonial updated successfully' });
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
+                {/* Professional Information Section */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
+                    <Briefcase className="text-red-400" size={20} />
+                    <span>Professional Information</span>
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Current Position</label>
+                      {isEditing ? (
+                        <div className="relative">
+                          <Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                          <input
+                            type="text"
+                            name="currentPosition"
+                            value={formData.currentPosition || ''}
+                            onChange={handleInputChange}
+                            className="w-full bg-gray-50 border border-gray-300 rounded-xl pl-12 pr-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                          />
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {userProfile?.currentPosition || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
 
-app.put('/api/testimonials/:id', authenticateAdmin, async (req, res) => {
-  try {
-    const { id } = req.params;
-    console.log('Updating testimonial:', id, req.body);
-    const updateData = { ...req.body, updatedAt: new Date() };
-    
-    await Testimonial.findByIdAndUpdate(id, updateData);
-    console.log('Testimonial updated successfully');
-    res.json({ message: 'Testimonial updated successfully' });
-  } catch (error) {
-    console.error('Error updating testimonial:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-app.delete('/api/testimonials/:id', authenticateAdmin, async (req, res) => {
-  try {
-    const { id } = req.params;
-    console.log('Deleting testimonial:', id);
-    await Testimonial.findByIdAndDelete(id);
-    console.log('Testimonial deleted successfully');
-    res.json({ message: 'Testimonial deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting testimonial:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Experience</label>
+                      {isEditing ? (
+                        <select
+                          name="experience"
+                          value={formData.experience || ''}
+                          onChange={handleInputChange}
+                          className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                        >
+                          <option value="">Select Experience</option>
+                          <option value="fresher">Fresher (0 years)</option>
+                          <option value="1-2">1-2 years</option>
+                          <option value="3-5">3-5 years</option>
+                          <option value="6-10">6-10 years</option>
+                          <option value="10+">10+ years</option>
+                        </select>
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {getExperienceLabel(userProfile?.experience) || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
 
-// Service Routes
-app.get('/api/services', async (req, res) => {
-  try {
-    console.log('Fetching services from database...');
-    // Check MongoDB connection
-    if (mongoose.connection.readyState !== 1) {
-      console.error('MongoDB not connected');
-      return res.status(500).json({ message: 'Database connection error' });
-    }
-    
-    const services = await Service.find({ active: true }).sort({ order: 1 });
-    console.log('Found services:', services.length);
-    console.log('Sample service:', services[0]);
-    res.json(services);
-  } catch (error) {
-    console.error('Error fetching services:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Education</label>
+                      {isEditing ? (
+                        <div className="relative">
+                          <GraduationCap className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                          <select
+                            name="education"
+                            value={formData.education || ''}
+                            onChange={handleInputChange}
+                            className="w-full bg-gray-50 border border-gray-300 rounded-xl pl-12 pr-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                          >
+                            <option value="">Select Education</option>
+                            <option value="high-school">High School</option>
+                            <option value="diploma">Diploma</option>
+                            <option value="bachelors">Bachelor's Degree</option>
+                            <option value="masters">Master's Degree</option>
+                            <option value="phd">PhD</option>
+                          </select>
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {getEducationLabel(userProfile?.education) || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
 
-app.get('/api/services/admin', authenticateAdmin, async (req, res) => {
-  try {
-    console.log('Fetching admin services from database...');
-    const services = await Service.find().sort({ order: 1 });
-    console.log('Found admin services:', services.length);
-    res.json(services);
-  } catch (error) {
-    console.error('Error fetching admin services:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Expected Salary</label>
+                      {isEditing ? (
+                        <div className="relative">
+                          <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                          <input
+                            type="text"
+                            name="expectedSalary"
+                            value={formData.expectedSalary || ''}
+                            onChange={handleInputChange}
+                            className="w-full bg-gray-50 border border-gray-300 rounded-xl pl-12 pr-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                          />
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {userProfile?.expectedSalary ? `${userProfile.expectedSalary} LPA` : 'Not provided'}
+                        </div>
+                      )}
+                    </div>
 
-app.post('/api/services', async (req, res) => {
-  try {
-    // Check MongoDB connection
-    if (mongoose.connection.readyState !== 1) {
-      console.error('MongoDB not connected');
-      return res.status(500).json({ message: 'Database connection error' });
-    }
-    
-    console.log('Creating service:', req.body);
-    const service = new Service(req.body);
-    await service.save();
-    console.log('Service created successfully');
-    res.status(201).json({ message: 'Service created successfully' });
-  } catch (error) {
-    console.error('Error creating service:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Preferred Location</label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          name="preferredLocation"
+                          value={formData.preferredLocation || ''}
+                          onChange={handleInputChange}
+                          className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                        />
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {userProfile?.preferredLocation || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
 
-app.put('/api/services/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    console.log('Updating service:', id, req.body);
-    const updateData = { ...req.body, updatedAt: new Date() };
-    
-    await Service.findByIdAndUpdate(id, updateData);
-    console.log('Service updated successfully');
-    res.json({ message: 'Service updated successfully' });
-  } catch (error) {
-    console.error('Error updating service:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Job Type</label>
+                      {isEditing ? (
+                        <select
+                          name="jobType"
+                          value={formData.jobType || ''}
+                          onChange={handleInputChange}
+                          className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                        >
+                          <option value="">Select Job Type</option>
+                          <option value="full-time">Full Time</option>
+                          <option value="part-time">Part Time</option>
+                          <option value="contract">Contract</option>
+                          <option value="internship">Internship</option>
+                          <option value="freelance">Freelance</option>
+                        </select>
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900 capitalize">
+                          {userProfile?.jobType?.replace('-', ' ') || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
 
-app.delete('/api/services/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    console.log('Deleting service:', id);
-    await Service.findByIdAndDelete(id);
-    console.log('Service deleted successfully');
-    res.json({ message: 'Service deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting service:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-// Dashboard Stats
-// Privacy Policy Routes
-app.get('/api/privacy-policy', async (req, res) => {
-  try {
-    console.log('Fetching privacy policy from database...');
-    // Check MongoDB connection
-    if (mongoose.connection.readyState !== 1) {
-      console.error('MongoDB not connected');
-      return res.status(500).json({ message: 'Database connection error' });
-    }
-    
-    const privacyPolicy = await PrivacyPolicy.findOne({ active: true });
-    console.log('Found privacy policy:', privacyPolicy);
-    res.json(privacyPolicy || {});
-  } catch (error) {
-    console.error('Error fetching privacy policy:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Work Mode</label>
+                      {isEditing ? (
+                        <select
+                          name="workMode"
+                          value={formData.workMode || ''}
+                          onChange={handleInputChange}
+                          className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                        >
+                          <option value="">Select Work Mode</option>
+                          <option value="office">Office</option>
+                          <option value="remote">Remote</option>
+                          <option value="hybrid">Hybrid</option>
+                        </select>
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900 capitalize">
+                          {userProfile?.workMode || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
+                  </div>
 
-app.put('/api/privacy-policy', authenticateAdmin, async (req, res) => {
-  try {
-    console.log('Updating privacy policy:', req.body);
-    
-    // Find existing privacy policy or create new
-    let privacyPolicy = await PrivacyPolicy.findOne({ active: true });
-    
-    if (privacyPolicy) {
-      // Update existing
-      Object.assign(privacyPolicy, req.body);
-      privacyPolicy.lastUpdated = new Date();
-      await privacyPolicy.save();
-    } else {
-      // Create new
-      privacyPolicy = new PrivacyPolicy({ ...req.body, active: true });
-      await privacyPolicy.save();
-    }
-    
-    console.log('Privacy policy updated successfully');
-    res.json({ message: 'Privacy policy updated successfully' });
-  } catch (error) {
-    console.error('Error updating privacy policy:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-// Terms of Service Routes
-app.get('/api/terms-of-service', async (req, res) => {
-  try {
-    console.log('Fetching terms of service from database...');
-    // Check MongoDB connection
-    if (mongoose.connection.readyState !== 1) {
-      console.error('MongoDB not connected');
-      return res.status(500).json({ message: 'Database connection error' });
-    }
-    
-    const termsOfService = await TermsOfService.findOne({ active: true });
-    console.log('Found terms of service:', termsOfService);
-    res.json(termsOfService || {});
-  } catch (error) {
-    console.error('Error fetching terms of service:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
+                  <div className="mt-6">
+                    <label className="block text-gray-600 text-sm font-medium mb-2">Skills</label>
+                    {isEditing ? (
+                      <textarea
+                        name="skills"
+                        value={formData.skills || ''}
+                        onChange={handleInputChange}
+                        rows={3}
+                        className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors resize-none"
+                      />
+                    ) : (
+                      <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                        {userProfile?.skills || 'Not provided'}
+                      </div>
+                    )}
+                  </div>
+                </div>
 
-app.put('/api/terms-of-service', authenticateAdmin, async (req, res) => {
-  try {
-    console.log('Updating terms of service:', req.body);
-    
-    // Find existing terms of service or create new
-    let termsOfService = await TermsOfService.findOne({ active: true });
-    
-    if (termsOfService) {
-      // Update existing
-      Object.assign(termsOfService, req.body);
-      termsOfService.lastUpdated = new Date();
-      await termsOfService.save();
-    } else {
-      // Create new
-      termsOfService = new TermsOfService({ ...req.body, active: true });
-      await termsOfService.save();
-    }
-    
-    console.log('Terms of service updated successfully');
-    res.json({ message: 'Terms of service updated successfully' });
-  } catch (error) {
-    console.error('Error updating terms of service:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
+                {/* Services & Preferences */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
+                    <Heart className="text-red-400" size={20} />
+                    <span>Preferences</span>
+                  </h3>
+                  <div>
+                    <label className="block text-gray-600 text-sm font-medium mb-2">Interested Services</label>
+                    <div className="p-3 bg-gray-50 rounded-xl">
+                      {userProfile?.interestedServices && userProfile.interestedServices.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {userProfile.interestedServices.map((service: string, index: number) => (
+                            <span
+                              key={index}
+                              className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800"
+                            >
+                              {service.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-gray-900">No services selected</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
 
-// About Content Routes
-app.get('/api/about-content', async (req, res) => {
-  try {
-    console.log('Fetching about content from database...');
-    // Check MongoDB connection
-    if (mongoose.connection.readyState !== 1) {
-      console.error('MongoDB not connected');
-      return res.status(500).json({ message: 'Database connection error' });
-    }
-    
-    const aboutContent = await AboutContent.findOne({ active: true });
-    console.log('Found about content:', aboutContent);
-    res.json(aboutContent || {});
-  } catch (error) {
-    console.error('Error fetching about content:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
+                {isEditing && (
+                  <div>
+                    <label className="block text-gray-600 text-sm font-medium mb-2">Update Resume</label>
+                    <div className="relative">
+                      <input
+                        type="file"
+                        onChange={handleFileChange}
+                        accept=".pdf,.doc,.docx"
+                        className="hidden"
+                        id="resume-update"
+                      />
+                      <label
+                        htmlFor="resume-update"
+                        className="w-full bg-gray-50 border-2 border-dashed border-gray-300 rounded-xl p-6 text-center cursor-pointer hover:border-red-400 transition-colors"
+                      >
+                        <Upload className="mx-auto mb-2 text-gray-400" size={32} />
+                        <div className="text-gray-600">
+                          {newResume ? (
+                            <div className="flex items-center justify-center space-x-2">
+                              <FileText className="text-red-400" size={20} />
+                              <span className="text-red-600 font-medium">{newResume.name}</span>
+                            </div>
+                          ) : (
+                            <>
+                              <div className="font-medium">Click to upload new resume</div>
+                              <div className="text-sm text-gray-500">PDF, DOC, DOCX (Max 10MB)</div>
+                            </>
+                          )}
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
-app.put('/api/about-content', authenticateAdmin, async (req, res) => {
-  try {
-    console.log('Updating about content:', req.body);
-    
-    // Find existing content or create new
-    let aboutContent = await AboutContent.findOne({ active: true });
-    
-    if (aboutContent) {
-      // Update existing
-      Object.assign(aboutContent, req.body);
-      await aboutContent.save();
-    } else {
-      // Create new
-      aboutContent = new AboutContent({ ...req.body, active: true });
-      await aboutContent.save();
-    }
-    
-    console.log('About content updated successfully');
-    res.json({ message: 'About content updated successfully' });
-  } catch (error) {
-    console.error('Error updating about content:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-
-app.get('/api/dashboard-stats', async (req, res) => {
-  try {
-    console.log('Fetching dashboard stats from database...');
-    // Check MongoDB connection
-    if (mongoose.connection.readyState !== 1) {
-      console.error('MongoDB not connected');
-      return res.status(500).json({ message: 'Database connection error' });
-    }
-    
-    const dashboardStats = await DashboardStats.findOne({ active: true });
-    console.log('Found dashboard stats:', dashboardStats);
-    res.json(dashboardStats || {});
-  } catch (error) {
-    console.error('Error fetching dashboard stats:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-
-app.put('/api/dashboard-stats', async (req, res) => {
-  try {
-    console.log('Updating dashboard stats:', req.body);
-    
-    // Find existing stats or create new
-    let dashboardStats = await DashboardStats.findOne({ active: true });
-    
-    if (dashboardStats) {
-      // Update existing
-      Object.assign(dashboardStats, req.body);
-      dashboardStats.updatedAt = new Date();
-      await dashboardStats.save();
-    } else {
-      // Create new
-      dashboardStats = new DashboardStats({ ...req.body, active: true });
-      await dashboardStats.save();
-    }
-    
-    console.log('Dashboard stats updated successfully');
-    res.json({ message: 'Dashboard stats updated successfully' });
-  } catch (error) {
-    console.error('Error updating dashboard stats:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-
-app.get('/api/dashboard/stats', authenticateAdmin, async (req, res) => {
-  try {
-    const totalContacts = await Contact.countDocuments();
-    const totalApplications = await JobApplication.countDocuments();
-    const totalFraudCases = await FraudCase.countDocuments();
-    const placedJobs = await JobApplication.countDocuments({ status: 'placed' });
-    const resolvedFraudCases = await FraudCase.countDocuments({ status: 'resolved' });
-    const totalUsers = await User.countDocuments();
-    const newsletterSubscribers = await Newsletter.countDocuments();
-    const totalTestimonials = await Testimonial.countDocuments({ approved: true });
-
-    res.json({
-      totalContacts,
-      totalApplications,
-      totalFraudCases,
-      placedJobs,
-      resolvedFraudCases,
-      totalUsers,
-      newsletterSubscribers,
-      totalTestimonials,
-      successRate: totalApplications > 0 ? Math.round((placedJobs / totalApplications) * 100) : 0
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-
-// Website Content Management Routes
-app.get('/api/website-content', async (req, res) => {
-  try {
-    const content = await WebsiteContent.find();
-    const contentObj = {};
-    content.forEach(item => {
-      contentObj[item.section] = item.content;
-    });
-    res.json(contentObj);
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-
-app.put('/api/website-content/:section', authenticateAdmin, async (req, res) => {
-  try {
-    const { section } = req.params;
-    const content = req.body;
-    
-    await WebsiteContent.findOneAndUpdate(
-      { section },
-      { 
-        content, 
-        lastUpdated: new Date(),
-        updatedBy: req.user.userId 
-      },
-      { upsert: true, new: true }
-    );
-    
-    res.json({ message: 'Content updated successfully' });
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-
-app.delete('/api/website-content/:section/:itemId', authenticateAdmin, async (req, res) => {
-  try {
-    const { section, itemId } = req.params;
-    
-    const websiteContent = await WebsiteContent.findOne({ section });
-    if (!websiteContent) {
-      return res.status(404).json({ message: 'Content section not found' });
-    }
-    
-    if (Array.isArray(websiteContent.content)) {
-      websiteContent.content = websiteContent.content.filter(
-        item => item.id.toString() !== itemId
-      );
-      await websiteContent.save();
-    }
-    
-    res.json({ message: 'Item deleted successfully' });
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-
-// Status update routes
-app.put('/api/contacts/:id/status', authenticateAdmin, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { status } = req.body;
-    
-    await Contact.findByIdAndUpdate(id, { status });
-    res.json({ message: 'Contact status updated successfully' });
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-
-app.put('/api/job-applications/:id/status', authenticateAdmin, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { status } = req.body;
-    
-    await JobApplication.findByIdAndUpdate(id, { status });
-    res.json({ message: 'Job application status updated successfully' });
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-
-app.put('/api/fraud-cases/:id/status', authenticateAdmin, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { status } = req.body;
-    
-    await FraudCase.findByIdAndUpdate(id, { status });
-    res.json({ message: 'Fraud case status updated successfully' });
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-
-// User management routes
-app.get('/api/users', authenticateAdmin, async (req, res) => {
-  try {
-    const users = await User.find().select('-password').sort({ createdAt: -1 });
-    res.json(users);
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-
-app.delete('/api/users/:id', authenticateAdmin, async (req, res) => {
-  try {
-    const { id } = req.params;
-    await User.findByIdAndDelete(id);
-    res.json({ message: 'User deleted successfully' });
-  } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-
-// Contact Info Routes
-app.get('/api/contact-info', async (req, res) => {
-  try {
-    console.log('Fetching contact info from database...');
-    // Check MongoDB connection
-    if (mongoose.connection.readyState !== 1) {
-      console.error('MongoDB not connected');
-      return res.status(500).json({ message: 'Database connection error' });
-    }
-    
-    const contactInfo = await ContactInfo.findOne({ active: true });
-    console.log('Found contact info:', contactInfo);
-    res.json(contactInfo || {});
-  } catch (error) {
-    console.error('Error fetching contact info:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-
-app.put('/api/contact-info', authenticateAdmin, async (req, res) => {
-  try {
-    console.log('Updating contact info:', req.body);
-    
-    // Find existing contact info or create new
-    let contactInfo = await ContactInfo.findOne({ active: true });
-    
-    if (contactInfo) {
-      // Update existing
-      Object.assign(contactInfo, req.body);
-      contactInfo.updatedAt = new Date();
-      await contactInfo.save();
-    } else {
-      // Create new
-      contactInfo = new ContactInfo({ ...req.body, active: true });
-      await contactInfo.save();
-    }
-    
-    console.log('Contact info updated successfully');
-    res.json({ message: 'Contact info updated successfully' });
-  } catch (error) {
-    console.error('Error updating contact info:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-
-// Dashboard Stats Routes
-app.get('/api/dashboard-stats', async (req, res) => {
-  try {
-    console.log('Fetching dashboard stats from database...');
-    // Check MongoDB connection
-    if (mongoose.connection.readyState !== 1) {
-      console.error('MongoDB not connected');
-      return res.status(500).json({ message: 'Database connection error' });
-    }
-    
-    const dashboardStats = await DashboardStats.findOne({ active: true });
-    console.log('Found dashboard stats:', dashboardStats);
-    res.json(dashboardStats || {});
-  } catch (error) {
-    console.error('Error fetching dashboard stats:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-
-app.put('/api/dashboard-stats', authenticateAdmin, async (req, res) => {
-  try {
-    console.log('Updating dashboard stats:', req.body);
-    
-    // Find existing stats or create new
-    let dashboardStats = await DashboardStats.findOne({ active: true });
-    
-    if (dashboardStats) {
-      // Update existing
-      Object.assign(dashboardStats, req.body);
-      dashboardStats.updatedAt = new Date();
-      await dashboardStats.save();
-    } else {
-      // Create new
-      dashboardStats = new DashboardStats({ ...req.body, active: true });
-      await dashboardStats.save();
-    }
-    
-    console.log('Dashboard stats updated successfully');
-    res.json({ message: 'Dashboard stats updated successfully' });
-  } catch (error) {
-    console.error('Error updating dashboard stats:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-
-// Start server
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`MongoDB URI: ${process.env.MONGODB_URI || 'mongodb://localhost:27017/careerguard'}`);
-  
-  // Wait for MongoDB connection before creating default data
-  mongoose.connection.once('open', async () => {
-    console.log('MongoDB connection established');
-    await createDefaultAdmin();
-    await createDefaultTestimonials();
-    await createDefaultServices();
-    await createDefaultContactInfo();
-    await createDefaultDashboardStats();
-    await createDefaultPrivacyPolicy();
-    await createDefaultTermsOfService();
-    // await createDefaultContent();
-    console.log('Server initialization complete');
-  });
-  
-  // Handle connection errors gracefully
-  mongoose.connection.on('error', (err) => {
-    console.error('MongoDB connection error:', err);
-  });
-});
+export default UserDashboard;

@@ -47,8 +47,47 @@ const UserDashboard = () => {
   const fetchUserProfile = async () => {
     try {
       setIsLoading(true);
-      // For now, we'll use the user data from auth context
-      // In a real app, you'd fetch full profile data from API
+      // Fetch complete user profile from API
+      const profileData = await apiService.getUserProfile(user.id);
+      setUserProfile(profileData);
+      setFormData({
+        name: user?.name || '',
+        email: user?.email || '',
+        phone: user?.phone || '',
+        dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : '',
+        gender: user?.gender || '',
+        address: user?.address || '',
+        city: user?.city || '',
+        state: user?.state || '',
+        pincode: user?.pincode || '',
+        currentPosition: user?.currentPosition || '',
+        experience: user?.experience || '',
+        skills: user?.skills || '',
+        education: user?.education || '',
+        expectedSalary: user?.expectedSalary || '',
+        preferredLocation: user?.preferredLocation || '',
+        name: profileData?.name || '',
+        email: profileData?.email || '',
+        phone: profileData?.phone || '',
+        dateOfBirth: profileData?.dateOfBirth ? new Date(profileData.dateOfBirth).toISOString().split('T')[0] : '',
+        gender: profileData?.gender || '',
+        address: profileData?.address || '',
+        city: profileData?.city || '',
+        state: profileData?.state || '',
+        pincode: profileData?.pincode || '',
+        currentPosition: profileData?.currentPosition || '',
+        experience: profileData?.experience || '',
+        skills: profileData?.skills || '',
+        education: profileData?.education || '',
+        expectedSalary: profileData?.expectedSalary || '',
+        preferredLocation: profileData?.preferredLocation || '',
+        jobType: profileData?.jobType || '',
+        workMode: profileData?.workMode || '',
+        interestedServices: profileData?.interestedServices || []
+      });
+    } catch (error) {
+      console.error('Failed to fetch user profile:', error);
+      // If API fails, use the user data from auth context as fallback
       setUserProfile(user);
       setFormData({
         name: user?.name || '',
@@ -70,8 +109,6 @@ const UserDashboard = () => {
         workMode: user?.workMode || '',
         interestedServices: user?.interestedServices || []
       });
-    } catch (error) {
-      console.error('Failed to fetch user profile:', error);
     } finally {
       setIsLoading(false);
     }
@@ -126,13 +163,17 @@ const UserDashboard = () => {
         updateData.append('resume', newResume);
       }
 
-      // In a real app, you'd call an API to update the user profile
-      // await apiService.updateUserProfile(user.id, updateData);
+      // Call API to update the user profile
+      const updatedProfile = await apiService.updateUserProfile(user?.id || user?._id, updateData);
+      setUserProfile(updatedProfile);
       
       setStatus('success');
       setStatusMessage('Profile updated successfully!');
       setIsEditing(false);
       setNewResume(null);
+      
+      // Refresh the profile data
+      await fetchUserProfile();
     } catch (error) {
       setStatus('error');
       setStatusMessage(error instanceof Error ? error.message : 'Failed to update profile');
@@ -143,7 +184,7 @@ const UserDashboard = () => {
 
   const handleDownloadResume = () => {
     if (userProfile?.resume) {
-      const resumeUrl = `${import.meta.env.VITE_API_URL || '/api'}/uploads/${userProfile.resume.split('/').pop()}`;
+      const resumeUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/${userProfile.resume}`;
       const link = document.createElement('a');
       link.href = resumeUrl;
       link.download = `${userProfile.name.replace(/\s+/g, '_')}_Resume.pdf`;
