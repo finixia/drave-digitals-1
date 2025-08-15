@@ -1,581 +1,813 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { 
+  User, 
+  FileText, 
+  Edit, 
+  Download, 
+  Upload, 
+  Save, 
+  ArrowLeft,
+  Mail,
+  Phone,
+  MapPin,
+  Briefcase,
+  GraduationCap,
+  Calendar,
+  DollarSign,
+  CheckCircle,
+  AlertCircle,
+  Clock,
+  Building,
+  Target,
+  Award,
+  Heart
+} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { apiService } from '../utils/api';
 
-export interface ContactFormData {
-  name: string;
-  email: string;
-  phone: string;
-  service: string;
-  message: string;
-}
+const UserDashboard = () => {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [formData, setFormData] = useState<any>({});
+  const [newResume, setNewResume] = useState<File | null>(null);
+  const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [statusMessage, setStatusMessage] = useState('');
 
-export interface JobApplicationData {
-  name: string;
-  email: string;
-  phone: string;
-  position: string;
-  experience: string;
-  skills: string;
-  resume?: File;
-}
+  useEffect(() => {
+    if (user) {
+      fetchUserProfile();
+    }
+  }, [user]);
 
-export interface FraudCaseData {
-  name: string;
-  email: string;
-  phone: string;
-  fraudType: string;
-  description: string;
-  amount?: number;
-  evidence?: File[];
-}
-
-export interface LoginData {
-  email: string;
-  password: string;
-}
-
-export interface RegisterData {
-  name: string;
-  email: string;
-  password: string;
-  role?: string;
-}
-
-export interface DetailedRegistrationData {
-  // Basic Info
-  name: string;
-  email: string;
-  password: string;
-  phone: string;
-  
-  // Personal Details
-  dateOfBirth: string;
-  gender: string;
-  address: string;
-  city: string;
-  state: string;
-  pincode?: string;
-  
-  // Professional Details
-  currentPosition?: string;
-  experience: string;
-  skills: string;
-  education: string;
-  expectedSalary?: string;
-  preferredLocation?: string;
-  
-  // Preferences
-  jobType?: string;
-  workMode?: string;
-  interestedServices: string[];
-  
-  // Documents
-  resume?: File;
-}
-
-export interface TestimonialData {
-  name: string;
-  role: string;
-  company: string;
-  rating: number;
-  text: string;
-  avatar: string;
-  service: string;
-  featured?: boolean;
-  approved?: boolean;
-}
-
-export interface ServiceData {
-  title: string;
-  description: string;
-  icon: string;
-  color: string;
-  features: string[];
-  active?: boolean;
-  order?: number;
-}
-export interface AboutContentData {
-  title: string;
-  subtitle: string;
-  description: string;
-  values: Array<{
-    title: string;
-    description: string;
-    icon: string;
-  }>;
-  commitments: string[];
-  active?: boolean;
-}
-
-export interface PrivacyPolicyData {
-  title: string;
-  subtitle: string;
-  introduction: string;
-  sections: Array<{
-    title: string;
-    content: Array<{
-      subtitle?: string;
-      items: string[];
-    }>;
-  }>;
-  contactInfo: {
-    email: string;
-    phone: string;
-    address: string;
+  const fetchUserProfile = async () => {
+    try {
+      setIsLoading(true);
+      // Fetch complete user profile from API
+      const profileData = await apiService.getUserProfile(user.id);
+      setUserProfile(profileData);
+      setFormData({
+        name: user?.name || '',
+        email: user?.email || '',
+        phone: user?.phone || '',
+        dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : '',
+        gender: user?.gender || '',
+        address: user?.address || '',
+        city: user?.city || '',
+        state: user?.state || '',
+        pincode: user?.pincode || '',
+        currentPosition: user?.currentPosition || '',
+        experience: user?.experience || '',
+        skills: user?.skills || '',
+        education: user?.education || '',
+        expectedSalary: user?.expectedSalary || '',
+        preferredLocation: user?.preferredLocation || '',
+        jobType: user?.jobType || '',
+        workMode: user?.workMode || '',
+        interestedServices: user?.interestedServices || []
+      });
+    } catch (error) {
+      console.error('Failed to fetch user profile:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
-  active?: boolean;
-}
 
-export interface TermsOfServiceData {
-  title: string;
-  subtitle: string;
-  introduction: string;
-  sections: Array<{
-    title: string;
-    content: Array<{
-      subtitle?: string;
-      items: string[];
-    }>;
-  }>;
-  contactInfo: {
-    email: string;
-    phone: string;
-    address: string;
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev: any) => ({
+      ...prev,
+      [name]: value
+    }));
   };
-  active?: boolean;
-}
 
-export interface ContactInfoData {
-  phone: string[];
-  email: string[];
-  address: string[];
-  workingHours: string[];
-}
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) { // 10MB limit
+        setStatus('error');
+        setStatusMessage('File size should be less than 10MB');
+        return;
+      }
+      
+      const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+      if (!allowedTypes.includes(file.type)) {
+        setStatus('error');
+        setStatusMessage('Please upload a PDF or Word document');
+        return;
+      }
+      
+      setNewResume(file);
+      setStatus('idle');
+    }
+  };
 
-export interface DashboardStatsData {
-  happyClients: string;
-  successRate: string;
-  growthRate: string;
-  totalProjects: string;
-  activeClients: string;
-  completedProjects: string;
-}
+  const handleSave = async () => {
+    try {
+      setIsLoading(true);
+      setStatus('idle');
+      
+      const updateData = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+        if (value) {
+          if (key === 'interestedServices' && Array.isArray(value)) {
+            updateData.append(key, JSON.stringify(value));
+          } else {
+            updateData.append(key, value.toString());
+          }
+        }
+      });
+      
+      if (newResume) {
+        updateData.append('resume', newResume);
+      }
 
-class ApiService {
-  private async request(endpoint: string, options: RequestInit = {}) {
-    const url = `${API_BASE_URL}${endpoint}`;
-    const config: RequestInit = {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-      ...options,
+      // In a real app, you'd call an API to update the user profile
+      // await apiService.updateUserProfile(user.id, updateData);
+      
+      setStatus('success');
+      setStatusMessage('Profile updated successfully!');
+      setIsEditing(false);
+      setNewResume(null);
+    } catch (error) {
+      setStatus('error');
+      setStatusMessage(error instanceof Error ? error.message : 'Failed to update profile');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDownloadResume = () => {
+    if (userProfile?.resume) {
+      const resumeUrl = `${import.meta.env.VITE_API_URL || '/api'}/uploads/${userProfile.resume.split('/').pop()}`;
+      const link = document.createElement('a');
+      link.href = resumeUrl;
+      link.download = `${userProfile.name.replace(/\s+/g, '_')}_Resume.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return 'Not provided';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const getExperienceLabel = (exp: string) => {
+    const expMap: { [key: string]: string } = {
+      'fresher': 'Fresher (0 years)',
+      '1-2': '1-2 years',
+      '3-5': '3-5 years',
+      '6-10': '6-10 years',
+      '10+': '10+ years'
     };
+    return expMap[exp] || exp;
+  };
 
-    // Add auth token if available
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers = {
-        ...config.headers,
-        'Authorization': `Bearer ${token}`,
-      };
-    }
+  const getEducationLabel = (edu: string) => {
+    const eduMap: { [key: string]: string } = {
+      'high-school': 'High School',
+      'diploma': 'Diploma',
+      'bachelors': "Bachelor's Degree",
+      'masters': "Master's Degree",
+      'phd': 'PhD'
+    };
+    return eduMap[edu] || edu;
+  };
 
-    try {
-      const response = await fetch(url, config);
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Something went wrong');
-      }
-
-      return data;
-    } catch (error) {
-      console.error('API Error:', error);
-      throw error;
-    }
+  if (isLoading && !userProfile) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          className="w-8 h-8 border-4 border-red-400 border-t-transparent rounded-full"
+        />
+        <p className="ml-4 text-gray-600">Loading your profile...</p>
+      </div>
+    );
   }
 
-  // Auth endpoints
-  async login(data: LoginData) {
-    const response = await this.request('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-    
-    if (response.token) {
-      localStorage.setItem('token', response.token);
-    }
-    
-    return response;
-  }
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <motion.button
+                onClick={() => navigate('/')}
+                whileHover={{ scale: 1.05, x: -5 }}
+                whileTap={{ scale: 0.95 }}
+                className="inline-flex items-center space-x-2 text-gray-600 hover:text-red-600 transition-colors"
+              >
+                <ArrowLeft size={20} />
+                <span>Back to Home</span>
+              </motion.button>
+              <div className="flex items-center space-x-3">
+                <img 
+                  src="/company logo.png" 
+                  alt="Drave Capitals Logo" 
+                  className="w-10 h-10 object-contain"
+                />
+                <div>
+                  <h1 className="text-xl font-bold text-gray-900">My Dashboard</h1>
+                  <p className="text-sm text-gray-600">Drave Digitals</p>
+                </div>
+              </div>
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleLogout}
+              className="bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-2 rounded-xl font-medium hover:shadow-lg transition-all"
+            >
+              Logout
+            </motion.button>
+          </div>
+        </div>
+      </div>
 
-  async register(data: RegisterData) {
-    const response = await this.request('/auth/register', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-    
-    if (response.token) {
-      localStorage.setItem('token', response.token);
-    }
-    
-    return response;
-  }
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Profile Card */}
+          <div className="lg:col-span-1">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm"
+            >
+              <div className="text-center mb-6">
+                <div className="w-20 h-20 bg-gradient-to-r from-red-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-white font-bold text-2xl">
+                    {userProfile?.name?.charAt(0) || 'U'}
+                  </span>
+                </div>
+                <h2 className="text-xl font-bold text-gray-900">{userProfile?.name}</h2>
+                <p className="text-gray-600">{userProfile?.email}</p>
+                <div className="mt-4 inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  <CheckCircle size={12} className="mr-1" />
+                  Active Member
+                </div>
+              </div>
 
-  async registerWithDetails(formData: FormData) {
-    const response = await fetch(`${API_BASE_URL}/auth/register-detailed`, {
-      method: 'POST',
-      headers: {
-        // Don't set Content-Type for FormData, let browser set it
-        ...(localStorage.getItem('token') && {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        })
-      },
-      body: formData,
-    });
+              {/* Quick Stats */}
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="text-center p-3 bg-blue-50 rounded-lg">
+                  <Calendar className="text-blue-400 mx-auto mb-1" size={20} />
+                  <div className="text-xs text-gray-600">Member Since</div>
+                  <div className="text-sm font-semibold text-gray-900">
+                    {userProfile?.createdAt ? new Date(userProfile.createdAt).getFullYear() : '2024'}
+                  </div>
+                </div>
+                <div className="text-center p-3 bg-green-50 rounded-lg">
+                  <Award className="text-green-400 mx-auto mb-1" size={20} />
+                  <div className="text-xs text-gray-600">Profile</div>
+                  <div className="text-sm font-semibold text-gray-900">
+                    {userProfile?.profileCompleted ? 'Complete' : 'Incomplete'}
+                  </div>
+                </div>
+              </div>
 
-    const data = await response.json();
+              {/* Resume Section */}
+              <div className="border-t border-gray-200 pt-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Resume</h3>
+                {userProfile?.resume ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                      <FileText className="text-red-400" size={20} />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-900">Current Resume</p>
+                        <p className="text-xs text-gray-600">PDF Document</p>
+                      </div>
+                    </div>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleDownloadResume}
+                      className="w-full bg-blue-500 text-white py-2 rounded-lg font-medium hover:bg-blue-600 transition-colors inline-flex items-center justify-center space-x-2"
+                    >
+                      <Download size={16} />
+                      <span>Download Resume</span>
+                    </motion.button>
+                  </div>
+                ) : (
+                  <div className="text-center py-6">
+                    <FileText className="mx-auto text-gray-400 mb-2" size={32} />
+                    <p className="text-gray-600 text-sm">No resume uploaded</p>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
 
-    if (!response.ok) {
-      throw new Error(data.message || 'Registration failed');
-    }
+          {/* Profile Details */}
+          <div className="lg:col-span-2">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Profile Information</h2>
+                {!isEditing ? (
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setIsEditing(true)}
+                    className="bg-red-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-600 transition-colors inline-flex items-center space-x-2"
+                  >
+                    <Edit size={16} />
+                    <span>Edit Profile</span>
+                  </motion.button>
+                ) : (
+                  <div className="flex items-center space-x-3">
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => {
+                        setIsEditing(false);
+                        setNewResume(null);
+                        setStatus('idle');
+                      }}
+                      className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors"
+                    >
+                      Cancel
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={handleSave}
+                      disabled={isLoading}
+                      className="bg-green-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-600 transition-colors inline-flex items-center space-x-2 disabled:opacity-50"
+                    >
+                      <Save size={16} />
+                      <span>{isLoading ? 'Saving...' : 'Save Changes'}</span>
+                    </motion.button>
+                  </div>
+                )}
+              </div>
 
-    if (data.token) {
-      localStorage.setItem('token', data.token);
-    }
-    
-    return data;
-  }
+              {/* Status Message */}
+              {status !== 'idle' && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`mb-6 p-4 rounded-xl flex items-center space-x-3 ${
+                    status === 'success' 
+                      ? 'bg-green-500/10 border border-green-500/20 text-green-400' 
+                      : 'bg-red-500/10 border border-red-500/20 text-red-400'
+                  }`}
+                >
+                  {status === 'success' ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
+                  <span>{statusMessage}</span>
+                </motion.div>
+              )}
 
-  // Contact form
-  async submitContact(data: ContactFormData) {
-    return this.request('/contact', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
+              {/* Personal Information Section */}
+              <div className="space-y-8">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
+                    <User className="text-red-400" size={20} />
+                    <span>Personal Information</span>
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Full Name</label>
+                      {isEditing ? (
+                        <div className="relative">
+                          <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                          <input
+                            type="text"
+                            name="name"
+                            value={formData.name || ''}
+                            onChange={handleInputChange}
+                            className="w-full bg-gray-50 border border-gray-300 rounded-xl pl-12 pr-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                          />
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {userProfile?.name || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
 
-  // Job applications
-  async submitJobApplication(data: JobApplicationData) {
-    const formData = new FormData();
-    Object.entries(data).forEach(([key, value]) => {
-      if (value instanceof File) {
-        formData.append(key, value);
-      } else if (value !== undefined) {
-        formData.append(key, value.toString());
-      }
-    });
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Email</label>
+                      {isEditing ? (
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                          <input
+                            type="email"
+                            name="email"
+                            value={formData.email || ''}
+                            onChange={handleInputChange}
+                            className="w-full bg-gray-50 border border-gray-300 rounded-xl pl-12 pr-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                          />
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {userProfile?.email || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
 
-    return this.request('/job-applications', {
-      method: 'POST',
-      headers: {}, // Remove Content-Type to let browser set it for FormData
-      body: formData,
-    });
-  }
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Phone</label>
+                      {isEditing ? (
+                        <div className="relative">
+                          <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                          <input
+                            type="tel"
+                            name="phone"
+                            value={formData.phone || ''}
+                            onChange={handleInputChange}
+                            className="w-full bg-gray-50 border border-gray-300 rounded-xl pl-12 pr-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                          />
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {userProfile?.phone || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
 
-  // Fraud cases
-  async submitFraudCase(data: FraudCaseData) {
-    const formData = new FormData();
-    Object.entries(data).forEach(([key, value]) => {
-      if (key === 'evidence' && Array.isArray(value)) {
-        value.forEach((file) => formData.append('evidence', file));
-      } else if (value instanceof File) {
-        formData.append(key, value);
-      } else if (value !== undefined) {
-        formData.append(key, value.toString());
-      }
-    });
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Date of Birth</label>
+                      {isEditing ? (
+                        <div className="relative">
+                          <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                          <input
+                            type="date"
+                            name="dateOfBirth"
+                            value={formData.dateOfBirth || ''}
+                            onChange={handleInputChange}
+                            className="w-full bg-gray-50 border border-gray-300 rounded-xl pl-12 pr-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                          />
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {formatDate(userProfile?.dateOfBirth)}
+                        </div>
+                      )}
+                    </div>
 
-    return this.request('/fraud-cases', {
-      method: 'POST',
-      headers: {}, // Remove Content-Type to let browser set it for FormData
-      body: formData,
-    });
-  }
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Gender</label>
+                      {isEditing ? (
+                        <select
+                          name="gender"
+                          value={formData.gender || ''}
+                          onChange={handleInputChange}
+                          className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                        >
+                          <option value="">Select Gender</option>
+                          <option value="male">Male</option>
+                          <option value="female">Female</option>
+                          <option value="other">Other</option>
+                          <option value="prefer-not-to-say">Prefer not to say</option>
+                        </select>
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900 capitalize">
+                          {userProfile?.gender || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
 
-  async subscribeNewsletter(email: string) {
-    return this.request('/newsletter', {
-      method: 'POST',
-      body: JSON.stringify({ email }),
-    });
-  }
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">PIN Code</label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          name="pincode"
+                          value={formData.pincode || ''}
+                          onChange={handleInputChange}
+                          className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                        />
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {userProfile?.pincode || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
+                  </div>
 
-  // Admin endpoints
-  async getContacts() {
-    return this.request('/contacts');
-  }
+                  <div className="mt-6">
+                    <label className="block text-gray-600 text-sm font-medium mb-2">Address</label>
+                    {isEditing ? (
+                      <div className="relative">
+                        <MapPin className="absolute left-3 top-3 text-gray-400" size={20} />
+                        <textarea
+                          name="address"
+                          value={formData.address || ''}
+                          onChange={handleInputChange}
+                          rows={3}
+                          className="w-full bg-gray-50 border border-gray-300 rounded-xl pl-12 pr-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors resize-none"
+                        />
+                      </div>
+                    ) : (
+                      <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                        {userProfile?.address || 'Not provided'}
+                      </div>
+                    )}
+                  </div>
 
-  async getJobApplications() {
-    return this.request('/job-applications');
-  }
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">City</label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          name="city"
+                          value={formData.city || ''}
+                          onChange={handleInputChange}
+                          className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                        />
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {userProfile?.city || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
 
-  async getFraudCases() {
-    return this.request('/fraud-cases');
-  }
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">State</label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          name="state"
+                          value={formData.state || ''}
+                          onChange={handleInputChange}
+                          className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                        />
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {userProfile?.state || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
 
-  async getDashboardStats() {
-    return this.request('/dashboard/stats');
-  }
+                {/* Professional Information Section */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
+                    <Briefcase className="text-red-400" size={20} />
+                    <span>Professional Information</span>
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Current Position</label>
+                      {isEditing ? (
+                        <div className="relative">
+                          <Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                          <input
+                            type="text"
+                            name="currentPosition"
+                            value={formData.currentPosition || ''}
+                            onChange={handleInputChange}
+                            className="w-full bg-gray-50 border border-gray-300 rounded-xl pl-12 pr-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                          />
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {userProfile?.currentPosition || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
 
-  // Website content management
-  async updateWebsiteContent(section: string, data: any) {
-    return this.request(`/website-content/${section}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
-  }
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Experience</label>
+                      {isEditing ? (
+                        <select
+                          name="experience"
+                          value={formData.experience || ''}
+                          onChange={handleInputChange}
+                          className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                        >
+                          <option value="">Select Experience</option>
+                          <option value="fresher">Fresher (0 years)</option>
+                          <option value="1-2">1-2 years</option>
+                          <option value="3-5">3-5 years</option>
+                          <option value="6-10">6-10 years</option>
+                          <option value="10+">10+ years</option>
+                        </select>
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {getExperienceLabel(userProfile?.experience) || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
 
-  async deleteWebsiteContent(section: string, itemId: string | number) {
-    return this.request(`/website-content/${section}/${itemId}`, {
-      method: 'DELETE',
-    });
-  }
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Education</label>
+                      {isEditing ? (
+                        <div className="relative">
+                          <GraduationCap className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                          <select
+                            name="education"
+                            value={formData.education || ''}
+                            onChange={handleInputChange}
+                            className="w-full bg-gray-50 border border-gray-300 rounded-xl pl-12 pr-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                          >
+                            <option value="">Select Education</option>
+                            <option value="high-school">High School</option>
+                            <option value="diploma">Diploma</option>
+                            <option value="bachelors">Bachelor's Degree</option>
+                            <option value="masters">Master's Degree</option>
+                            <option value="phd">PhD</option>
+                          </select>
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {getEducationLabel(userProfile?.education) || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
 
-  async getWebsiteContent() {
-    return this.request('/website-content');
-  }
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Expected Salary</label>
+                      {isEditing ? (
+                        <div className="relative">
+                          <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                          <input
+                            type="text"
+                            name="expectedSalary"
+                            value={formData.expectedSalary || ''}
+                            onChange={handleInputChange}
+                            className="w-full bg-gray-50 border border-gray-300 rounded-xl pl-12 pr-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                          />
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {userProfile?.expectedSalary ? `${userProfile.expectedSalary} LPA` : 'Not provided'}
+                        </div>
+                      )}
+                    </div>
 
-  // User management
-  async getUsers() {
-    return this.request('/users');
-  }
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Preferred Location</label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          name="preferredLocation"
+                          value={formData.preferredLocation || ''}
+                          onChange={handleInputChange}
+                          className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                        />
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {userProfile?.preferredLocation || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
 
-  async updateUserStatus(userId: string, status: string) {
-    return this.request(`/users/${userId}/status`, {
-      method: 'PUT',
-      body: JSON.stringify({ status }),
-    });
-  }
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Job Type</label>
+                      {isEditing ? (
+                        <select
+                          name="jobType"
+                          value={formData.jobType || ''}
+                          onChange={handleInputChange}
+                          className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                        >
+                          <option value="">Select Job Type</option>
+                          <option value="full-time">Full Time</option>
+                          <option value="part-time">Part Time</option>
+                          <option value="contract">Contract</option>
+                          <option value="internship">Internship</option>
+                          <option value="freelance">Freelance</option>
+                        </select>
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900 capitalize">
+                          {userProfile?.jobType?.replace('-', ' ') || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
 
-  async getUserProfile(userId: string) {
-    return this.request(`/users/${userId}`);
-  }
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Work Mode</label>
+                      {isEditing ? (
+                        <select
+                          name="workMode"
+                          value={formData.workMode || ''}
+                          onChange={handleInputChange}
+                          className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                        >
+                          <option value="">Select Work Mode</option>
+                          <option value="office">Office</option>
+                          <option value="remote">Remote</option>
+                          <option value="hybrid">Hybrid</option>
+                        </select>
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900 capitalize">
+                          {userProfile?.workMode || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
+                  </div>
 
-  async updateUserProfile(userId: string, formData: FormData) {
-    return this.request(`/users/${userId}`, {
-      method: 'PUT',
-      headers: {}, // Remove Content-Type to let browser set it for FormData
-      body: formData,
-    });
-  }
+                  <div className="mt-6">
+                    <label className="block text-gray-600 text-sm font-medium mb-2">Skills</label>
+                    {isEditing ? (
+                      <textarea
+                        name="skills"
+                        value={formData.skills || ''}
+                        onChange={handleInputChange}
+                        rows={3}
+                        className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors resize-none"
+                      />
+                    ) : (
+                      <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                        {userProfile?.skills || 'Not provided'}
+                      </div>
+                    )}
+                  </div>
+                </div>
 
-  async deleteUser(userId: string) {
-    return this.request(`/users/${userId}`, {
-      method: 'DELETE',
-    });
-  }
+                {/* Services & Preferences */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
+                    <Heart className="text-red-400" size={20} />
+                    <span>Preferences</span>
+                  </h3>
+                  <div>
+                    <label className="block text-gray-600 text-sm font-medium mb-2">Interested Services</label>
+                    <div className="p-3 bg-gray-50 rounded-xl">
+                      {userProfile?.interestedServices && userProfile.interestedServices.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {userProfile.interestedServices.map((service: string, index: number) => (
+                            <span
+                              key={index}
+                              className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800"
+                            >
+                              {service.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-gray-900">No services selected</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
 
-  // Testimonial endpoints
-  async getTestimonials() {
-    try {
-      console.log('API: Fetching testimonials...');
-      return await this.request('/testimonials');
-    } catch (error) {
-      console.error('Failed to fetch testimonials:', error);
-      throw error;
-    }
-  }
+                {isEditing && (
+                  <div>
+                    <label className="block text-gray-600 text-sm font-medium mb-2">Update Resume</label>
+                    <div className="relative">
+                      <input
+                        type="file"
+                        onChange={handleFileChange}
+                        accept=".pdf,.doc,.docx"
+                        className="hidden"
+                        id="resume-update"
+                      />
+                      <label
+                        htmlFor="resume-update"
+                        className="w-full bg-gray-50 border-2 border-dashed border-gray-300 rounded-xl p-6 text-center cursor-pointer hover:border-red-400 transition-colors"
+                      >
+                        <Upload className="mx-auto mb-2 text-gray-400" size={32} />
+                        <div className="text-gray-600">
+                          {newResume ? (
+                            <div className="flex items-center justify-center space-x-2">
+                              <FileText className="text-red-400" size={20} />
+                              <span className="text-red-600 font-medium">{newResume.name}</span>
+                            </div>
+                          ) : (
+                            <>
+                              <div className="font-medium">Click to upload new resume</div>
+                              <div className="text-sm text-gray-500">PDF, DOC, DOCX (Max 10MB)</div>
+                            </>
+                          )}
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
-  async getTestimonialsAdmin() {
-    console.log('API: Fetching admin testimonials...');
-    return this.request('/testimonials/admin');
-  }
-
-  async createTestimonial(data: TestimonialData) {
-    console.log('API: Creating testimonial...', data);
-    return this.request('/testimonials', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async updateTestimonial(testimonialId: string, data: TestimonialData) {
-    return this.request(`/testimonials/${testimonialId}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
-  }
-  async updateTestimonialStatus(testimonialId: string, approved: boolean, featured?: boolean) {
-    return this.request(`/testimonials/${testimonialId}/approve`, {
-      method: 'PUT',
-      body: JSON.stringify({ approved, featured }),
-    });
-  }
-
-  async deleteTestimonial(testimonialId: string) {
-    return this.request(`/testimonials/${testimonialId}`, {
-      method: 'DELETE',
-    });
-  }
-
-  async submitTestimonial(data: TestimonialData) {
-    return this.request('/testimonials', {
-      method: 'POST',
-      body: JSON.stringify({ ...data, approved: false }),
-    });
-  }
-
-  // Service endpoints
-  async getServices() {
-    try {
-      console.log('API: Fetching services...');
-      return await this.request('/services');
-    } catch (error) {
-      console.error('Failed to fetch services:', error);
-      throw error;
-    }
-  }
-
-  async getServicesAdmin() {
-    console.log('API: Fetching admin services...');
-    return this.request('/services/admin');
-  }
-
-  async createService(data: ServiceData) {
-    console.log('API: Creating service...', data);
-    const response = await this.request('/services', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-    console.log('Service creation response:', response);
-    return response;
-  }
-
-  async updateService(serviceId: string, data: ServiceData) {
-    return this.request(`/services/${serviceId}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
-  }
-
-  async deleteService(serviceId: string) {
-    return this.request(`/services/${serviceId}`, {
-      method: 'DELETE',
-    });
-  }
-  // Contact status updates
-  async updateContactStatus(contactId: string, status: string) {
-    return this.request(`/contacts/${contactId}/status`, {
-      method: 'PUT',
-      body: JSON.stringify({ status }),
-    });
-  }
-
-  // Job application status updates
-  async updateJobApplicationStatus(applicationId: string, status: string) {
-    return this.request(`/job-applications/${applicationId}/status`, {
-      method: 'PUT',
-      body: JSON.stringify({ status }),
-    });
-  }
-
-  // Fraud case status updates
-  async updateFraudCaseStatus(caseId: string, status: string) {
-    return this.request(`/fraud-cases/${caseId}/status`, {
-      method: 'PUT',
-      body: JSON.stringify({ status }),
-    });
-  }
-
-  // About Content endpoints
-  async getAboutContent() {
-    try {
-      console.log('API: Fetching about content...');
-      return await this.request('/about-content');
-    } catch (error) {
-      console.error('Failed to fetch about content:', error);
-      throw error;
-    }
-  }
-
-  async updateAboutContent(data: AboutContentData) {
-    console.log('API: Updating about content...', data);
-    return this.request('/about-content', {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
-  }
-
-  // Contact Info endpoints
-  async getContactInfo() {
-    try {
-      console.log('API: Fetching contact info...');
-      return await this.request('/contact-info');
-    } catch (error) {
-      console.error('Failed to fetch contact info:', error);
-      throw error;
-    }
-  }
-
-  async updateContactInfo(data: ContactInfoData) {
-    console.log('API: Updating contact info...', data);
-    return this.request('/contact-info', {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
-  }
-
-  // Dashboard Stats endpoints
-  async getDashboardStats() {
-    try {
-      console.log('API: Fetching dashboard stats...');
-      return await this.request('/dashboard-stats');
-    } catch (error) {
-      console.error('Failed to fetch dashboard stats:', error);
-      throw error;
-    }
-  }
-
-  async getDashboardStatsData() {
-    // Alias for backward compatibility
-    return this.getDashboardStats();
-  }
-
-  async updateDashboardStats(data: DashboardStatsData) {
-    console.log('API: Updating dashboard stats...', data);
-    return this.request('/dashboard-stats', {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
-  }
-
-  // Privacy Policy endpoints
-  async getPrivacyPolicy() {
-    try {
-      console.log('API: Fetching privacy policy...');
-      return await this.request('/privacy-policy');
-    } catch (error) {
-      console.error('Failed to fetch privacy policy:', error);
-      throw error;
-    }
-  }
-
-  async updatePrivacyPolicy(data: PrivacyPolicyData) {
-    console.log('API: Updating privacy policy...', data);
-    return this.request('/privacy-policy', {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
-  }
-
-  // Terms of Service endpoints
-  async getTermsOfService() {
-    try {
-      console.log('API: Fetching terms of service...');
-      return await this.request('/terms-of-service');
-    } catch (error) {
-      console.error('Failed to fetch terms of service:', error);
-      throw error;
-    }
-  }
-
-  async updateTermsOfService(data: TermsOfServiceData) {
-    console.log('API: Updating terms of service...', data);
-    return this.request('/terms-of-service', {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
-  }
-}
-
-export const apiService = new ApiService();
+export default UserDashboard;

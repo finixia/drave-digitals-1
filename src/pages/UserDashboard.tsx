@@ -47,8 +47,32 @@ const UserDashboard = () => {
   const fetchUserProfile = async () => {
     try {
       setIsLoading(true);
-      // For now, we'll use the user data from auth context
-      // In a real app, you'd fetch full profile data from API
+      // Fetch complete user profile from API
+      const profileData = await apiService.getUserProfile(user.id);
+      setUserProfile(profileData);
+      setFormData({
+        name: profileData?.name || '',
+        email: profileData?.email || '',
+        phone: profileData?.phone || '',
+        dateOfBirth: profileData?.dateOfBirth ? new Date(profileData.dateOfBirth).toISOString().split('T')[0] : '',
+        gender: profileData?.gender || '',
+        address: profileData?.address || '',
+        city: profileData?.city || '',
+        state: profileData?.state || '',
+        pincode: profileData?.pincode || '',
+        currentPosition: profileData?.currentPosition || '',
+        experience: profileData?.experience || '',
+        skills: profileData?.skills || '',
+        education: profileData?.education || '',
+        expectedSalary: profileData?.expectedSalary || '',
+        preferredLocation: profileData?.preferredLocation || '',
+        jobType: profileData?.jobType || '',
+        workMode: profileData?.workMode || '',
+        interestedServices: profileData?.interestedServices || []
+      });
+    } catch (error) {
+      console.error('Failed to fetch user profile:', error);
+      // Fallback to auth context data if API fails
       setUserProfile(user);
       setFormData({
         name: user?.name || '',
@@ -70,8 +94,6 @@ const UserDashboard = () => {
         workMode: user?.workMode || '',
         interestedServices: user?.interestedServices || []
       });
-    } catch (error) {
-      console.error('Failed to fetch user profile:', error);
     } finally {
       setIsLoading(false);
     }
@@ -115,24 +137,26 @@ const UserDashboard = () => {
       Object.entries(formData).forEach(([key, value]) => {
         if (value) {
           if (key === 'interestedServices' && Array.isArray(value)) {
-            updateData.append(key, JSON.stringify(value));
           } else {
             updateData.append(key, value.toString());
           }
         }
       });
-      
+
       if (newResume) {
         updateData.append('resume', newResume);
       }
 
       // In a real app, you'd call an API to update the user profile
-      // await apiService.updateUserProfile(user.id, updateData);
+      await apiService.updateUserProfile(user.id, updateData);
       
       setStatus('success');
       setStatusMessage('Profile updated successfully!');
       setIsEditing(false);
       setNewResume(null);
+      
+      // Refresh profile data
+      await fetchUserProfile();
     } catch (error) {
       setStatus('error');
       setStatusMessage(error instanceof Error ? error.message : 'Failed to update profile');
@@ -143,7 +167,7 @@ const UserDashboard = () => {
 
   const handleDownloadResume = () => {
     if (userProfile?.resume) {
-      const resumeUrl = `${import.meta.env.VITE_API_URL || '/api'}/uploads/${userProfile.resume.split('/').pop()}`;
+      const resumeUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/${userProfile.resume}`;
       const link = document.createElement('a');
       link.href = resumeUrl;
       link.download = `${userProfile.name.replace(/\s+/g, '_')}_Resume.pdf`;
@@ -403,7 +427,7 @@ const UserDashboard = () => {
                         </div>
                       ) : (
                         <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
-                          {userProfile?.name || 'Not provided'}
+                          {formData.name || userProfile?.name || 'Not provided'}
                         </div>
                       )}
                     </div>
@@ -423,7 +447,7 @@ const UserDashboard = () => {
                         </div>
                       ) : (
                         <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
-                          {userProfile?.email || 'Not provided'}
+                          {formData.email || userProfile?.email || 'Not provided'}
                         </div>
                       )}
                     </div>
@@ -443,7 +467,7 @@ const UserDashboard = () => {
                         </div>
                       ) : (
                         <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
-                          {userProfile?.phone || 'Not provided'}
+                          {formData.phone || userProfile?.phone || 'Not provided'}
                         </div>
                       )}
                     </div>
@@ -463,7 +487,7 @@ const UserDashboard = () => {
                         </div>
                       ) : (
                         <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
-                          {formatDate(userProfile?.dateOfBirth)}
+                          {formatDate(formData.dateOfBirth || userProfile?.dateOfBirth)}
                         </div>
                       )}
                     </div>
@@ -485,7 +509,7 @@ const UserDashboard = () => {
                         </select>
                       ) : (
                         <div className="p-3 bg-gray-50 rounded-xl text-gray-900 capitalize">
-                          {userProfile?.gender || 'Not provided'}
+                          {formData.gender || userProfile?.gender || 'Not provided'}
                         </div>
                       )}
                     </div>
@@ -502,7 +526,7 @@ const UserDashboard = () => {
                         />
                       ) : (
                         <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
-                          {userProfile?.pincode || 'Not provided'}
+                          {formData.pincode || userProfile?.pincode || 'Not provided'}
                         </div>
                       )}
                     </div>
@@ -523,7 +547,7 @@ const UserDashboard = () => {
                       </div>
                     ) : (
                       <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
-                        {userProfile?.address || 'Not provided'}
+                        {formData.address || userProfile?.address || 'Not provided'}
                       </div>
                     )}
                   </div>
@@ -541,7 +565,7 @@ const UserDashboard = () => {
                         />
                       ) : (
                         <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
-                          {userProfile?.city || 'Not provided'}
+                          {formData.city || userProfile?.city || 'Not provided'}
                         </div>
                       )}
                     </div>
@@ -558,7 +582,7 @@ const UserDashboard = () => {
                         />
                       ) : (
                         <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
-                          {userProfile?.state || 'Not provided'}
+                          {formData.state || userProfile?.state || 'Not provided'}
                         </div>
                       )}
                     </div>
@@ -587,7 +611,7 @@ const UserDashboard = () => {
                         </div>
                       ) : (
                         <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
-                          {userProfile?.currentPosition || 'Not provided'}
+                          {formData.currentPosition || userProfile?.currentPosition || 'Not provided'}
                         </div>
                       )}
                     </div>
@@ -610,7 +634,7 @@ const UserDashboard = () => {
                         </select>
                       ) : (
                         <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
-                          {getExperienceLabel(userProfile?.experience) || 'Not provided'}
+                          {getExperienceLabel(formData.experience || userProfile?.experience) || 'Not provided'}
                         </div>
                       )}
                     </div>
@@ -636,7 +660,7 @@ const UserDashboard = () => {
                         </div>
                       ) : (
                         <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
-                          {getEducationLabel(userProfile?.education) || 'Not provided'}
+                          {getEducationLabel(formData.education || userProfile?.education) || 'Not provided'}
                         </div>
                       )}
                     </div>
@@ -656,7 +680,7 @@ const UserDashboard = () => {
                         </div>
                       ) : (
                         <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
-                          {userProfile?.expectedSalary ? `${userProfile.expectedSalary} LPA` : 'Not provided'}
+                          {(formData.expectedSalary || userProfile?.expectedSalary) ? `${formData.expectedSalary || userProfile.expectedSalary} LPA` : 'Not provided'}
                         </div>
                       )}
                     </div>
@@ -673,7 +697,7 @@ const UserDashboard = () => {
                         />
                       ) : (
                         <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
-                          {userProfile?.preferredLocation || 'Not provided'}
+                          {formData.preferredLocation || userProfile?.preferredLocation || 'Not provided'}
                         </div>
                       )}
                     </div>
@@ -696,7 +720,7 @@ const UserDashboard = () => {
                         </select>
                       ) : (
                         <div className="p-3 bg-gray-50 rounded-xl text-gray-900 capitalize">
-                          {userProfile?.jobType?.replace('-', ' ') || 'Not provided'}
+                          {(formData.jobType || userProfile?.jobType)?.replace('-', ' ') || 'Not provided'}
                         </div>
                       )}
                     </div>
@@ -717,7 +741,7 @@ const UserDashboard = () => {
                         </select>
                       ) : (
                         <div className="p-3 bg-gray-50 rounded-xl text-gray-900 capitalize">
-                          {userProfile?.workMode || 'Not provided'}
+                          {formData.workMode || userProfile?.workMode || 'Not provided'}
                         </div>
                       )}
                     </div>
@@ -735,7 +759,7 @@ const UserDashboard = () => {
                       />
                     ) : (
                       <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
-                        {userProfile?.skills || 'Not provided'}
+                        {formData.skills || userProfile?.skills || 'Not provided'}
                       </div>
                     )}
                   </div>
@@ -750,9 +774,9 @@ const UserDashboard = () => {
                   <div>
                     <label className="block text-gray-600 text-sm font-medium mb-2">Interested Services</label>
                     <div className="p-3 bg-gray-50 rounded-xl">
-                      {userProfile?.interestedServices && userProfile.interestedServices.length > 0 ? (
+                      {(formData.interestedServices || userProfile?.interestedServices) && (formData.interestedServices || userProfile.interestedServices).length > 0 ? (
                         <div className="flex flex-wrap gap-2">
-                          {userProfile.interestedServices.map((service: string, index: number) => (
+                          {(formData.interestedServices || userProfile.interestedServices).map((service: string, index: number) => (
                             <span
                               key={index}
                               className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800"
