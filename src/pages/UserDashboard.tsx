@@ -16,7 +16,12 @@ import {
   Calendar,
   DollarSign,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Clock,
+  Building,
+  Target,
+  Award,
+  Heart
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -49,14 +54,21 @@ const UserDashboard = () => {
         name: user?.name || '',
         email: user?.email || '',
         phone: user?.phone || '',
+        dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : '',
+        gender: user?.gender || '',
+        address: user?.address || '',
         city: user?.city || '',
         state: user?.state || '',
+        pincode: user?.pincode || '',
         currentPosition: user?.currentPosition || '',
         experience: user?.experience || '',
         skills: user?.skills || '',
         education: user?.education || '',
         expectedSalary: user?.expectedSalary || '',
-        preferredLocation: user?.preferredLocation || ''
+        preferredLocation: user?.preferredLocation || '',
+        jobType: user?.jobType || '',
+        workMode: user?.workMode || '',
+        interestedServices: user?.interestedServices || []
       });
     } catch (error) {
       console.error('Failed to fetch user profile:', error);
@@ -102,7 +114,11 @@ const UserDashboard = () => {
       const updateData = new FormData();
       Object.entries(formData).forEach(([key, value]) => {
         if (value) {
-          updateData.append(key, value.toString());
+          if (key === 'interestedServices' && Array.isArray(value)) {
+            updateData.append(key, JSON.stringify(value));
+          } else {
+            updateData.append(key, value.toString());
+          }
         }
       });
       
@@ -140,6 +156,37 @@ const UserDashboard = () => {
   const handleLogout = () => {
     logout();
     navigate('/');
+  };
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return 'Not provided';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const getExperienceLabel = (exp: string) => {
+    const expMap: { [key: string]: string } = {
+      'fresher': 'Fresher (0 years)',
+      '1-2': '1-2 years',
+      '3-5': '3-5 years',
+      '6-10': '6-10 years',
+      '10+': '10+ years'
+    };
+    return expMap[exp] || exp;
+  };
+
+  const getEducationLabel = (edu: string) => {
+    const eduMap: { [key: string]: string } = {
+      'high-school': 'High School',
+      'diploma': 'Diploma',
+      'bachelors': "Bachelor's Degree",
+      'masters': "Master's Degree",
+      'phd': 'PhD'
+    };
+    return eduMap[edu] || edu;
   };
 
   if (isLoading && !userProfile) {
@@ -216,6 +263,24 @@ const UserDashboard = () => {
                 <div className="mt-4 inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                   <CheckCircle size={12} className="mr-1" />
                   Active Member
+                </div>
+              </div>
+
+              {/* Quick Stats */}
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="text-center p-3 bg-blue-50 rounded-lg">
+                  <Calendar className="text-blue-400 mx-auto mb-1" size={20} />
+                  <div className="text-xs text-gray-600">Member Since</div>
+                  <div className="text-sm font-semibold text-gray-900">
+                    {userProfile?.createdAt ? new Date(userProfile.createdAt).getFullYear() : '2024'}
+                  </div>
+                </div>
+                <div className="text-center p-3 bg-green-50 rounded-lg">
+                  <Award className="text-green-400 mx-auto mb-1" size={20} />
+                  <div className="text-xs text-gray-600">Profile</div>
+                  <div className="text-sm font-semibold text-gray-900">
+                    {userProfile?.profileCompleted ? 'Complete' : 'Incomplete'}
+                  </div>
                 </div>
               </div>
 
@@ -315,117 +380,392 @@ const UserDashboard = () => {
                 </motion.div>
               )}
 
-              {/* Form Fields */}
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-gray-600 text-sm font-medium mb-2">Full Name</label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                      <input
-                        type="text"
-                        name="name"
-                        value={formData.name || ''}
-                        onChange={handleInputChange}
-                        disabled={!isEditing}
-                        className="w-full bg-gray-50 border border-gray-300 rounded-xl pl-12 pr-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors disabled:bg-gray-100"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-gray-600 text-sm font-medium mb-2">Email</label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                      <input
-                        type="email"
-                        name="email"
-                        value={formData.email || ''}
-                        onChange={handleInputChange}
-                        disabled={!isEditing}
-                        className="w-full bg-gray-50 border border-gray-300 rounded-xl pl-12 pr-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors disabled:bg-gray-100"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-gray-600 text-sm font-medium mb-2">Phone</label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                      <input
-                        type="tel"
-                        name="phone"
-                        value={formData.phone || ''}
-                        onChange={handleInputChange}
-                        disabled={!isEditing}
-                        className="w-full bg-gray-50 border border-gray-300 rounded-xl pl-12 pr-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors disabled:bg-gray-100"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-gray-600 text-sm font-medium mb-2">Current Position</label>
-                    <div className="relative">
-                      <Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                      <input
-                        type="text"
-                        name="currentPosition"
-                        value={formData.currentPosition || ''}
-                        onChange={handleInputChange}
-                        disabled={!isEditing}
-                        className="w-full bg-gray-50 border border-gray-300 rounded-xl pl-12 pr-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors disabled:bg-gray-100"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-gray-600 text-sm font-medium mb-2">Experience</label>
-                    <select
-                      name="experience"
-                      value={formData.experience || ''}
-                      onChange={handleInputChange}
-                      disabled={!isEditing}
-                      className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors disabled:bg-gray-100"
-                    >
-                      <option value="">Select Experience</option>
-                      <option value="fresher">Fresher (0 years)</option>
-                      <option value="1-2">1-2 years</option>
-                      <option value="3-5">3-5 years</option>
-                      <option value="6-10">6-10 years</option>
-                      <option value="10+">10+ years</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-gray-600 text-sm font-medium mb-2">Education</label>
-                    <div className="relative">
-                      <GraduationCap className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                      <input
-                        type="text"
-                        name="education"
-                        value={formData.education || ''}
-                        onChange={handleInputChange}
-                        disabled={!isEditing}
-                        className="w-full bg-gray-50 border border-gray-300 rounded-xl pl-12 pr-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors disabled:bg-gray-100"
-                      />
-                    </div>
-                  </div>
-                </div>
-
+              {/* Personal Information Section */}
+              <div className="space-y-8">
                 <div>
-                  <label className="block text-gray-600 text-sm font-medium mb-2">Skills</label>
-                  <textarea
-                    name="skills"
-                    value={formData.skills || ''}
-                    onChange={handleInputChange}
-                    disabled={!isEditing}
-                    rows={3}
-                    className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors resize-none disabled:bg-gray-100"
-                  />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
+                    <User className="text-red-400" size={20} />
+                    <span>Personal Information</span>
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Full Name</label>
+                      {isEditing ? (
+                        <div className="relative">
+                          <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                          <input
+                            type="text"
+                            name="name"
+                            value={formData.name || ''}
+                            onChange={handleInputChange}
+                            className="w-full bg-gray-50 border border-gray-300 rounded-xl pl-12 pr-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                          />
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {userProfile?.name || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Email</label>
+                      {isEditing ? (
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                          <input
+                            type="email"
+                            name="email"
+                            value={formData.email || ''}
+                            onChange={handleInputChange}
+                            className="w-full bg-gray-50 border border-gray-300 rounded-xl pl-12 pr-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                          />
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {userProfile?.email || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Phone</label>
+                      {isEditing ? (
+                        <div className="relative">
+                          <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                          <input
+                            type="tel"
+                            name="phone"
+                            value={formData.phone || ''}
+                            onChange={handleInputChange}
+                            className="w-full bg-gray-50 border border-gray-300 rounded-xl pl-12 pr-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                          />
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {userProfile?.phone || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Date of Birth</label>
+                      {isEditing ? (
+                        <div className="relative">
+                          <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                          <input
+                            type="date"
+                            name="dateOfBirth"
+                            value={formData.dateOfBirth || ''}
+                            onChange={handleInputChange}
+                            className="w-full bg-gray-50 border border-gray-300 rounded-xl pl-12 pr-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                          />
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {formatDate(userProfile?.dateOfBirth)}
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Gender</label>
+                      {isEditing ? (
+                        <select
+                          name="gender"
+                          value={formData.gender || ''}
+                          onChange={handleInputChange}
+                          className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                        >
+                          <option value="">Select Gender</option>
+                          <option value="male">Male</option>
+                          <option value="female">Female</option>
+                          <option value="other">Other</option>
+                          <option value="prefer-not-to-say">Prefer not to say</option>
+                        </select>
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900 capitalize">
+                          {userProfile?.gender || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">PIN Code</label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          name="pincode"
+                          value={formData.pincode || ''}
+                          onChange={handleInputChange}
+                          className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                        />
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {userProfile?.pincode || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="mt-6">
+                    <label className="block text-gray-600 text-sm font-medium mb-2">Address</label>
+                    {isEditing ? (
+                      <div className="relative">
+                        <MapPin className="absolute left-3 top-3 text-gray-400" size={20} />
+                        <textarea
+                          name="address"
+                          value={formData.address || ''}
+                          onChange={handleInputChange}
+                          rows={3}
+                          className="w-full bg-gray-50 border border-gray-300 rounded-xl pl-12 pr-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors resize-none"
+                        />
+                      </div>
+                    ) : (
+                      <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                        {userProfile?.address || 'Not provided'}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">City</label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          name="city"
+                          value={formData.city || ''}
+                          onChange={handleInputChange}
+                          className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                        />
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {userProfile?.city || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">State</label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          name="state"
+                          value={formData.state || ''}
+                          onChange={handleInputChange}
+                          className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                        />
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {userProfile?.state || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Professional Information Section */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
+                    <Briefcase className="text-red-400" size={20} />
+                    <span>Professional Information</span>
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Current Position</label>
+                      {isEditing ? (
+                        <div className="relative">
+                          <Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                          <input
+                            type="text"
+                            name="currentPosition"
+                            value={formData.currentPosition || ''}
+                            onChange={handleInputChange}
+                            className="w-full bg-gray-50 border border-gray-300 rounded-xl pl-12 pr-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                          />
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {userProfile?.currentPosition || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Experience</label>
+                      {isEditing ? (
+                        <select
+                          name="experience"
+                          value={formData.experience || ''}
+                          onChange={handleInputChange}
+                          className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                        >
+                          <option value="">Select Experience</option>
+                          <option value="fresher">Fresher (0 years)</option>
+                          <option value="1-2">1-2 years</option>
+                          <option value="3-5">3-5 years</option>
+                          <option value="6-10">6-10 years</option>
+                          <option value="10+">10+ years</option>
+                        </select>
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {getExperienceLabel(userProfile?.experience) || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Education</label>
+                      {isEditing ? (
+                        <div className="relative">
+                          <GraduationCap className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                          <select
+                            name="education"
+                            value={formData.education || ''}
+                            onChange={handleInputChange}
+                            className="w-full bg-gray-50 border border-gray-300 rounded-xl pl-12 pr-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                          >
+                            <option value="">Select Education</option>
+                            <option value="high-school">High School</option>
+                            <option value="diploma">Diploma</option>
+                            <option value="bachelors">Bachelor's Degree</option>
+                            <option value="masters">Master's Degree</option>
+                            <option value="phd">PhD</option>
+                          </select>
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {getEducationLabel(userProfile?.education) || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Expected Salary</label>
+                      {isEditing ? (
+                        <div className="relative">
+                          <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                          <input
+                            type="text"
+                            name="expectedSalary"
+                            value={formData.expectedSalary || ''}
+                            onChange={handleInputChange}
+                            className="w-full bg-gray-50 border border-gray-300 rounded-xl pl-12 pr-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                          />
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {userProfile?.expectedSalary ? `${userProfile.expectedSalary} LPA` : 'Not provided'}
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Preferred Location</label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          name="preferredLocation"
+                          value={formData.preferredLocation || ''}
+                          onChange={handleInputChange}
+                          className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                        />
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {userProfile?.preferredLocation || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Job Type</label>
+                      {isEditing ? (
+                        <select
+                          name="jobType"
+                          value={formData.jobType || ''}
+                          onChange={handleInputChange}
+                          className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                        >
+                          <option value="">Select Job Type</option>
+                          <option value="full-time">Full Time</option>
+                          <option value="part-time">Part Time</option>
+                          <option value="contract">Contract</option>
+                          <option value="internship">Internship</option>
+                          <option value="freelance">Freelance</option>
+                        </select>
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900 capitalize">
+                          {userProfile?.jobType?.replace('-', ' ') || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Work Mode</label>
+                      {isEditing ? (
+                        <select
+                          name="workMode"
+                          value={formData.workMode || ''}
+                          onChange={handleInputChange}
+                          className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                        >
+                          <option value="">Select Work Mode</option>
+                          <option value="office">Office</option>
+                          <option value="remote">Remote</option>
+                          <option value="hybrid">Hybrid</option>
+                        </select>
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900 capitalize">
+                          {userProfile?.workMode || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="mt-6">
+                    <label className="block text-gray-600 text-sm font-medium mb-2">Skills</label>
+                    {isEditing ? (
+                      <textarea
+                        name="skills"
+                        value={formData.skills || ''}
+                        onChange={handleInputChange}
+                        rows={3}
+                        className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors resize-none"
+                      />
+                    ) : (
+                      <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                        {userProfile?.skills || 'Not provided'}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Services & Preferences */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
+                    <Heart className="text-red-400" size={20} />
+                    <span>Preferences</span>
+                  </h3>
+                  <div>
+                    <label className="block text-gray-600 text-sm font-medium mb-2">Interested Services</label>
+                    <div className="p-3 bg-gray-50 rounded-xl">
+                      {userProfile?.interestedServices && userProfile.interestedServices.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {userProfile.interestedServices.map((service: string, index: number) => (
+                            <span
+                              key={index}
+                              className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800"
+                            >
+                              {service.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-gray-900">No services selected</span>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 {isEditing && (

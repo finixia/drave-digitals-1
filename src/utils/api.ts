@@ -347,6 +347,18 @@ class ApiService {
     });
   }
 
+  async getUserProfile(userId: string) {
+    return this.request(`/users/${userId}`);
+  }
+
+  async updateUserProfile(userId: string, formData: FormData) {
+    return this.request(`/users/${userId}`, {
+      method: 'PUT',
+      headers: {}, // Remove Content-Type to let browser set it for FormData
+      body: formData,
+    });
+  }
+
   async deleteUser(userId: string) {
     return this.request(`/users/${userId}`, {
       method: 'DELETE',
