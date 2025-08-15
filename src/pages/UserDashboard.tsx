@@ -108,6 +108,10 @@ const UserDashboard = () => {
         jobType: profileData?.jobType || '',
         workMode: profileData?.workMode || '',
         interestedServices: profileData?.interestedServices || []
+      });
+    }
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev: any) => ({
@@ -148,6 +152,9 @@ const UserDashboard = () => {
           if (key === 'interestedServices' && Array.isArray(value)) {
           } else {
             updateData.append(key, value.toString());
+          }
+        }
+      });
     } finally {
       setIsLoading(false);
     }
