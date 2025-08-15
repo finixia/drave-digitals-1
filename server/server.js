@@ -51,58 +51,6 @@ const UserDashboard = () => {
       const profileData = await apiService.getUserProfile(user.id);
       setUserProfile(profileData);
       setFormData({
-    res.status(500).json({ message: 'Server error' });
-  }
-});
-
-// Update user profile
-app.put('/api/users/:userId', authenticateToken, upload.single('resume'), async (req, res) => {
-  try {
-    const { userId } = req.params;
-    
-    // Users can only update their own profile, admins can update any profile
-    if (req.user.role !== 'admin' && req.user.id !== userId) {
-      return res.status(403).json({ message: 'Access denied' });
-    }
-
-    const updateData = { ...req.body };
-    
-    // Handle interested services JSON parsing
-    if (updateData.interestedServices && typeof updateData.interestedServices === 'string') {
-      try {
-        updateData.interestedServices = JSON.parse(updateData.interestedServices);
-      } catch (e) {
-        updateData.interestedServices = [updateData.interestedServices];
-      }
-    }
-
-    // Handle resume upload
-    if (req.file) {
-      updateData.resume = req.file.path;
-    }
-
-    // Convert date string to Date object if provided
-    if (updateData.dateOfBirth) {
-      updateData.dateOfBirth = new Date(updateData.dateOfBirth);
-    }
-
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      updateData,
-      { new: true, runValidators: true }
-    ).select('-password');
-
-    if (!updatedUser) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    res.json(updatedUser);
-  } catch (error) {
-    console.error('Error updating user profile:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
-
         name: user?.name || '',
         email: user?.email || '',
         phone: user?.phone || '',
