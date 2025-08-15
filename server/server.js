@@ -1,466 +1,854 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
-require('dotenv').config();
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { 
+  User, 
+  FileText, 
+  Edit, 
+  Download, 
+  Upload, 
+  Save, 
+  ArrowLeft,
+  Mail,
+  Phone,
+  MapPin,
+  Briefcase,
+  GraduationCap,
+  Calendar,
+  DollarSign,
+  CheckCircle,
+  AlertCircle,
+  Clock,
+  Building,
+  Target,
+  Award,
+  Heart
+} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { apiService } from '../utils/api';
 
-const app = express();
-const PORT = process.env.PORT || 5000;
+const UserDashboard = () => {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [formData, setFormData] = useState<any>({});
+  const [newResume, setNewResume] = useState<File | null>(null);
+  const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [statusMessage, setStatusMessage] = useState('');
 
-// Middleware
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// Serve uploaded files
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// Create uploads directory if it doesn't exist
-const uploadsDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
-
-// MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/careerguard', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log('MongoDB connected successfully'))
-.catch(err => console.error('MongoDB connection error:', err));
-
-// User Schema
-const userSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  phone: String,
-  dateOfBirth: Date,
-  gender: String,
-  address: String,
-  city: String,
-  state: String,
-  pincode: String,
-  currentPosition: String,
-  experience: String,
-  skills: String,
-  education: String,
-  expectedSalary: String,
-  preferredLocation: String,
-  jobType: String,
-  workMode: String,
-  interestedServices: [String],
-  resume: String,
-  profileCompleted: { type: Boolean, default: false },
-  role: { type: String, default: 'user' },
-}, { timestamps: true });
-
-const User = mongoose.model('User', userSchema);
-
-// Contact Schema
-const contactSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true },
-  phone: { type: String, required: true },
-  service: { type: String, required: true },
-  message: { type: String, required: true },
-  status: { type: String, default: 'new' },
-}, { timestamps: true });
-
-const Contact = mongoose.model('Contact', contactSchema);
-
-// Testimonial Schema
-const testimonialSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  role: { type: String, required: true },
-  company: { type: String, required: true },
-  rating: { type: Number, required: true, min: 1, max: 5 },
-  text: { type: String, required: true },
-  avatar: { type: String, default: '👤' },
-  service: { type: String, required: true },
-  featured: { type: Boolean, default: false },
-  approved: { type: Boolean, default: false },
-}, { timestamps: true });
-
-const Testimonial = mongoose.model('Testimonial', testimonialSchema);
-
-// Service Schema
-const serviceSchema = new mongoose.Schema({
-  title: { type: String, required: true },
-  description: { type: String, required: true },
-  icon: { type: String, default: 'Shield' },
-  color: { type: String, default: 'from-red-500 to-pink-600' },
-  features: [String],
-  active: { type: Boolean, default: true },
-  order: { type: Number, default: 0 },
-}, { timestamps: true });
-
-const Service = mongoose.model('Service', serviceSchema);
-
-// Multer configuration for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/');
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
-const upload = multer({ 
-  storage: storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-    if (allowedTypes.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Invalid file type. Only PDF and Word documents are allowed.'));
+  useEffect(() => {
+    if (user) {
+      fetchUserProfile();
     }
-  }
-});
+  }, [user]);
 
-// Middleware to verify JWT token
-const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-
-  if (!token) {
-    return res.status(401).json({ success: false, message: 'Access token required' });
-  }
-
-  jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret', (err, user) => {
-    if (err) {
-      return res.status(403).json({ success: false, message: 'Invalid token' });
+  const fetchUserProfile = async () => {
+    try {
+      setIsLoading(true);
+      // Fetch complete user profile from API
+      const profileData = await apiService.getUserProfile(user.id);
+      setUserProfile(profileData);
+      setFormData({
+        name: user?.name || '',
+        email: user?.email || '',
+        phone: user?.phone || '',
+        dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : '',
+        gender: user?.gender || '',
+        address: user?.address || '',
+        city: user?.city || '',
+        state: user?.state || '',
+        pincode: user?.pincode || '',
+        currentPosition: user?.currentPosition || '',
+        experience: user?.experience || '',
+        skills: user?.skills || '',
+        education: user?.education || '',
+        expectedSalary: user?.expectedSalary || '',
+        preferredLocation: user?.preferredLocation || '',
+        name: profileData?.name || '',
+        email: profileData?.email || '',
+        phone: profileData?.phone || '',
+        dateOfBirth: profileData?.dateOfBirth ? new Date(profileData.dateOfBirth).toISOString().split('T')[0] : '',
+        gender: profileData?.gender || '',
+        address: profileData?.address || '',
+        city: profileData?.city || '',
+        state: profileData?.state || '',
+        pincode: profileData?.pincode || '',
+        currentPosition: profileData?.currentPosition || '',
+        experience: profileData?.experience || '',
+        skills: profileData?.skills || '',
+        education: profileData?.education || '',
+        expectedSalary: profileData?.expectedSalary || '',
+        preferredLocation: profileData?.preferredLocation || '',
+        jobType: profileData?.jobType || '',
+        workMode: profileData?.workMode || '',
+        interestedServices: profileData?.interestedServices || []
+      });
+    } catch (error) {
+      // Fetch complete user profile from API
+      const profileData = await apiService.getUserProfile(user.id);
+      setUserProfile(profileData);
+      setFormData({
+        name: user?.name || '',
+        email: user?.email || '',
+        phone: user?.phone || '',
+        dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : '',
+        gender: user?.gender || '',
+        address: user?.address || '',
+        city: user?.city || '',
+        state: user?.state || '',
+        pincode: user?.pincode || '',
+        currentPosition: user?.currentPosition || '',
+        experience: user?.experience || '',
+        skills: user?.skills || '',
+        education: user?.education || '',
+        expectedSalary: user?.expectedSalary || '',
+        preferredLocation: user?.preferredLocation || '',
+        jobType: user?.jobType || '',
+        workMode: user?.workMode || '',
+        interestedServices: user?.interestedServices || []
+      });
+    } finally {
+      setIsLoading(false);
     }
-    req.user = user;
-    next();
-  });
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev: any) => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) { // 10MB limit
+        setStatus('error');
+        setStatusMessage('File size should be less than 10MB');
+        return;
+      }
+      
+      const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+      if (!allowedTypes.includes(file.type)) {
+        setStatus('error');
+        setStatusMessage('Please upload a PDF or Word document');
+        return;
+      }
+      
+      setNewResume(file);
+      setStatus('idle');
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      setIsLoading(true);
+      setStatus('idle');
+      
+      const updateData = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+        if (value) {
+          if (key === 'interestedServices' && Array.isArray(value)) {
+            updateData.append(key, JSON.stringify(value));
+          } else {
+            updateData.append(key, value.toString());
+          }
+        }
+      });
+      
+      if (newResume) {
+        updateData.append('resume', newResume);
+      }
+
+      // Call API to update the user profile
+      const updatedProfile = await apiService.updateUserProfile(user?.id || user?._id, updateData);
+      setUserProfile(updatedProfile);
+      
+      setStatus('success');
+      setStatusMessage('Profile updated successfully!');
+      setIsEditing(false);
+      setNewResume(null);
+      
+      // Refresh the profile data
+      await fetchUserProfile();
+    } catch (error) {
+      setStatus('error');
+      setStatusMessage(error instanceof Error ? error.message : 'Failed to update profile');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDownloadResume = () => {
+    if (userProfile?.resume) {
+      const resumeUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/${userProfile.resume}`;
+      const link = document.createElement('a');
+      link.href = resumeUrl;
+      link.download = `${userProfile.name.replace(/\s+/g, '_')}_Resume.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return 'Not provided';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const getExperienceLabel = (exp: string) => {
+    const expMap: { [key: string]: string } = {
+      'fresher': 'Fresher (0 years)',
+      '1-2': '1-2 years',
+      '3-5': '3-5 years',
+      '6-10': '6-10 years',
+      '10+': '10+ years'
+    };
+    return expMap[exp] || exp;
+  };
+
+  const getEducationLabel = (edu: string) => {
+    const eduMap: { [key: string]: string } = {
+      'high-school': 'High School',
+      'diploma': 'Diploma',
+      'bachelors': "Bachelor's Degree",
+      'masters': "Master's Degree",
+      'phd': 'PhD'
+    };
+    return eduMap[edu] || edu;
+  };
+
+  if (isLoading && !userProfile) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          className="w-8 h-8 border-4 border-red-400 border-t-transparent rounded-full"
+        />
+        <p className="ml-4 text-gray-600">Loading your profile...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <motion.button
+                onClick={() => navigate('/')}
+                whileHover={{ scale: 1.05, x: -5 }}
+                whileTap={{ scale: 0.95 }}
+                className="inline-flex items-center space-x-2 text-gray-600 hover:text-red-600 transition-colors"
+              >
+                <ArrowLeft size={20} />
+                <span>Back to Home</span>
+              </motion.button>
+              <div className="flex items-center space-x-3">
+                <img 
+                  src="/company logo.png" 
+                  alt="Drave Capitals Logo" 
+                  className="w-10 h-10 object-contain"
+                />
+                <div>
+                  <h1 className="text-xl font-bold text-gray-900">My Dashboard</h1>
+                  <p className="text-sm text-gray-600">Drave Digitals</p>
+                </div>
+              </div>
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleLogout}
+              className="bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-2 rounded-xl font-medium hover:shadow-lg transition-all"
+            >
+              Logout
+            </motion.button>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Profile Card */}
+          <div className="lg:col-span-1">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm"
+            >
+              <div className="text-center mb-6">
+                <div className="w-20 h-20 bg-gradient-to-r from-red-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-white font-bold text-2xl">
+                    {userProfile?.name?.charAt(0) || 'U'}
+                  </span>
+                </div>
+                <h2 className="text-xl font-bold text-gray-900">{userProfile?.name}</h2>
+                <p className="text-gray-600">{userProfile?.email}</p>
+                <div className="mt-4 inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  <CheckCircle size={12} className="mr-1" />
+                  Active Member
+                </div>
+              </div>
+
+              {/* Quick Stats */}
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="text-center p-3 bg-blue-50 rounded-lg">
+                  <Calendar className="text-blue-400 mx-auto mb-1" size={20} />
+                  <div className="text-xs text-gray-600">Member Since</div>
+                  <div className="text-sm font-semibold text-gray-900">
+                    {userProfile?.createdAt ? new Date(userProfile.createdAt).getFullYear() : '2024'}
+                  </div>
+                </div>
+                <div className="text-center p-3 bg-green-50 rounded-lg">
+                  <Award className="text-green-400 mx-auto mb-1" size={20} />
+                  <div className="text-xs text-gray-600">Profile</div>
+                  <div className="text-sm font-semibold text-gray-900">
+                    {userProfile?.profileCompleted ? 'Complete' : 'Incomplete'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Resume Section */}
+              <div className="border-t border-gray-200 pt-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Resume</h3>
+                {userProfile?.resume ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                      <FileText className="text-red-400" size={20} />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-900">Current Resume</p>
+                        <p className="text-xs text-gray-600">PDF Document</p>
+                      </div>
+                    </div>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleDownloadResume}
+                      className="w-full bg-blue-500 text-white py-2 rounded-lg font-medium hover:bg-blue-600 transition-colors inline-flex items-center justify-center space-x-2"
+                    >
+                      <Download size={16} />
+                      <span>Download Resume</span>
+                    </motion.button>
+                  </div>
+                ) : (
+                  <div className="text-center py-6">
+                    <FileText className="mx-auto text-gray-400 mb-2" size={32} />
+                    <p className="text-gray-600 text-sm">No resume uploaded</p>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Profile Details */}
+          <div className="lg:col-span-2">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Profile Information</h2>
+                {!isEditing ? (
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setIsEditing(true)}
+                    className="bg-red-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-600 transition-colors inline-flex items-center space-x-2"
+                  >
+                    <Edit size={16} />
+                    <span>Edit Profile</span>
+                  </motion.button>
+                ) : (
+                  <div className="flex items-center space-x-3">
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => {
+                        setIsEditing(false);
+                        setNewResume(null);
+                        setStatus('idle');
+                      }}
+                      className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors"
+                    >
+                      Cancel
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={handleSave}
+                      disabled={isLoading}
+                      className="bg-green-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-600 transition-colors inline-flex items-center space-x-2 disabled:opacity-50"
+                    >
+                      <Save size={16} />
+                      <span>{isLoading ? 'Saving...' : 'Save Changes'}</span>
+                    </motion.button>
+                  </div>
+                )}
+              </div>
+
+              {/* Status Message */}
+              {status !== 'idle' && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`mb-6 p-4 rounded-xl flex items-center space-x-3 ${
+                    status === 'success' 
+                      ? 'bg-green-500/10 border border-green-500/20 text-green-400' 
+                      : 'bg-red-500/10 border border-red-500/20 text-red-400'
+                  }`}
+                >
+                  {status === 'success' ? <CheckCircle size={20} /> : <AlertCircle size={20} />}
+                  <span>{statusMessage}</span>
+                </motion.div>
+              )}
+
+              {/* Personal Information Section */}
+              <div className="space-y-8">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
+                    <User className="text-red-400" size={20} />
+                    <span>Personal Information</span>
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Full Name</label>
+                      {isEditing ? (
+                        <div className="relative">
+                          <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                          <input
+                            type="text"
+                            name="name"
+                            value={formData.name || ''}
+                            onChange={handleInputChange}
+                            className="w-full bg-gray-50 border border-gray-300 rounded-xl pl-12 pr-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                          />
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {userProfile?.name || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Email</label>
+                      {isEditing ? (
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                          <input
+                            type="email"
+                            name="email"
+                            value={formData.email || ''}
+                            onChange={handleInputChange}
+                            className="w-full bg-gray-50 border border-gray-300 rounded-xl pl-12 pr-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                          />
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {userProfile?.email || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Phone</label>
+                      {isEditing ? (
+                        <div className="relative">
+                          <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                          <input
+                            type="tel"
+                            name="phone"
+                            value={formData.phone || ''}
+                            onChange={handleInputChange}
+                            className="w-full bg-gray-50 border border-gray-300 rounded-xl pl-12 pr-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                          />
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {userProfile?.phone || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Date of Birth</label>
+                      {isEditing ? (
+                        <div className="relative">
+                          <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                          <input
+                            type="date"
+                            name="dateOfBirth"
+                            value={formData.dateOfBirth || ''}
+                            onChange={handleInputChange}
+                            className="w-full bg-gray-50 border border-gray-300 rounded-xl pl-12 pr-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                          />
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {formatDate(userProfile?.dateOfBirth)}
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Gender</label>
+                      {isEditing ? (
+                        <select
+                          name="gender"
+                          value={formData.gender || ''}
+                          onChange={handleInputChange}
+                          className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                        >
+                          <option value="">Select Gender</option>
+                          <option value="male">Male</option>
+                          <option value="female">Female</option>
+                          <option value="other">Other</option>
+                          <option value="prefer-not-to-say">Prefer not to say</option>
+                        </select>
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900 capitalize">
+                          {userProfile?.gender || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">PIN Code</label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          name="pincode"
+                          value={formData.pincode || ''}
+                          onChange={handleInputChange}
+                          className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                        />
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {userProfile?.pincode || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="mt-6">
+                    <label className="block text-gray-600 text-sm font-medium mb-2">Address</label>
+                    {isEditing ? (
+                      <div className="relative">
+                        <MapPin className="absolute left-3 top-3 text-gray-400" size={20} />
+                        <textarea
+                          name="address"
+                          value={formData.address || ''}
+                          onChange={handleInputChange}
+                          rows={3}
+                          className="w-full bg-gray-50 border border-gray-300 rounded-xl pl-12 pr-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors resize-none"
+                        />
+                      </div>
+                    ) : (
+                      <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                        {userProfile?.address || 'Not provided'}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">City</label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          name="city"
+                          value={formData.city || ''}
+                          onChange={handleInputChange}
+                          className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                        />
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {userProfile?.city || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">State</label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          name="state"
+                          value={formData.state || ''}
+                          onChange={handleInputChange}
+                          className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                        />
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {userProfile?.state || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Professional Information Section */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
+                    <Briefcase className="text-red-400" size={20} />
+                    <span>Professional Information</span>
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Current Position</label>
+                      {isEditing ? (
+                        <div className="relative">
+                          <Briefcase className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                          <input
+                            type="text"
+                            name="currentPosition"
+                            value={formData.currentPosition || ''}
+                            onChange={handleInputChange}
+                            className="w-full bg-gray-50 border border-gray-300 rounded-xl pl-12 pr-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                          />
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {userProfile?.currentPosition || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Experience</label>
+                      {isEditing ? (
+                        <select
+                          name="experience"
+                          value={formData.experience || ''}
+                          onChange={handleInputChange}
+                          className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                        >
+                          <option value="">Select Experience</option>
+                          <option value="fresher">Fresher (0 years)</option>
+                          <option value="1-2">1-2 years</option>
+                          <option value="3-5">3-5 years</option>
+                          <option value="6-10">6-10 years</option>
+                          <option value="10+">10+ years</option>
+                        </select>
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {getExperienceLabel(userProfile?.experience) || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Education</label>
+                      {isEditing ? (
+                        <div className="relative">
+                          <GraduationCap className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                          <select
+                            name="education"
+                            value={formData.education || ''}
+                            onChange={handleInputChange}
+                            className="w-full bg-gray-50 border border-gray-300 rounded-xl pl-12 pr-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                          >
+                            <option value="">Select Education</option>
+                            <option value="high-school">High School</option>
+                            <option value="diploma">Diploma</option>
+                            <option value="bachelors">Bachelor's Degree</option>
+                            <option value="masters">Master's Degree</option>
+                            <option value="phd">PhD</option>
+                          </select>
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {getEducationLabel(userProfile?.education) || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Expected Salary</label>
+                      {isEditing ? (
+                        <div className="relative">
+                          <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                          <input
+                            type="text"
+                            name="expectedSalary"
+                            value={formData.expectedSalary || ''}
+                            onChange={handleInputChange}
+                            className="w-full bg-gray-50 border border-gray-300 rounded-xl pl-12 pr-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                          />
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {userProfile?.expectedSalary ? `${userProfile.expectedSalary} LPA` : 'Not provided'}
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Preferred Location</label>
+                      {isEditing ? (
+                        <input
+                          type="text"
+                          name="preferredLocation"
+                          value={formData.preferredLocation || ''}
+                          onChange={handleInputChange}
+                          className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                        />
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                          {userProfile?.preferredLocation || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Job Type</label>
+                      {isEditing ? (
+                        <select
+                          name="jobType"
+                          value={formData.jobType || ''}
+                          onChange={handleInputChange}
+                          className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                        >
+                          <option value="">Select Job Type</option>
+                          <option value="full-time">Full Time</option>
+                          <option value="part-time">Part Time</option>
+                          <option value="contract">Contract</option>
+                          <option value="internship">Internship</option>
+                          <option value="freelance">Freelance</option>
+                        </select>
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900 capitalize">
+                          {userProfile?.jobType?.replace('-', ' ') || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-gray-600 text-sm font-medium mb-2">Work Mode</label>
+                      {isEditing ? (
+                        <select
+                          name="workMode"
+                          value={formData.workMode || ''}
+                          onChange={handleInputChange}
+                          className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors"
+                        >
+                          <option value="">Select Work Mode</option>
+                          <option value="office">Office</option>
+                          <option value="remote">Remote</option>
+                          <option value="hybrid">Hybrid</option>
+                        </select>
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded-xl text-gray-900 capitalize">
+                          {userProfile?.workMode || 'Not provided'}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="mt-6">
+                    <label className="block text-gray-600 text-sm font-medium mb-2">Skills</label>
+                    {isEditing ? (
+                      <textarea
+                        name="skills"
+                        value={formData.skills || ''}
+                        onChange={handleInputChange}
+                        rows={3}
+                        className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 text-gray-900 focus:border-red-400 focus:outline-none transition-colors resize-none"
+                      />
+                    ) : (
+                      <div className="p-3 bg-gray-50 rounded-xl text-gray-900">
+                        {userProfile?.skills || 'Not provided'}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Services & Preferences */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center space-x-2">
+                    <Heart className="text-red-400" size={20} />
+                    <span>Preferences</span>
+                  </h3>
+                  <div>
+                    <label className="block text-gray-600 text-sm font-medium mb-2">Interested Services</label>
+                    <div className="p-3 bg-gray-50 rounded-xl">
+                      {userProfile?.interestedServices && userProfile.interestedServices.length > 0 ? (
+                        <div className="flex flex-wrap gap-2">
+                          {userProfile.interestedServices.map((service: string, index: number) => (
+                            <span
+                              key={index}
+                              className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800"
+                            >
+                              {service.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-gray-900">No services selected</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {isEditing && (
+                  <div>
+                    <label className="block text-gray-600 text-sm font-medium mb-2">Update Resume</label>
+                    <div className="relative">
+                      <input
+                        type="file"
+                        onChange={handleFileChange}
+                        accept=".pdf,.doc,.docx"
+                        className="hidden"
+                        id="resume-update"
+                      />
+                      <label
+                        htmlFor="resume-update"
+                        className="w-full bg-gray-50 border-2 border-dashed border-gray-300 rounded-xl p-6 text-center cursor-pointer hover:border-red-400 transition-colors"
+                      >
+                        <Upload className="mx-auto mb-2 text-gray-400" size={32} />
+                        <div className="text-gray-600">
+                          {newResume ? (
+                            <div className="flex items-center justify-center space-x-2">
+                              <FileText className="text-red-400" size={20} />
+                              <span className="text-red-600 font-medium">{newResume.name}</span>
+                            </div>
+                          ) : (
+                            <>
+                              <div className="font-medium">Click to upload new resume</div>
+                              <div className="text-sm text-gray-500">PDF, DOC, DOCX (Max 10MB)</div>
+                            </>
+                          )}
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 };
 
-// Routes
-
-// Auth Routes
-app.post('/api/auth/register', upload.single('resume'), async (req, res) => {
-  try {
-    const { name, email, password, phone, dateOfBirth, gender, address, city, state, pincode, currentPosition, experience, skills, education, expectedSalary, preferredLocation, jobType, workMode, interestedServices } = req.body;
-
-    // Check if user already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ success: false, message: 'User already exists with this email' });
-    }
-
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Parse interested services if it's a string
-    let parsedServices = [];
-    if (interestedServices) {
-      try {
-        parsedServices = typeof interestedServices === 'string' ? JSON.parse(interestedServices) : interestedServices;
-      } catch (e) {
-        parsedServices = [];
-      }
-    }
-
-    // Create user
-    const user = new User({
-      name,
-      email,
-      password: hashedPassword,
-      phone,
-      dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
-      gender,
-      address,
-      city,
-      state,
-      pincode,
-      currentPosition,
-      experience,
-      skills,
-      education,
-      expectedSalary,
-      preferredLocation,
-      jobType,
-      workMode,
-      interestedServices: parsedServices,
-      resume: req.file ? req.file.path : undefined,
-      profileCompleted: true,
-    });
-
-    await user.save();
-
-    // Generate JWT token
-    const token = jwt.sign(
-      { userId: user._id, email: user.email, role: user.role },
-      process.env.JWT_SECRET || 'fallback-secret',
-      { expiresIn: '24h' }
-    );
-
-    // Return user data without password
-    const userResponse = {
-      id: user._id,
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      phone: user.phone,
-      dateOfBirth: user.dateOfBirth,
-      gender: user.gender,
-      address: user.address,
-      city: user.city,
-      state: user.state,
-      pincode: user.pincode,
-      currentPosition: user.currentPosition,
-      experience: user.experience,
-      skills: user.skills,
-      education: user.education,
-      expectedSalary: user.expectedSalary,
-      preferredLocation: user.preferredLocation,
-      jobType: user.jobType,
-      workMode: user.workMode,
-      interestedServices: user.interestedServices,
-      resume: user.resume,
-      profileCompleted: user.profileCompleted,
-      role: user.role,
-      createdAt: user.createdAt
-    };
-
-    res.status(201).json({
-      success: true,
-      message: 'User registered successfully',
-      user: userResponse,
-      token
-    });
-  } catch (error) {
-    console.error('Registration error:', error);
-    res.status(500).json({ success: false, message: 'Registration failed', error: error.message });
-  }
-});
-
-app.post('/api/auth/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    // Find user by email
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(400).json({ success: false, message: 'Invalid credentials' });
-    }
-
-    // Check password
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      return res.status(400).json({ success: false, message: 'Invalid credentials' });
-    }
-
-    // Generate JWT token
-    const token = jwt.sign(
-      { userId: user._id, email: user.email, role: user.role },
-      process.env.JWT_SECRET || 'fallback-secret',
-      { expiresIn: '24h' }
-    );
-
-    // Return user data without password
-    const userResponse = {
-      id: user._id,
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      phone: user.phone,
-      dateOfBirth: user.dateOfBirth,
-      gender: user.gender,
-      address: user.address,
-      city: user.city,
-      state: user.state,
-      pincode: user.pincode,
-      currentPosition: user.currentPosition,
-      experience: user.experience,
-      skills: user.skills,
-      education: user.education,
-      expectedSalary: user.expectedSalary,
-      preferredLocation: user.preferredLocation,
-      jobType: user.jobType,
-      workMode: user.workMode,
-      interestedServices: user.interestedServices,
-      resume: user.resume,
-      profileCompleted: user.profileCompleted,
-      role: user.role,
-      createdAt: user.createdAt
-    };
-
-    res.json({
-      success: true,
-      message: 'Login successful',
-      user: userResponse,
-      token
-    });
-  } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ success: false, message: 'Login failed', error: error.message });
-  }
-});
-
-// Contact Routes
-app.post('/api/contact', async (req, res) => {
-  try {
-    const contact = new Contact(req.body);
-    await contact.save();
-    res.status(201).json({ success: true, message: 'Contact form submitted successfully' });
-  } catch (error) {
-    console.error('Contact submission error:', error);
-    res.status(500).json({ success: false, message: 'Failed to submit contact form', error: error.message });
-  }
-});
-
-app.get('/api/admin/contacts', authenticateToken, async (req, res) => {
-  try {
-    const contacts = await Contact.find().sort({ createdAt: -1 });
-    res.json({ success: true, data: contacts });
-  } catch (error) {
-    console.error('Fetch contacts error:', error);
-    res.status(500).json({ success: false, message: 'Failed to fetch contacts', error: error.message });
-  }
-});
-
-// User Routes
-app.get('/api/users/:id', authenticateToken, async (req, res) => {
-  try {
-    const user = await User.findById(req.params.id).select('-password');
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
-    }
-    res.json({ success: true, data: user });
-  } catch (error) {
-    console.error('Fetch user error:', error);
-    res.status(500).json({ success: false, message: 'Failed to fetch user', error: error.message });
-  }
-});
-
-app.get('/api/admin/users', authenticateToken, async (req, res) => {
-  try {
-    const users = await User.find().select('-password').sort({ createdAt: -1 });
-    res.json({ success: true, data: users });
-  } catch (error) {
-    console.error('Fetch users error:', error);
-    res.status(500).json({ success: false, message: 'Failed to fetch users', error: error.message });
-  }
-});
-
-// Dashboard Stats
-app.get('/api/admin/dashboard/stats', authenticateToken, async (req, res) => {
-  try {
-    const totalUsers = await User.countDocuments();
-    const totalContacts = await Contact.countDocuments();
-    const totalTestimonials = await Testimonial.countDocuments();
-    const totalServices = await Service.countDocuments();
-
-    const stats = {
-      totalUsers,
-      totalContacts,
-      totalTestimonials,
-      totalServices,
-      totalApplications: totalContacts,
-      totalFraudCases: Math.floor(totalContacts * 0.3),
-      placedJobs: Math.floor(totalContacts * 0.6),
-      resolvedFraudCases: Math.floor(totalContacts * 0.8),
-      newsletterSubscribers: Math.floor(totalUsers * 0.4),
-      successRate: 98,
-      happyClients: '5000+',
-      growthRate: '150%'
-    };
-
-    res.json({ success: true, data: stats });
-  } catch (error) {
-    console.error('Dashboard stats error:', error);
-    res.status(500).json({ success: false, message: 'Failed to fetch dashboard stats', error: error.message });
-  }
-});
-
-// Testimonial Routes
-app.post('/api/testimonials', async (req, res) => {
-  try {
-    const testimonial = new Testimonial(req.body);
-    await testimonial.save();
-    res.status(201).json({ success: true, message: 'Testimonial submitted successfully' });
-  } catch (error) {
-    console.error('Testimonial submission error:', error);
-    res.status(500).json({ success: false, message: 'Failed to submit testimonial', error: error.message });
-  }
-});
-
-app.get('/api/testimonials', async (req, res) => {
-  try {
-    const testimonials = await Testimonial.find({ approved: true }).sort({ createdAt: -1 });
-    res.json({ success: true, data: testimonials });
-  } catch (error) {
-    console.error('Fetch testimonials error:', error);
-    res.status(500).json({ success: false, message: 'Failed to fetch testimonials', error: error.message });
-  }
-});
-
-app.get('/api/admin/testimonials', authenticateToken, async (req, res) => {
-  try {
-    const testimonials = await Testimonial.find().sort({ createdAt: -1 });
-    res.json({ success: true, data: testimonials });
-  } catch (error) {
-    console.error('Fetch admin testimonials error:', error);
-    res.status(500).json({ success: false, message: 'Failed to fetch testimonials', error: error.message });
-  }
-});
-
-// Service Routes
-app.get('/api/services', async (req, res) => {
-  try {
-    const services = await Service.find({ active: true }).sort({ order: 1 });
-    res.json({ success: true, data: services });
-  } catch (error) {
-    console.error('Fetch services error:', error);
-    res.status(500).json({ success: false, message: 'Failed to fetch services', error: error.message });
-  }
-});
-
-app.get('/api/admin/services', authenticateToken, async (req, res) => {
-  try {
-    const services = await Service.find().sort({ order: 1 });
-    res.json({ success: true, data: services });
-  } catch (error) {
-    console.error('Fetch admin services error:', error);
-    res.status(500).json({ success: false, message: 'Failed to fetch services', error: error.message });
-  }
-});
-
-app.post('/api/admin/services', authenticateToken, async (req, res) => {
-  try {
-    const service = new Service(req.body);
-    await service.save();
-    res.status(201).json({ success: true, message: 'Service created successfully', data: service });
-  } catch (error) {
-    console.error('Create service error:', error);
-    res.status(500).json({ success: false, message: 'Failed to create service', error: error.message });
-  }
-});
-
-// Error handling middleware
-app.use((error, req, res, next) => {
-  console.error('Server error:', error);
-  res.status(500).json({ success: false, message: 'Internal server error' });
-});
-
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({ success: false, message: 'Route not found' });
-});
-
-// Start server
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`API available at http://localhost:${PORT}`);
-});
-
-module.exports = app;
+export default UserDashboard;
