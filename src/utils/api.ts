@@ -1,408 +1,581 @@
-// API Service for handling all HTTP requests
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
-// Types
-export interface User {
-  _id?: string;
-  id?: string;
+export interface ContactFormData {
   name: string;
   email: string;
-  phone?: string;
-  dateOfBirth?: string;
-  gender?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  pincode?: string;
-  currentPosition?: string;
-  experience?: string;
-  skills?: string;
-  education?: string;
-  expectedSalary?: string;
-  preferredLocation?: string;
-  jobType?: string;
-  workMode?: string;
-  interestedServices?: string[];
-  resume?: string;
-  profileCompleted?: boolean;
-  createdAt?: string;
+  phone: string;
+  service: string;
+  message: string;
+}
+
+export interface JobApplicationData {
+  name: string;
+  email: string;
+  phone: string;
+  position: string;
+  experience: string;
+  skills: string;
+  resume?: File;
+}
+
+export interface FraudCaseData {
+  name: string;
+  email: string;
+  phone: string;
+  fraudType: string;
+  description: string;
+  amount?: number;
+  evidence?: File[];
+}
+
+export interface LoginData {
+  email: string;
+  password: string;
+}
+
+export interface RegisterData {
+  name: string;
+  email: string;
+  password: string;
   role?: string;
 }
 
-export interface LoginResponse {
-  success: boolean;
-  user: User;
-  token?: string;
-  message?: string;
+export interface DetailedRegistrationData {
+  // Basic Info
+  name: string;
+  email: string;
+  password: string;
+  phone: string;
+  
+  // Personal Details
+  dateOfBirth: string;
+  gender: string;
+  address: string;
+  city: string;
+  state: string;
+  pincode?: string;
+  
+  // Professional Details
+  currentPosition?: string;
+  experience: string;
+  skills: string;
+  education: string;
+  expectedSalary?: string;
+  preferredLocation?: string;
+  
+  // Preferences
+  jobType?: string;
+  workMode?: string;
+  interestedServices: string[];
+  
+  // Documents
+  resume?: File;
 }
 
-export interface ApiResponse<T = any> {
-  success: boolean;
-  data?: T;
-  message?: string;
-  error?: string;
+export interface TestimonialData {
+  name: string;
+  role: string;
+  company: string;
+  rating: number;
+  text: string;
+  avatar: string;
+  service: string;
+  featured?: boolean;
+  approved?: boolean;
 }
 
-// Helper function to get auth headers
-const getAuthHeaders = () => {
-  const token = localStorage.getItem('token');
-  return {
-    'Authorization': token ? `Bearer ${token}` : '',
-    'Content-Type': 'application/json',
+export interface ServiceData {
+  title: string;
+  description: string;
+  icon: string;
+  color: string;
+  features: string[];
+  active?: boolean;
+  order?: number;
+}
+export interface AboutContentData {
+  title: string;
+  subtitle: string;
+  description: string;
+  values: Array<{
+    title: string;
+    description: string;
+    icon: string;
+  }>;
+  commitments: string[];
+  active?: boolean;
+}
+
+export interface PrivacyPolicyData {
+  title: string;
+  subtitle: string;
+  introduction: string;
+  sections: Array<{
+    title: string;
+    content: Array<{
+      subtitle?: string;
+      items: string[];
+    }>;
+  }>;
+  contactInfo: {
+    email: string;
+    phone: string;
+    address: string;
   };
-};
+  active?: boolean;
+}
 
-// Helper function to get auth headers for form data
-const getAuthHeadersForFormData = () => {
-  const token = localStorage.getItem('token');
-  return {
-    'Authorization': token ? `Bearer ${token}` : '',
+export interface TermsOfServiceData {
+  title: string;
+  subtitle: string;
+  introduction: string;
+  sections: Array<{
+    title: string;
+    content: Array<{
+      subtitle?: string;
+      items: string[];
+    }>;
+  }>;
+  contactInfo: {
+    email: string;
+    phone: string;
+    address: string;
   };
-};
+  active?: boolean;
+}
 
-// API Service
-export const apiService = {
-  // Authentication
-  async login(email: string, password: string): Promise<LoginResponse> {
+export interface ContactInfoData {
+  phone: string[];
+  email: string[];
+  address: string[];
+  workingHours: string[];
+}
+
+export interface DashboardStatsData {
+  happyClients: string;
+  successRate: string;
+  growthRate: string;
+  totalProjects: string;
+  activeClients: string;
+  completedProjects: string;
+}
+
+class ApiService {
+  private async request(endpoint: string, options: RequestInit = {}) {
+    const url = `${API_BASE_URL}${endpoint}`;
+    const config: RequestInit = {
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+      ...options,
+    };
+
+    // Add auth token if available
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers = {
+        ...config.headers,
+        'Authorization': `Bearer ${token}`,
+      };
+    }
+
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
+      const response = await fetch(url, config);
       const data = await response.json();
-      
+
       if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
+        throw new Error(data.message || 'Something went wrong');
       }
 
       return data;
     } catch (error) {
-      // Fallback for demo purposes when backend is not available
-      if (email === 'chaitanyapawar410@gmail.com' && password === 'password') {
-        return {
-          success: true,
-          user: {
-            _id: '688edd2ad86cba02281147c2',
-            name: 'Chaitanya Pawar',
-            email: 'chaitanyapawar410@gmail.com',
-            phone: '9579279673',
-            dateOfBirth: '2001-10-04',
-            gender: 'male',
-            address: 'fewfsdfgfs',
-            city: 'Chhatrapati Sambhajinagar',
-            state: 'Maharashtra',
-            pincode: '431109',
-            currentPosition: 'Software Developer',
-            experience: '1-2',
-            skills: 'DSA',
-            education: 'bachelors',
-            expectedSalary: '6',
-            preferredLocation: 'Pune',
-            jobType: 'full-time',
-            workMode: 'office',
-            interestedServices: ['job-consultancy'],
-            resume: 'uploads/resume-1754133190283-787090974.pdf',
-            profileCompleted: true,
-            createdAt: '2025-08-03T03:53:14.300Z',
-            role: 'user'
-          }
-        };
-      }
+      console.error('API Error:', error);
       throw error;
     }
-  },
+  }
 
-  async register(userData: any): Promise<ApiResponse> {
+  // Auth endpoints
+  async login(data: LoginData) {
+    const response = await this.request('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    
+    if (response.token) {
+      localStorage.setItem('token', response.token);
+    }
+    
+    return response;
+  }
+
+  async register(data: RegisterData) {
+    const response = await this.request('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    
+    if (response.token) {
+      localStorage.setItem('token', response.token);
+    }
+    
+    return response;
+  }
+
+  async registerWithDetails(formData: FormData) {
+    const response = await fetch(`${API_BASE_URL}/auth/register-detailed`, {
+      method: 'POST',
+      headers: {
+        // Don't set Content-Type for FormData, let browser set it
+        ...(localStorage.getItem('token') && {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        })
+      },
+      body: formData,
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Registration failed');
+    }
+
+    if (data.token) {
+      localStorage.setItem('token', data.token);
+    }
+    
+    return data;
+  }
+
+  // Contact form
+  async submitContact(data: ContactFormData) {
+    return this.request('/contact', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Job applications
+  async submitJobApplication(data: JobApplicationData) {
+    const formData = new FormData();
+    Object.entries(data).forEach(([key, value]) => {
+      if (value instanceof File) {
+        formData.append(key, value);
+      } else if (value !== undefined) {
+        formData.append(key, value.toString());
+      }
+    });
+
+    return this.request('/job-applications', {
+      method: 'POST',
+      headers: {}, // Remove Content-Type to let browser set it for FormData
+      body: formData,
+    });
+  }
+
+  // Fraud cases
+  async submitFraudCase(data: FraudCaseData) {
+    const formData = new FormData();
+    Object.entries(data).forEach(([key, value]) => {
+      if (key === 'evidence' && Array.isArray(value)) {
+        value.forEach((file) => formData.append('evidence', file));
+      } else if (value instanceof File) {
+        formData.append(key, value);
+      } else if (value !== undefined) {
+        formData.append(key, value.toString());
+      }
+    });
+
+    return this.request('/fraud-cases', {
+      method: 'POST',
+      headers: {}, // Remove Content-Type to let browser set it for FormData
+      body: formData,
+    });
+  }
+
+  async subscribeNewsletter(email: string) {
+    return this.request('/newsletter', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  }
+
+  // Admin endpoints
+  async getContacts() {
+    return this.request('/contacts');
+  }
+
+  async getJobApplications() {
+    return this.request('/job-applications');
+  }
+
+  async getFraudCases() {
+    return this.request('/fraud-cases');
+  }
+
+  async getDashboardStats() {
+    return this.request('/dashboard/stats');
+  }
+
+  // Website content management
+  async updateWebsiteContent(section: string, data: any) {
+    return this.request(`/website-content/${section}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteWebsiteContent(section: string, itemId: string | number) {
+    return this.request(`/website-content/${section}/${itemId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getWebsiteContent() {
+    return this.request('/website-content');
+  }
+
+  // User management
+  async getUsers() {
+    return this.request('/users');
+  }
+
+  async updateUserStatus(userId: string, status: string) {
+    return this.request(`/users/${userId}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ status }),
+    });
+  }
+
+  async getUserProfile(userId: string) {
+    return this.request(`/users/${userId}`);
+  }
+
+  async updateUserProfile(userId: string, formData: FormData) {
+    return this.request(`/users/${userId}`, {
+      method: 'PUT',
+      headers: {}, // Remove Content-Type to let browser set it for FormData
+      body: formData,
+    });
+  }
+
+  async deleteUser(userId: string) {
+    return this.request(`/users/${userId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Testimonial endpoints
+  async getTestimonials() {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
-        method: 'POST',
-        body: userData, // FormData
-      });
-
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || 'Registration failed');
-      }
-
-      return data;
+      console.log('API: Fetching testimonials...');
+      return await this.request('/testimonials');
     } catch (error) {
+      console.error('Failed to fetch testimonials:', error);
       throw error;
     }
-  },
+  }
 
-  async adminLogin(email: string, password: string): Promise<LoginResponse> {
+  async getTestimonialsAdmin() {
+    console.log('API: Fetching admin testimonials...');
+    return this.request('/testimonials/admin');
+  }
+
+  async createTestimonial(data: TestimonialData) {
+    console.log('API: Creating testimonial...', data);
+    return this.request('/testimonials', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateTestimonial(testimonialId: string, data: TestimonialData) {
+    return this.request(`/testimonials/${testimonialId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+  async updateTestimonialStatus(testimonialId: string, approved: boolean, featured?: boolean) {
+    return this.request(`/testimonials/${testimonialId}/approve`, {
+      method: 'PUT',
+      body: JSON.stringify({ approved, featured }),
+    });
+  }
+
+  async deleteTestimonial(testimonialId: string) {
+    return this.request(`/testimonials/${testimonialId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async submitTestimonial(data: TestimonialData) {
+    return this.request('/testimonials', {
+      method: 'POST',
+      body: JSON.stringify({ ...data, approved: false }),
+    });
+  }
+
+  // Service endpoints
+  async getServices() {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/admin/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || 'Admin login failed');
-      }
-
-      return data;
+      console.log('API: Fetching services...');
+      return await this.request('/services');
     } catch (error) {
+      console.error('Failed to fetch services:', error);
       throw error;
     }
-  },
+  }
 
-  // User Profile
-  async getUserProfile(userId: string): Promise<User> {
+  async getServicesAdmin() {
+    console.log('API: Fetching admin services...');
+    return this.request('/services/admin');
+  }
+
+  async createService(data: ServiceData) {
+    console.log('API: Creating service...', data);
+    const response = await this.request('/services', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    console.log('Service creation response:', response);
+    return response;
+  }
+
+  async updateService(serviceId: string, data: ServiceData) {
+    return this.request(`/services/${serviceId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteService(serviceId: string) {
+    return this.request(`/services/${serviceId}`, {
+      method: 'DELETE',
+    });
+  }
+  // Contact status updates
+  async updateContactStatus(contactId: string, status: string) {
+    return this.request(`/contacts/${contactId}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ status }),
+    });
+  }
+
+  // Job application status updates
+  async updateJobApplicationStatus(applicationId: string, status: string) {
+    return this.request(`/job-applications/${applicationId}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ status }),
+    });
+  }
+
+  // Fraud case status updates
+  async updateFraudCaseStatus(caseId: string, status: string) {
+    return this.request(`/fraud-cases/${caseId}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ status }),
+    });
+  }
+
+  // About Content endpoints
+  async getAboutContent() {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
-        method: 'GET',
-        headers: getAuthHeaders(),
-      });
-
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to fetch user profile');
-      }
-
-      return data.data;
+      console.log('API: Fetching about content...');
+      return await this.request('/about-content');
     } catch (error) {
-      // Fallback for demo user
-      if (userId === '688edd2ad86cba02281147c2') {
-        return {
-          _id: '688edd2ad86cba02281147c2',
-          name: 'Chaitanya Pawar',
-          email: 'chaitanyapawar410@gmail.com',
-          phone: '9579279673',
-          dateOfBirth: '2001-10-04',
-          gender: 'male',
-          address: 'fewfsdfgfs',
-          city: 'Chhatrapati Sambhajinagar',
-          state: 'Maharashtra',
-          pincode: '431109',
-          currentPosition: 'Software Developer',
-          experience: '1-2',
-          skills: 'DSA',
-          education: 'bachelors',
-          expectedSalary: '6',
-          preferredLocation: 'Pune',
-          jobType: 'full-time',
-          workMode: 'office',
-          interestedServices: ['job-consultancy'],
-          resume: 'uploads/resume-1754133190283-787090974.pdf',
-          profileCompleted: true,
-          createdAt: '2025-08-03T03:53:14.300Z',
-          role: 'user'
-        };
-      }
+      console.error('Failed to fetch about content:', error);
       throw error;
     }
-  },
+  }
 
-  async updateUserProfile(userId: string, formData: FormData): Promise<User> {
+  async updateAboutContent(data: AboutContentData) {
+    console.log('API: Updating about content...', data);
+    return this.request('/about-content', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Contact Info endpoints
+  async getContactInfo() {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
-        method: 'PUT',
-        headers: getAuthHeadersForFormData(),
-        body: formData,
-      });
-
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to update user profile');
-      }
-
-      return data.data;
+      console.log('API: Fetching contact info...');
+      return await this.request('/contact-info');
     } catch (error) {
+      console.error('Failed to fetch contact info:', error);
       throw error;
     }
-  },
+  }
 
-  // Dashboard Stats
-  async getDashboardStats(): Promise<any> {
+  async updateContactInfo(data: ContactInfoData) {
+    console.log('API: Updating contact info...', data);
+    return this.request('/contact-info', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Dashboard Stats endpoints
+  async getDashboardStats() {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/dashboard/stats`, {
-        method: 'GET',
-        headers: getAuthHeaders(),
-      });
-
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to fetch dashboard stats');
-      }
-
-      return data.data;
+      console.log('API: Fetching dashboard stats...');
+      return await this.request('/dashboard-stats');
     } catch (error) {
+      console.error('Failed to fetch dashboard stats:', error);
       throw error;
     }
-  },
+  }
 
-  // Contact Forms
-  async submitContactForm(contactData: any): Promise<ApiResponse> {
+  async getDashboardStatsData() {
+    // Alias for backward compatibility
+    return this.getDashboardStats();
+  }
+
+  async updateDashboardStats(data: DashboardStatsData) {
+    console.log('API: Updating dashboard stats...', data);
+    return this.request('/dashboard-stats', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Privacy Policy endpoints
+  async getPrivacyPolicy() {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/contact`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(contactData),
-      });
-
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to submit contact form');
-      }
-
-      return data;
+      console.log('API: Fetching privacy policy...');
+      return await this.request('/privacy-policy');
     } catch (error) {
+      console.error('Failed to fetch privacy policy:', error);
       throw error;
     }
-  },
+  }
 
-  async getContacts(): Promise<any[]> {
+  async updatePrivacyPolicy(data: PrivacyPolicyData) {
+    console.log('API: Updating privacy policy...', data);
+    return this.request('/privacy-policy', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Terms of Service endpoints
+  async getTermsOfService() {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/contacts`, {
-        method: 'GET',
-        headers: getAuthHeaders(),
-      });
-
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to fetch contacts');
-      }
-
-      return data.data;
+      console.log('API: Fetching terms of service...');
+      return await this.request('/terms-of-service');
     } catch (error) {
+      console.error('Failed to fetch terms of service:', error);
       throw error;
     }
-  },
+  }
 
-  // Testimonials
-  async submitTestimonial(testimonialData: any): Promise<ApiResponse> {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/testimonials`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(testimonialData),
-      });
+  async updateTermsOfService(data: TermsOfServiceData) {
+    console.log('API: Updating terms of service...', data);
+    return this.request('/terms-of-service', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+}
 
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to submit testimonial');
-      }
-
-      return data;
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  async getTestimonials(): Promise<any[]> {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/testimonials`, {
-        method: 'GET',
-      });
-
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to fetch testimonials');
-      }
-
-      return data.data;
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  // Terms of Service
-  async getTermsOfService(): Promise<string> {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/terms-of-service`, {
-        method: 'GET',
-      });
-
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to fetch terms of service');
-      }
-
-      return data.data.content;
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  async updateTermsOfService(content: string): Promise<ApiResponse> {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/terms-of-service`, {
-        method: 'PUT',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ content }),
-      });
-
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to update terms of service');
-      }
-
-      return data;
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  // Privacy Policy
-  async getPrivacyPolicy(): Promise<string> {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/privacy-policy`, {
-        method: 'GET',
-      });
-
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to fetch privacy policy');
-      }
-
-      return data.data.content;
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  async updatePrivacyPolicy(content: string): Promise<ApiResponse> {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/admin/privacy-policy`, {
-        method: 'PUT',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ content }),
-      });
-
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to update privacy policy');
-      }
-
-      return data;
-    } catch (error) {
-      throw error;
-    }
-  },
-};
+export const apiService = new ApiService();
